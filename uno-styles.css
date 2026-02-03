@@ -1,0 +1,288 @@
+/* Uno Specific Styles */
+
+/* Game Board Layout */
+.uno-game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 80vh;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px;
+}
+
+/* Opponents Area */
+.opponents-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+}
+
+.opponent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-secondary);
+    padding: 10px;
+    border: var(--pixel-border) var(--retro-blue);
+    position: relative;
+}
+
+.opponent.active-turn {
+    border-color: var(--retro-yellow);
+    box-shadow: 0 0 15px var(--retro-yellow);
+}
+
+.opponent-cards {
+    display: flex;
+    gap: 2px;
+    margin-top: 5px;
+}
+
+.card-back-mini {
+    width: 20px;
+    height: 30px;
+    background: var(--text-primary);
+    border: 1px solid #000;
+}
+
+/* Center Table (Draw & Discard) */
+.center-table {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.deck-pile, .discard-pile {
+    width: 80px;
+    height: 120px;
+    position: relative;
+    cursor: pointer;
+}
+
+.deck-pile {
+    background: var(--bg-secondary);
+    border: 4px solid var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+}
+
+.deck-pile::after {
+    content: 'UNO';
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: var(--retro-red);
+    transform: rotate(-25deg);
+}
+
+/* Card Styles */
+.card {
+    width: 80px;
+    height: 120px;
+    border-radius: 8px; /* Slightly rounded for cards */
+    border: 3px solid #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    user-select: none;
+    transition: transform 0.2s;
+    background-color: white; /* Default fallback */
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Card Colors */
+.card.red { background-color: var(--retro-red); }
+.card.blue { background-color: var(--retro-blue); }
+.card.green { background-color: var(--retro-green); }
+.card.yellow { background-color: var(--retro-yellow); }
+.card.black { background-color: #111; border-color: #444; }
+
+.card-content {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 32px;
+    color: white;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 2;
+}
+
+/* Small corner values */
+.card::before {
+    content: attr(data-value);
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: white;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.card::after {
+    content: attr(data-value);
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    color: white;
+    text-shadow: 1px 1px 0 #000;
+    transform: rotate(180deg);
+}
+
+/* Special Cards Content overrides */
+.card.skip .card-content { font-size: 20px; }
+.card.reverse .card-content { font-size: 20px; }
+.card.draw2 .card-content { font-size: 20px; }
+.card.wild .card-content, .card.wild4 .card-content { 
+    background: linear-gradient(45deg, var(--retro-red), var(--retro-yellow), var(--retro-green), var(--retro-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    font-size: 20px; 
+}
+
+/* Player Hand */
+.player-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-hand {
+    display: flex;
+    justify-content: center;
+    gap: -20px; /* Overlap cards */
+    padding: 20px;
+    min-height: 140px;
+    flex-wrap: wrap;
+}
+
+.player-hand .card {
+    cursor: pointer;
+    margin: 0 -10px; /* Overlap */
+    transition: transform 0.2s, z-index 0s;
+}
+
+.player-hand .card:hover {
+    transform: translateY(-20px) scale(1.1);
+    z-index: 100;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.player-hand .card.disabled {
+    filter: grayscale(0.8) brightness(0.7);
+    cursor: not-allowed;
+}
+
+/* Color Picker Modal */
+.color-picker-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.color-picker-modal.visible {
+    display: flex;
+}
+
+.color-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    background: var(--bg-primary);
+    padding: 20px;
+    border: 4px solid white;
+}
+
+.color-btn {
+    width: 80px;
+    height: 80px;
+    border: 2px solid white;
+    cursor: pointer;
+}
+.color-btn.red { background: var(--retro-red); }
+.color-btn.blue { background: var(--retro-blue); }
+.color-btn.green { background: var(--retro-green); }
+.color-btn.yellow { background: var(--retro-yellow); }
+
+/* Direction Indicator */
+.direction-indicator {
+    font-size: 40px;
+    color: var(--retro-magenta);
+    position: absolute;
+    /* positioned relative to center table */
+}
+
+/* Message / Status */
+.game-status {
+    font-family: 'Press Start 2P', cursive;
+    color: var(--retro-yellow);
+    margin-bottom: 10px;
+    text-align: center;
+    min-height: 20px;
+}
+
+/* Uno Button */
+.uno-btn {
+    background: var(--retro-red);
+    color: white;
+    border: 4px solid white;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P';
+    font-size: 16px;
+    cursor: pointer;
+    display: none; /* Only show when needed */
+    animation: pulse 1s infinite;
+}
+
+.pass-btn {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 4px solid var(--text-secondary);
+    padding: 10px 20px;
+    font-family: 'Press Start 2P';
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.pass-btn:hover {
+    color: var(--retro-cyan);
+    border-color: var(--retro-cyan);
+}
+
+.player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    .card { width: 50px; height: 75px; }
+    .card-content { font-size: 18px; }
+    .player-hand .card { margin: 0 -5px; }
+    .deck-pile, .discard-pile { width: 50px; height: 75px; }
+}

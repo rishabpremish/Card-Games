@@ -1,0 +1,319 @@
+/* Blackjack Specific Styles */
+
+html, body {
+    overflow: hidden; /* Disable scrolling globally for this page */
+    height: 100%;
+}
+
+.game-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 10px; /* Reduced padding */
+    box-sizing: border-box;
+}
+
+.game-header {
+    margin-bottom: 10px; /* Reduced margin */
+    flex-shrink: 0;
+}
+
+.game-stats {
+    margin-bottom: 10px; /* Reduced margin */
+    flex-shrink: 0;
+}
+
+.bj-game-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1; /* Take up remaining space */
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;
+    padding: 10px 0;
+    overflow: hidden; /* Ensure no internal scroll */
+}
+
+/* --- Area Containers --- */
+.dealer-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-height: 150px; /* Reduced min-height */
+    flex-shrink: 0;
+}
+
+.player-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-height: 180px; /* Reduced min-height */
+    flex-shrink: 0;
+    justify-content: flex-end; /* Align content to bottom */
+}
+
+.table-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 10px;
+    min-height: 100px;
+}
+
+/* --- Hand Display --- */
+.hand-container {
+    display: flex;
+    justify-content: center;
+    gap: -30px; /* Card Overlap */
+    margin: 5px 0;
+    min-width: 120px;
+    min-height: 120px; /* Reserve space, reduced */
+    transition: all 0.3s;
+}
+
+.hand-container.active-hand {
+    filter: drop-shadow(0 0 5px var(--retro-yellow));
+    transform: scale(1.05);
+}
+
+.hand-container.inactive-hand {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+    transform: scale(0.95);
+}
+
+.split-wrapper {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+}
+
+.hand-score {
+    background: var(--bg-secondary);
+    border: 2px solid var(--retro-cyan);
+    color: var(--retro-yellow);
+    font-family: 'Press Start 2P';
+    font-size: 0.8rem;
+    padding: 3px 8px; /* Reduced padding */
+    margin-top: 2px; /* Reduced margin */
+    text-shadow: 2px 2px 0 #000;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.hand-label {
+    font-family: 'Press Start 2P';
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    margin-top: 10px; /* Increased from 4px to 10px */
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+/* --- Cards (Reusing/Extending styles.css) --- */
+.bj-card {
+    width: 90px;  /* Smaller cards */
+    height: 126px;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-left: -40px; /* Tight overlap */
+    transform-origin: center bottom;
+}
+
+.bj-card .card-front {
+    background-color: var(--card-white); /* Force opacity */
+    z-index: 2; /* Ensure front is above back if needed */
+}
+
+.bj-card .card-back {
+    background-color: var(--bg-card);
+    z-index: 1;
+}
+
+.bj-card:first-child {
+    margin-left: 0;
+}
+
+.bj-card:hover {
+    transform: translateY(-10px) rotate(2deg);
+    z-index: 50;
+}
+
+/* Hidden Dealer Card */
+.bj-card.hidden .card-front {
+    display: none;
+}
+.bj-card.hidden .card-back {
+    transform: rotateY(0deg); /* Show back */
+}
+
+/* --- Chips & Betting --- */
+.chip-rack {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    perspective: 500px;
+}
+
+.chip {
+    width: 50px; /* Smaller chips */
+    height: 50px;
+    border-radius: 50%;
+    border: 4px dashed rgba(255,255,255,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Press Start 2P';
+    font-size: 0.6rem;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.5);
+    transition: transform 0.1s, margin-top 0.1s;
+    user-select: none;
+    text-shadow: 1px 1px 0 #000;
+    position: relative;
+}
+
+/* Chip Colors */
+.chip.c-10 { background: var(--retro-blue); border-color: #88ccff; }
+.chip.c-50 { background: var(--retro-red); border-color: #ff8888; }
+.chip.c-100 { background: var(--retro-green); border-color: #88ff88; }
+.chip.c-500 { background: var(--retro-purple); border-color: #dcb3ff; } /* High roller */
+.chip.c-max { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
+
+.chip::before {
+    content: '';
+    position: absolute;
+    top: 5px; left: 5px; right: 5px; bottom: 5px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.chip:hover {
+    transform: translateY(-5px);
+}
+
+.chip:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+}
+
+.chip.disabled {
+    filter: grayscale(1) brightness(0.5);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.current-bet-display {
+    font-family: 'Press Start 2P';
+    color: var(--retro-yellow);
+    background: rgba(0,0,0,0.6);
+    padding: 10px 20px;
+    border: 2px solid var(--retro-yellow);
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.bet-label { font-size: 0.6rem; color: #aaa; }
+.bet-amount { font-size: 1.2rem; }
+
+/* --- Action Controls --- */
+.action-controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.action-btn {
+    font-family: 'Press Start 2P';
+    font-size: 0.7rem; /* Smaller font */
+    padding: 12px 20px; /* Smaller padding */
+    border: 4px solid;
+    background: var(--bg-secondary);
+    color: white;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+}
+
+.action-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
+.action-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+
+.btn-hit { border-color: var(--retro-green); color: var(--retro-green); }
+.btn-hit:hover { background: var(--retro-green); color: black; }
+
+.btn-stand { border-color: var(--retro-red); color: var(--retro-red); }
+.btn-stand:hover { background: var(--retro-red); color: white; }
+
+.btn-double { border-color: var(--retro-yellow); color: var(--retro-yellow); }
+.btn-double:hover { background: var(--retro-yellow); color: black; }
+
+.btn-split { border-color: var(--retro-cyan); color: var(--retro-cyan); }
+.btn-split:hover { background: var(--retro-cyan); color: black; }
+
+/* --- Messages --- */
+.message-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.message-overlay.visible { opacity: 1; }
+
+.big-text {
+    font-family: 'Press Start 2P';
+    font-size: 2.5rem; /* Smaller text */
+    color: var(--retro-yellow);
+    text-shadow: 4px 4px 0 #000, -2px -2px 0 var(--retro-magenta);
+    white-space: nowrap;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* --- Deck --- */
+.deck-shoe {
+    width: 90px;
+    height: 126px;
+    background: var(--bg-card);
+    border: 4px solid var(--retro-purple);
+    position: relative;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+}
+.deck-shoe::before {
+    content: '';
+    position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px;
+    border: 2px dashed var(--retro-purple);
+    opacity: 0.5;
+}
+
+/* Responsive adjustment for very small screens */
+@media (max-height: 700px) {
+    .bj-card { width: 70px; height: 98px; }
+    .deck-shoe { width: 70px; height: 98px; }
+    .hand-container { min-height: 100px; }
+    .dealer-area { min-height: 120px; }
+    .player-area { min-height: 150px; }
+    .game-header h1 { font-size: 1.5rem; }
+    .action-btn { padding: 10px 15px; font-size: 0.6rem; }
+}

@@ -1,0 +1,219 @@
+/* Solitaire Styles */
+
+.solitaire-board {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    user-select: none;
+}
+
+.top-row {
+    display: flex;
+    justify-content: space-between;
+    height: 140px;
+}
+
+.stock-pile-area, .waste-pile-area {
+    position: relative;
+    width: 90px;
+    height: 126px;
+}
+
+.foundation-area {
+    display: flex;
+    gap: 15px;
+}
+
+.foundation-slot {
+    position: relative;
+    width: 90px;
+    height: 126px;
+    border: 2px dashed var(--retro-cyan);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.suit-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+.suit-icon.red { color: var(--retro-red); }
+.suit-icon.black { color: var(--text-secondary); }
+
+.spacer {
+    flex-grow: 1;
+}
+
+.tableau-area {
+    display: flex;
+    justify-content: space-between;
+    min-height: 400px;
+}
+
+.tableau-col {
+    position: relative;
+    width: 90px;
+    min-height: 126px;
+    /* border-top: 2px solid rgba(255, 255, 255, 0.1); */
+}
+
+/* Card Styling Override for Solitaire Context */
+.sol-card {
+    position: absolute;
+    width: 90px;
+    height: 126px;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.sol-card.selected {
+    transform: translateY(-5px);
+    box-shadow: 0 0 10px var(--retro-yellow);
+    z-index: 100 !important;
+    filter: brightness(1.1);
+}
+
+/* Card Back */
+.card-back {
+    background: var(--bg-card);
+    border: 2px solid var(--retro-purple);
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-back::after {
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: 
+        repeating-linear-gradient(
+            45deg,
+            var(--retro-purple),
+            var(--retro-purple) 10px,
+            var(--bg-card) 10px,
+            var(--bg-card) 20px
+        );
+    opacity: 0.5;
+}
+
+/* Card Front Content */
+.card-front {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 4px;
+}
+
+/* High Contrast & Themes support via standard CSS logic or JS class toggles */
+body[class*="theme-"] .card-front {
+    /* Theme overrides handled by global CSS usually, but here specific adjustment */
+}
+
+.card-top, .card-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.card-bottom {
+    transform: rotate(180deg);
+}
+
+.card-val {
+    font-family: 'Press Start 2P';
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.card-suit {
+    font-size: 14px;
+}
+
+.red { color: #d00; }
+.black { color: #000; }
+
+/* Placeholder for empty piles */
+.placeholder {
+    width: 100%;
+    height: 100%;
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.2);
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+/* Controls */
+.solitaire-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.action-btn {
+    font-family: 'Press Start 2P';
+    background: var(--bg-secondary);
+    color: var(--retro-cyan);
+    border: 2px solid var(--retro-cyan);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+.action-btn:hover {
+    background: var(--retro-cyan);
+    color: var(--bg-primary);
+}
+
+.status-msg {
+    font-family: 'VT323';
+    font-size: 1.2rem;
+    color: var(--retro-yellow);
+}
+
+/* Stacking context for Tableau */
+/* Cards in tableau are absolute positioned relative to col.
+   JS will set top: XXpx.
+*/
+
+/* Mobile Adjustments */
+@media (max-width: 800px) {
+    .solitaire-board {
+        transform: scale(0.65);
+        transform-origin: top left;
+        width: 150%; /* Compensate for scale */
+        margin-left: 0;
+    }
+    
+    .game-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+}

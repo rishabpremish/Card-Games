@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Higher or Lower - Card Game</title>
+    <title>Chess - Strategy Game</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="chess-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* Specific overrides if needed, but most styles are now in chess-styles.css */
+        
+        /* Instructions modal adaptation */
+        .instructions-content ol li {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="game-container">
@@ -17,7 +26,7 @@
             });
         </script>
 
-        <!-- Settings Menu Modal -->
+        <!-- Settings Menu Modal (Copied from index.html) -->
         <div class="settings-overlay" id="settings-overlay">
             <div class="settings-modal">
                 <div class="settings-header">
@@ -153,39 +162,6 @@
                     </div>
                     
                     <div class="settings-section">
-                        <h3>GAMEPLAY</h3>
-                        <div class="settings-row">
-                            <span class="settings-label">Card Animation Speed</span>
-                            <select class="settings-select" id="card-speed">
-                                <option value="fast">Fast</option>
-                                <option value="normal" selected>Normal</option>
-                                <option value="slow">Slow</option>
-                            </select>
-                        </div>
-                        <div class="settings-row">
-                            <span class="settings-label">Pushed (Equal Values Accepted)</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="pushed-toggle" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="settings-row">
-                            <span class="settings-label">Confirm New Game</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="confirm-newgame" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="settings-row">
-                            <span class="settings-label">Ace Value</span>
-                            <select class="settings-select" id="ace-value">
-                                <option value="1" selected>Low (1)</option>
-                                <option value="14">High (14)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section">
                         <h3>DISPLAY</h3>
                         <div class="settings-row">
                             <span class="settings-label">Scanlines Effect</span>
@@ -211,24 +187,6 @@
                     </div>
                     
                     <div class="settings-section">
-                        <h3>ACCESSIBILITY</h3>
-                        <div class="settings-row">
-                            <span class="settings-label">High Contrast Cards</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="high-contrast-toggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="settings-row">
-                            <span class="settings-label">Reduce Motion</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="reduce-motion-toggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section">
                         <h3>DATA</h3>
                         <div class="settings-row">
                             <span class="settings-label">Reset All Settings</span>
@@ -244,148 +202,80 @@
         
         <!-- Header -->
         <header class="game-header">
-            <h1>Higher or Lower</h1>
-            <p class="subtitle">Predict your way through the deck</p>
+            <h1>Chess</h1>
+            <p class="subtitle">Retro Strategy</p>
         </header>
 
         <!-- Game Stats -->
         <div class="game-stats">
-            <div class="stat-item wallet-stat">
-                <span class="stat-label">Wallet</span>
-                <span class="stat-value" id="wallet-balance">$100</span>
+            <div class="stat-item">
+                <span class="stat-label">Turn</span>
+                <span class="stat-value" id="turn-display">White</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Cards Remaining</span>
-                <span class="stat-value" id="cards-remaining">43</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Cards Placed</span>
-                <span class="stat-value" id="cards-placed">9</span>
+                <span class="stat-label">Status</span>
+                <span class="stat-value" id="status-display">Active</span>
             </div>
         </div>
 
         <!-- Main Game Area -->
-        <div class="game-area">
-            <!-- Deck Area -->
-            <div class="deck-area">
-                <div class="deck" id="deck">
-                    <div class="deck-cards"></div>
-                </div>
-                <span class="deck-label">Draw Pile</span>
-            </div>
-
-            <!-- Card Grid -->
-            <div class="card-grid" id="card-grid">
-                <!-- Cards will be generated by JavaScript -->
-            </div>
-
-            <!-- Vertical Progress Bar -->
-            <div class="main-progress-container">
-                <div class="main-progress-bar">
-                    <div class="main-progress-fill" id="main-progress-fill" style="height: 0%"></div>
+        <div class="chess-game-area">
+            
+            <!-- Chess Board -->
+            <div class="chess-board-container">
+                <div class="chess-board" id="chess-board">
+                    <!-- Squares generated by JS -->
                 </div>
             </div>
-        </div>
 
-        <!-- Choice Buttons (Hidden by default) -->
-        <div class="choice-container" id="choice-container">
-            <div class="choice-prompt">
-                <span id="selected-card-display"></span>
-                <p>Will the next card be...</p>
-            </div>
-            <div class="choice-buttons">
-                <button class="choice-btn higher" id="btn-higher">
-                    <span class="btn-icon">▲</span>
-                    <span class="btn-text">Higher</span>
-                </button>
-                <button class="choice-btn lower" id="btn-lower">
-                    <span class="btn-icon">▼</span>
-                    <span class="btn-text">Lower</span>
-                </button>
-            </div>
-            <button class="cancel-btn" id="btn-cancel">Cancel</button>
-        </div>
+            <!-- Sidebar -->
+            <div class="chess-sidebar">
+                
+                <!-- Controls Panel -->
+                <div class="chess-controls-panel">
+                    <div class="control-group">
+                        <label>Mode</label>
+                        <select id="game-mode" class="retro-select">
+                            <option value="pvp">PvP (Hotseat)</option>
+                            <option value="ai" selected>Player vs AI</option>
+                        </select>
+                    </div>
+                    <div class="control-group" id="difficulty-group">
+                        <label>AI Level</label>
+                        <select id="ai-difficulty" class="retro-select">
+                            <option value="1">Easy</option>
+                            <option value="2" selected>Medium</option>
+                            <option value="3">Hard</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Action</label>
+                        <button class="new-game-btn" id="new-game-btn">New Game</button>
+                    </div>
+                </div>
 
-        <!-- Drawn Card Display -->
-        <div class="drawn-card-overlay" id="drawn-card-overlay">
-            <div class="drawn-card-container">
-                <div class="drawn-card" id="drawn-card"></div>
-                <div class="result-message" id="result-message"></div>
-            </div>
-        </div>
-
-        <!-- Betting Modal -->
-        <div class="modal-overlay" id="betting-modal">
-            <div class="modal">
-                <button class="settings-close" id="close-bet-modal" style="position: absolute; top: 10px; right: 10px;">✕</button>
-                <div class="modal-icon">🎰</div>
-                <h2>Place Your Bet</h2>
-                <div class="betting-controls">
-                    <div class="current-balance">Balance: <span id="betting-balance">$100</span></div>
+                <!-- Captured Pieces -->
+                <div class="captured-area">
+                    <div class="captured-label">Captured by White</div>
+                    <div class="captured-side" id="captured-white" title="Pieces captured by White"></div>
                     
-                    <div class="bet-input-wrapper">
-                        <div class="bet-input-container">
-                            <span class="currency-symbol">$</span>
-                            <input type="number" id="bet-input" min="1" value="10">
-                        </div>
-                        <div class="bet-slider-container">
-                            <input type="range" id="bet-slider" min="1" max="100" value="10">
-                        </div>
-                    </div>
+                    <div class="captured-label">Captured by Black</div>
+                    <div class="captured-side" id="captured-black" title="Pieces captured by Black"></div>
+                </div>
 
-                    <div class="potential-payout">
-                        <span>Payout (5x):</span>
-                        <span id="potential-payout-value" class="payout-amount">$50</span>
-                    </div>
-                </div>
-                <div class="modal-buttons">
-                    <button class="bet-btn" id="btn-all-in">ALL IN!</button>
-                    <button class="play-btn" id="btn-place-bet">DEAL CARDS</button>
-                </div>
             </div>
+
         </div>
 
-        <!-- Game Over Modal -->
+        <!-- Game Over Modal (Adapted) -->
         <div class="modal-overlay" id="game-over-modal">
             <div class="modal">
-                <div class="modal-icon" id="modal-icon">🎉</div>
-                <h2 id="modal-title">Congratulations!</h2>
-                <p id="modal-message">You've made it through the entire deck!</p>
-                <div class="modal-stats">
-                    <div class="modal-stat">
-                        <span class="modal-stat-value" id="final-placed">52</span>
-                        <span class="modal-stat-label">Cards Placed</span>
-                    </div>
-                    <div class="modal-stat" id="win-payout-stat" style="display: none;">
-                        <span class="modal-stat-value" id="win-amount">$0</span>
-                        <span class="modal-stat-label">Won</span>
-                    </div>
-                </div>
-
-                <div class="modal-progress-container">
-                    <div class="modal-progress-bar">
-                        <div class="modal-progress-fill" id="progress-bar-fill" style="width: 0%"></div>
-                        <span class="modal-progress-text" id="progress-percent">0% COMPLETED</span>
-                    </div>
-                </div>
-
+                <div class="modal-icon" id="modal-icon">🏆</div>
+                <h2 id="modal-title">Game Over!</h2>
+                <p id="modal-message">White Wins by Checkmate!</p>
+                
                 <div class="modal-buttons">
                     <button class="play-again-btn" id="play-again-btn">Play Again</button>
-                    <button class="reveal-btn" id="reveal-deck-btn" style="display: none;">Reveal Deck</button>
-                    <button class="close-modal-btn" id="close-modal-btn" style="display: none;">View Game</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- New Game Confirmation Modal -->
-        <div class="modal-overlay" id="new-game-confirm-modal">
-            <div class="modal">
-                <div class="modal-icon">🎮</div>
-                <h2>Start New Game?</h2>
-                <p>Are you sure you want to start a new game? Your current progress will be lost.</p>
-                <div class="modal-buttons">
-                    <button class="close-modal-btn" id="cancel-new-game">Cancel</button>
-                    <button class="play-again-btn" id="confirm-new-game">New Game</button>
                 </div>
             </div>
         </div>
@@ -394,29 +284,23 @@
         <div class="instructions">
             <button class="instructions-toggle" id="instructions-toggle">How to Play</button>
             <div class="instructions-content" id="instructions-content">
-                <h3>Rules</h3>
+                <h3>Chess Rules</h3>
                 <ol>
-                    <li>Click on any face-up card in the grid</li>
-                    <li>Guess if the next card from the deck will be <strong>Higher</strong> or <strong>Lower</strong></li>
-                    <li>If correct, the new card is placed on that stack - keep going!</li>
-                    <li>If wrong, the stack is locked (turned face-down)</li>
-                    <li>Win by placing all 52 cards before running out of active stacks</li>
+                    <li><strong>Goal:</strong> Checkmate the opponent's King.</li>
+                    <li><strong>Movement:</strong> Standard Chess rules apply.</li>
+                    <li><strong>Controls:</strong> Click a piece to select, then click a highlighted square to move.</li>
+                    <li><strong>Castling:</strong> Move King two squares towards Rook.</li>
+                    <li><strong>Promotion:</strong> Pawns automatically promote to Queens (for simplicity in this retro version).</li>
                 </ol>
-                <p class="note">Note: Aces are low (1), Kings are high (13). Equal values count as wrong!</p>
             </div>
         </div>
 
-        <!-- Place Bet Button -->
-        <button class="place-bet-btn" id="open-bet-btn">PLACE BET</button>
-        <!-- New Game Button -->
-        <button class="new-game-btn" id="new-game-btn">New Game</button>
-        
         <!-- Settings Button -->
         <button class="settings-hint">Settings</button>
     </div>
 
     <script src="settings-loader.js"></script>
-    <script src="game.js"></script>
+    <script src="chess.js"></script>
     <script src="dev.js"></script>
 </body>
 </html>

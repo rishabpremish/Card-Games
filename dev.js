@@ -8,7 +8,6 @@ class DevTools {
         // Wait for game instance to be ready
         const checkGame = () => {
              if (window.gameInstance) return window.gameInstance;
-             if (window.connect4) return window.connect4;
              return null;
         };
 
@@ -35,7 +34,7 @@ class DevTools {
         devBtn.id = 'dev-tools-toggle';
         devBtn.style.cssText = `
             position: fixed;
-            top: 10px;
+            top: 60px;
             left: 10px;
             z-index: 1000;
             background: #333;
@@ -48,44 +47,14 @@ class DevTools {
         `;
         document.body.appendChild(devBtn);
 
-        // Create Connect 4 Link Button
-        const c4Btn = document.createElement('button');
-        c4Btn.textContent = '🔴 C4';
-        c4Btn.title = 'Play Connect 4';
-        c4Btn.style.cssText = `
-            position: fixed;
-            top: 50px;
-            left: 10px;
-            z-index: 1000;
-            background: #1a1a2e;
-            color: #ff00ff;
-            border: 2px solid #ff00ff;
-            padding: 5px 10px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 10px;
-            cursor: pointer;
-            opacity: 0.7;
-            text-shadow: 0 0 5px #ff00ff;
-        `;
-        
-        if (window.location.href.includes('connect4.html')) {
-            c4Btn.style.background = '#ff00ff';
-            c4Btn.style.color = '#1a1a2e';
-            c4Btn.textContent = '◀ HL';
-            c4Btn.title = 'Back to Higher Lower';
-            c4Btn.onclick = () => window.location.href = 'index.html';
-        } else {
-            c4Btn.onclick = () => window.location.href = 'connect4.html';
-        }
-        
-        document.body.appendChild(c4Btn);
+
 
         // Create Panel
         const panel = document.createElement('div');
         panel.id = 'dev-tools-panel';
         panel.style.cssText = `
             position: fixed;
-            top: 90px;
+            top: 140px;
             left: 10px;
             z-index: 1000;
             background: rgba(0,0,0,0.9);

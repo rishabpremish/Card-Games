@@ -56,7 +56,6 @@ class HigherLowerGame {
 
     // Stats elements
     this.cardsRemainingEl = document.getElementById("cards-remaining");
-    this.activeStacksEl = document.getElementById("active-stacks");
     this.cardsPlacedEl = document.getElementById("cards-placed");
     
     // In-Game Progress elements
@@ -65,6 +64,12 @@ class HigherLowerGame {
     // Progress Bar elements
     this.progressFill = document.getElementById("progress-bar-fill");
     this.progressPercent = document.getElementById("progress-percent");
+
+    // New Game Confirmation Modal
+    this.newGameConfirmModal = document.getElementById("new-game-confirm-modal");
+
+    // Ace value setting (1 or 14, default 1)
+    this.aceValue = parseInt(localStorage.getItem("aceValue")) || 1;
 
     // Bind event handlers
     this.bindEvents();
@@ -136,11 +141,18 @@ class HigherLowerGame {
     const deck = [];
     for (let suitIndex = 0; suitIndex < this.suits.length; suitIndex++) {
       for (let valueIndex = 0; valueIndex < this.values.length; valueIndex++) {
+        let numericValue = valueIndex + 1; // Default: Ace = 1, King = 13
+        
+        // Handle Ace value based on setting
+        if (valueIndex === 0 && this.aceValue === 14) {
+          numericValue = 14; // Ace high
+        }
+        
         deck.push({
           suit: this.suits[suitIndex],
           suitName: this.suitNames[suitIndex],
           value: this.values[valueIndex],
-          numericValue: valueIndex + 1, // Ace = 1, King = 13
+          numericValue: numericValue,
           isRed: suitIndex === 1 || suitIndex === 2, // Hearts or Diamonds
         });
       }
@@ -590,7 +602,6 @@ class HigherLowerGame {
   // Update game statistics
   updateStats() {
     this.cardsRemainingEl.textContent = this.deck.length;
-    this.activeStacksEl.textContent = this.grid.filter((s) => !s.locked).length;
     this.cardsPlacedEl.textContent = this.cardsPlaced;
 
     // Update in-game progress bar
@@ -720,6 +731,28 @@ class HigherLowerGame {
   // Hide game over modal
   hideGameOverModal() {
     this.gameOverModal.classList.remove("visible");
+  }
+
+  // Show new game confirmation modal
+  showNewGameConfirmModal() {
+    this.newGameConfirmModal.classList.add("visible");
+  }
+
+  // Hide new game confirmation modal
+  hideNewGameConfirmModal() {
+    this.newGameConfirmModal.classList.remove("visible");
+  }
+
+  // Update instructions text to reflect current settings
+  updateInstructions() {
+    const aceNote = document.querySelector(".instructions-content .note");
+    if (aceNote) {
+      const aceValue = this.aceValue;
+      const aceText = aceValue === 14 ? "high (14)" : "low (1)";
+      const pushedEnabled = localStorage.getItem("pushed") !== "false";
+      const equalValuesText = pushedEnabled ? "count as correct (pushed)" : "count as wrong";
+      aceNote.textContent = `Note: Aces are ${aceText}, Kings are high (13). Equal values ${equalValuesText}!`;
+    }
   }
 
   // Reveal the remaining cards in the deck
@@ -852,6 +885,7 @@ class HigherLowerGame {
     const cardSpeedSelect = document.getElementById("card-speed");
     const pushedToggle = document.getElementById("pushed-toggle");
     const confirmNewgameToggle = document.getElementById("confirm-newgame");
+    const aceValueSelect = document.getElementById("ace-value");
     const scanlinesToggle = document.getElementById("scanlines-toggle");
     const vignetteToggle = document.getElementById("vignette-toggle");
     const bgAnimationToggle = document.getElementById("bg-animation-toggle");
@@ -912,20 +946,32 @@ class HigherLowerGame {
       localStorage.setItem("cardSpeed", cardSpeedSelect.value);
     });
 
-    // Pushed setting (equal values accepted)
-    pushedToggle.addEventListener("change", () => {
-      localStorage.setItem(
-        "pushed",
-        pushedToggle.checked ? "true" : "false"
-      );
-    });
-
     // Confirm new game setting
     confirmNewgameToggle.addEventListener("change", () => {
       localStorage.setItem(
         "confirmNewgame",
         confirmNewgameToggle.checked ? "true" : "false"
       );
+    });
+
+    // Ace value setting
+    aceValueSelect.addEventListener("change", () => {
+      const newValue = parseInt(aceValueSelect.value);
+      this.aceValue = newValue;
+      localStorage.setItem("aceValue", newValue.toString());
+      this.updateInstructions();
+      // Restart game to apply new ace value
+      this.currentBet = 0;
+      this.initGame();
+    });
+
+    // Pushed setting - update instructions when changed
+    pushedToggle.addEventListener("change", () => {
+      localStorage.setItem(
+        "pushed",
+        pushedToggle.checked ? "true" : "false"
+      );
+      this.updateInstructions();
     });
 
     // Scanlines toggle
@@ -1041,6 +1087,15 @@ class HigherLowerGame {
         confirmNewgameToggle.checked = savedConfirm === "true";
       }
 
+      // Ace value - default is 1 (low)
+      const savedAceValue = localStorage.getItem("aceValue");
+      if (savedAceValue !== null) {
+        aceValueSelect.value = savedAceValue;
+        this.aceValue = parseInt(savedAceValue);
+      }
+      // Update instructions to reflect current ace value
+      this.updateInstructions();
+
       // Scanlines
       const savedScanlines = localStorage.getItem("scanlines");
       if (savedScanlines !== null) {
@@ -1089,13 +1144,32 @@ class HigherLowerGame {
 
     loadSettings();
 
-    // Update new game button to respect setting
+    // Update new game button to respect setting with custom modal
     document.getElementById("new-game-btn").addEventListener("click", () => {
-      const needsConfirm =
-        localStorage.getItem("confirmNewgame") !== "false";
-      if (!needsConfirm || confirm("Start a new game?")) {
-        this.currentBet = 0; // Reset bet for normal new game
+      const needsConfirm = localStorage.getItem("confirmNewgame") !== "false";
+      if (!needsConfirm) {
+        this.currentBet = 0;
         this.initGame();
+      } else {
+        this.showNewGameConfirmModal();
+      }
+    });
+
+    // New Game Confirmation Modal buttons
+    document.getElementById("cancel-new-game").addEventListener("click", () => {
+      this.hideNewGameConfirmModal();
+    });
+
+    document.getElementById("confirm-new-game").addEventListener("click", () => {
+      this.hideNewGameConfirmModal();
+      this.currentBet = 0;
+      this.initGame();
+    });
+
+    // Close new game modal on overlay click
+    this.newGameConfirmModal.addEventListener("click", (e) => {
+      if (e.target === this.newGameConfirmModal) {
+        this.hideNewGameConfirmModal();
       }
     });
 
@@ -1143,6 +1217,18 @@ class HigherLowerGame {
           e.preventDefault();
           this.selectedStackIndex = null;
           this.hideChoiceContainer();
+          return;
+        }
+          // Close new game confirm modal if open
+        if (this.newGameConfirmModal && this.newGameConfirmModal.classList.contains("visible")) {
+          e.preventDefault();
+          this.hideNewGameConfirmModal();
+          return;
+        }
+        // Close betting modal if open
+        if (this.bettingModal && this.bettingModal.classList.contains("visible")) {
+          e.preventDefault();
+          this.hideBettingModal();
           return;
         }
       }
