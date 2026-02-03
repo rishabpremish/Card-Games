@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 - Multiplayer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        /* Specific Connect 4 Styles */
+        .c4-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Menu Section */
+        .menu-section {
+            background: var(--bg-secondary);
+            border: var(--pixel-border) var(--retro-cyan);
+            padding: 40px;
+            text-align: center;
+            margin-top: 50px;
+            box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-btn {
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px 30px;
+            cursor: pointer;
+            background: var(--bg-card);
+            color: var(--retro-yellow);
+            border: 3px solid var(--retro-yellow);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: var(--transition-fast);
+        }
+
+        .menu-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px rgba(255, 255, 0, 0.5);
+            background: var(--retro-yellow);
+            color: var(--bg-primary);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .room-input {
+            font-family: 'Press Start 2P', cursive;
+            background: var(--bg-primary);
+            border: 2px solid var(--text-secondary);
+            color: var(--retro-green);
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        /* Game Board */
+        .game-board-container {
+            display: none; /* Hidden until game starts */
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .game-board-container.visible {
+            display: flex;
+        }
+
+        .status-display {
+            font-family: 'Press Start 2P', cursive;
+            color: var(--retro-cyan);
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px var(--retro-magenta);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .board {
+            background: #222;
+            padding: 15px;
+            border: 4px solid var(--retro-blue);
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            box-shadow: 0 0 20px var(--retro-blue);
+            position: relative;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+            transition: background 0.2s;
+        }
+        
+        .cell:hover::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cell.red {
+            background: var(--retro-red);
+            box-shadow: 0 0 10px var(--retro-red), inset -2px -2px 5px rgba(0,0,0,0.5);
+        }
+
+        .cell.yellow {
+            background: var(--retro-yellow);
+            box-shadow: 0 0 10px var(--retro-yellow), inset -2px -2px 5px rgba(0,0,0,0.5);
+        }
+        
+        .cell.winner {
+            animation: winnerPulse 1s infinite alternate;
+        }
+        
+        @keyframes winnerPulse {
+            0% { filter: brightness(1); }
+            100% { filter: brightness(1.5); }
+        }
+
+        /* Player Indicators */
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 10px;
+        }
+        
+        .p-badge {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.7rem;
+            padding: 10px;
+            border: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .p-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .p-you {
+            border-color: var(--text-secondary);
+            color: var(--text-secondary);
+        }
+        
+        .p-you.active {
+            border-color: var(--retro-green);
+            color: var(--retro-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        .room-code-display {
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-top: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border: 1px dashed var(--text-secondary);
+        }
+        
+        .room-code-display span {
+            color: var(--retro-green);
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        /* Warning for File Protocol */
+        .protocol-warning {
+            display: none;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid var(--retro-red);
+            color: var(--retro-red);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: transparent;
+            border: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 8px 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            cursor: pointer;
+        }
+        
+        .back-btn:hover {
+            border-color: var(--retro-cyan);
+            color: var(--retro-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="bg-decoration"></div>
+        <button class="back-btn" onclick="window.location.href='index.html'">← Back</button>
+
+        <header class="game-header">
+            <h1>CONNECT 4</h1>
+            <p class="subtitle">Multiplayer Edition</p>
+        </header>
+
+        <div class="c4-container">
+            <div id="protocol-warning" class="protocol-warning">
+                MULTIPLAYER WARNING: Online features may not work if opening file directly. Please use a local server (localhost).
+            </div>
+
+            <!-- Menu -->
+            <div id="menu" class="menu-section">
+                <h2 style="font-family: 'Press Start 2P'; font-size: 1rem; color: var(--retro-cyan); margin-bottom: 10px;">GAME MODE</h2>
+                
+                <button class="menu-btn" id="btn-create">Create Room</button>
+                
+                <div style="font-family: 'VT323'; color: var(--text-secondary);">- OR -</div>
+                
+                <div class="input-group">
+                    <input type="text" id="room-input" class="room-input" placeholder="CODE" maxlength="6">
+                    <button class="menu-btn" id="btn-join" style="padding: 10px 15px; font-size: 0.7rem;">JOIN</button>
+                </div>
+                <div id="connection-status" style="font-size: 0.8rem; color: var(--retro-magenta); min-height: 20px;"></div>
+            </div>
+
+            <!-- Game Board -->
+            <div id="game-ui" class="game-board-container">
+                <div class="player-info">
+                    <div class="p-badge p-you active" id="badge-p1">
+                        <span class="p-dot" style="background: var(--retro-red);"></span> YOU (P1)
+                    </div>
+                    <div class="p-badge p-you" id="badge-p2">
+                        OPPONENT (P2) <span class="p-dot" style="background: var(--retro-yellow);"></span>
+                    </div>
+                </div>
+
+                <div id="game-status" class="status-display">Waiting for opponent...</div>
+
+                <div class="board" id="board">
+                    <!-- Cells generated by JS -->
+                </div>
+
+                <div class="room-code-display" id="room-display">
+                    Room Code: <span id="current-room-code">----</span>
+                </div>
+                
+                <button class="menu-btn" id="btn-restart" style="display: none; margin-top: 20px;">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="connect4.js"></script>
+    <script src="dev.js"></script>
+</body>
+</html>

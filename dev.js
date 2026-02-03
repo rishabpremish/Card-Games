@@ -8,7 +8,7 @@ class DevTools {
         // Wait for game instance to be ready
         const checkGame = () => {
              if (window.gameInstance) return window.gameInstance;
-             if (window.blackjack) return window.blackjack;
+             if (window.connect4) return window.connect4;
              return null;
         };
 
@@ -48,11 +48,11 @@ class DevTools {
         `;
         document.body.appendChild(devBtn);
 
-        // Create Blackjack Link Button
-        const blackjackBtn = document.createElement('button');
-        blackjackBtn.textContent = '♠ BJ';
-        blackjackBtn.title = 'Play Blackjack';
-        blackjackBtn.style.cssText = `
+        // Create Connect 4 Link Button
+        const c4Btn = document.createElement('button');
+        c4Btn.textContent = '🔴 C4';
+        c4Btn.title = 'Play Connect 4';
+        c4Btn.style.cssText = `
             position: fixed;
             top: 50px;
             left: 10px;
@@ -67,18 +67,18 @@ class DevTools {
             opacity: 0.7;
             text-shadow: 0 0 5px #ff00ff;
         `;
-        // Check if we are already on blackjack page to highlight or disable
-        if (window.location.href.includes('blackjack.html')) {
-            blackjackBtn.style.background = '#ff00ff';
-            blackjackBtn.style.color = '#1a1a2e';
-            blackjackBtn.textContent = '◀ HL';
-            blackjackBtn.title = 'Back to Higher Lower';
-            blackjackBtn.onclick = () => window.location.href = 'index.html';
+        
+        if (window.location.href.includes('connect4.html')) {
+            c4Btn.style.background = '#ff00ff';
+            c4Btn.style.color = '#1a1a2e';
+            c4Btn.textContent = '◀ HL';
+            c4Btn.title = 'Back to Higher Lower';
+            c4Btn.onclick = () => window.location.href = 'index.html';
         } else {
-            blackjackBtn.onclick = () => window.location.href = 'blackjack.html';
+            c4Btn.onclick = () => window.location.href = 'connect4.html';
         }
         
-        document.body.appendChild(blackjackBtn);
+        document.body.appendChild(c4Btn);
 
         // Create Panel
         const panel = document.createElement('div');
