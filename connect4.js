@@ -70,35 +70,50 @@ class Connect4 {
     }
 
     initPeer(id = null) {
-        // Create Peer with clean ID if possible, otherwise let PeerJS assign and we map it (complex)
-        // For simplicity, we try to request the specific short ID.
-        // If unavailable, PeerJS errors.
+        if (this.peer) {
+            this.peer.destroy();
+        }
+
+        this.connStatus.textContent = "Connecting to PeerServer...";
+        this.connStatus.style.color = "var(--retro-yellow)";
         
-        // Note: Public PeerJS server might not allow short simple IDs easily or they collide.
-        // We add a prefix to make it unique-ish.
-        
-        this.connStatus.textContent = "Connecting to server...";
-        
-        this.peer = new Peer(id, {
-            debug: 2
-        });
+        try {
+            this.peer = new Peer(id, {
+                debug: 2,
+                config: {
+                    'iceServers': [
+                        { url: 'stun:stun.l.google.com:19302' },
+                        { url: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+        } catch (e) {
+            this.connStatus.textContent = "PeerJS Error: " + e.message;
+            return;
+        }
 
         this.peer.on('open', (peerId) => {
             console.log('My peer ID is: ' + peerId);
-            this.connStatus.textContent = "Connected. ID: " + peerId;
+            this.connStatus.textContent = "Server Connected. ID: " + peerId;
+            this.connStatus.style.color = "var(--retro-green)";
             
             if (this.isHost) {
                 this.startGameUI(peerId);
                 this.statusEl.textContent = "Waiting for opponent to join...";
+            } else {
+                // If we are joining, NOW we connect to the host
+                this.connectToHost();
             }
         });
 
         this.peer.on('connection', (conn) => {
             // Incoming connection (Host receives this)
-            if (this.conn) {
-                conn.close(); // Only 1 player allowed
+            if (this.conn && this.conn.open) {
+                console.log("Rejecting extra connection");
+                conn.close(); 
                 return;
             }
+            console.log("Incoming connection from " + conn.peer);
             this.conn = conn;
             this.setupConnection();
             this.statusEl.textContent = "Opponent connected! Game starting...";
@@ -108,10 +123,23 @@ class Connect4 {
 
         this.peer.on('error', (err) => {
             console.error(err);
-            this.connStatus.textContent = "Error: " + err.type;
+            this.connStatus.textContent = "Error: " + (err.type || err);
+            this.connStatus.style.color = "var(--retro-red)";
+            
             if (err.type === 'unavailable-id') {
                 this.connStatus.textContent = "Room code taken. Try again.";
+            } else if (err.type === 'peer-unavailable') {
+                this.connStatus.textContent = "Room not found. Check code.";
+                // Reset UI if we were trying to join
+                if (!this.isHost) {
+                     this.isJoining = false;
+                }
             }
+        });
+        
+        this.peer.on('disconnected', () => {
+             this.connStatus.textContent = "Disconnected from server.";
+             this.connStatus.style.color = "var(--retro-red)";
         });
     }
 
@@ -124,50 +152,57 @@ class Connect4 {
 
     joinRoom() {
         const code = this.roomInput.value.toUpperCase().trim();
-        if (!code) return;
+        if (!code) {
+            this.connStatus.textContent = "Please enter a code.";
+            return;
+        }
         
+        this.targetRoomCode = code;
         this.isHost = false;
         this.myPlayerId = 2; // Joiner is Yellow
-        this.initPeer(); // Let server assign my temp ID
         
-        // Wait for open then connect
-        // We need a slight delay or wait for 'open' event on the joiner's peer
-        // But initPeer sets up the 'open' listener. We need to hook into it or just wait.
-        // Better: logic inside initPeer handles "if host". 
-        // Here we need to connect AFTER my peer is ready.
+        // Init peer with random ID, then connect in 'open' callback
+        this.initPeer(); 
+    }
+    
+    connectToHost() {
+        if (!this.targetRoomCode) return;
         
-        // Hacky override of on('open') for joiner flow:
-        const originalOpen = this.peer ? null : true; // if null, we haven't called initPeer yet? 
-        // Logic fix: initPeer is async.
+        this.connStatus.textContent = "Connecting to room " + this.targetRoomCode + "...";
         
-        // Let's restructure initPeer to be simpler.
-        this.connStatus.textContent = "Connecting to network...";
-        this.peer = new Peer(); // Random ID for joiner
-
-        this.peer.on('open', (id) => {
-            this.connStatus.textContent = "Connecting to room " + code + "...";
-            const conn = this.peer.connect(code);
-            
-            conn.on('open', () => {
-                this.conn = conn;
-                this.setupConnection();
-                this.startGameUI(code);
-                this.statusEl.textContent = "Connected! Game starting...";
-                this.gameActive = true;
-                this.updateTurnIndicator();
-            });
-            
-            conn.on('error', (err) => {
-                 this.connStatus.textContent = "Connection failed.";
-            });
-            
-            // Setup connection handlers immediately just in case
-            this.conn = conn; 
-            this.setupConnection(); // This binds 'data' event
+        const conn = this.peer.connect(this.targetRoomCode, {
+            reliable: true
         });
         
-        this.peer.on('error', (err) => {
-             this.connStatus.textContent = "Error: " + err.type;
+        // Connection timeout safety
+        const timeout = setTimeout(() => {
+            if (!conn.open) {
+                this.connStatus.textContent = "Connection timed out. Host offline?";
+                this.connStatus.style.color = "var(--retro-red)";
+            }
+        }, 5000);
+
+        conn.on('open', () => {
+            clearTimeout(timeout);
+            console.log("Connected to " + conn.peer);
+            this.conn = conn;
+            this.setupConnection();
+            this.startGameUI(this.targetRoomCode);
+            this.statusEl.textContent = "Connected! Game starting...";
+            this.gameActive = true;
+            this.updateTurnIndicator();
+        });
+        
+        conn.on('error', (err) => {
+             clearTimeout(timeout);
+             console.error("Connection Error:", err);
+             this.connStatus.textContent = "Connection failed: " + err;
+             this.connStatus.style.color = "var(--retro-red)";
+        });
+        
+        conn.on('close', () => {
+             clearTimeout(timeout);
+             this.connStatus.textContent = "Connection closed.";
         });
     }
 
