@@ -1,7 +1,61 @@
 import { WebSocketServer } from "ws";
+import { createServer } from "http";
+import { readFileSync, existsSync, statSync } from "fs";
+import { join, extname } from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const PORT = process.env.PORT || 3001;
-const wss = new WebSocketServer({ port: PORT });
+
+// ── MIME types for static file serving ──
+const MIME = {
+  ".html": "text/html",
+  ".js": "application/javascript",
+  ".css": "text/css",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+};
+
+// ── Serve built client files ──
+const CLIENT_DIST = join(__dirname, "..", "client", "dist");
+
+const httpServer = createServer((req, res) => {
+  // Health check endpoint for Render
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("ok");
+    return;
+  }
+
+  // Try to serve static file from client/dist
+  let filePath = join(CLIENT_DIST, req.url === "/" ? "index.html" : req.url);
+
+  if (existsSync(filePath) && statSync(filePath).isFile()) {
+    const ext = extname(filePath);
+    const contentType = MIME[ext] || "application/octet-stream";
+    res.writeHead(200, { "Content-Type": contentType });
+    res.end(readFileSync(filePath));
+  } else {
+    // SPA fallback — serve index.html for client-side routes
+    const indexPath = join(CLIENT_DIST, "index.html");
+    if (existsSync(indexPath)) {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(readFileSync(indexPath));
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not found");
+    }
+  }
+});
+
+const wss = new WebSocketServer({ server: httpServer });
 
 // ============================================
 // CONSTANTS
@@ -990,4 +1044,6 @@ wss.on("connection", (ws) => {
   });
 });
 
-console.log(`Poker server listening on port ${PORT}`);
+httpServer.listen(PORT, () => {
+  console.log(`Poker server (HTTP + WS) listening on port ${PORT}`);
+});

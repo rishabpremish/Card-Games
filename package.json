@@ -1,0 +1,10 @@
+{
+  "name": "card-game",
+  "private": true,
+  "scripts": {
+    "install:all": "cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm install && npm run build",
+    "start": "cd server && node server.js",
+    "dev": "cd client && npm run dev"
+  }
+}
