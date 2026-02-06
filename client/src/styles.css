@@ -1,0 +1,4242 @@
+/* ============================================
+   HIGHER OR LOWER - RETRO 8-BIT CARD GAME
+   A crisp, pixel-perfect retro arcade style
+   ============================================ */
+
+/* CSS Variables for retro theming */
+:root {
+  /* Dark retro background palette */
+  --bg-primary: #0f0f23;
+  --bg-secondary: #1a1a2e;
+  --bg-card: #16213e;
+
+  /* Classic arcade colors */
+  --retro-cyan: #00fff7;
+  --retro-magenta: #ff00ff;
+  --retro-yellow: #ffff00;
+  --retro-green: #00ff00;
+  --retro-red: #ff3333;
+  --retro-orange: #ff9900;
+  --retro-blue: #3399ff;
+  --retro-purple: #9966ff;
+
+  /* Card colors - high contrast */
+  --card-white: #f8f8f8;
+  --card-red: #ff2222;
+  --card-black: #111111;
+
+  /* Text colors */
+  --text-primary: #ffffff;
+  --text-secondary: #7788aa;
+  --text-glow: #00fff7;
+
+  /* Pixel border style */
+  --pixel-border: 4px solid;
+  --pixel-shadow: 4px 4px 0px;
+
+  /* No border radius for pixel look */
+  --pixel-radius: 0px;
+
+  /* Crisp transitions */
+  --transition-fast: 0.15s steps(3);
+  --transition-medium: 0.3s steps(5);
+}
+
+/* Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Crisp pixel rendering */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+body {
+  font-family: "VT323", monospace;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+/* Scanline overlay effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Game Container */
+.game-container {
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Background Decoration - Pixel Grid Pattern */
+.bg-decoration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 255, 247, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(0, 255, 247, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pixel stars animation */
+.bg-decoration::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(2px 2px at 20% 30%, var(--retro-cyan), transparent),
+    radial-gradient(2px 2px at 40% 70%, var(--retro-magenta), transparent),
+    radial-gradient(2px 2px at 60% 20%, var(--retro-yellow), transparent),
+    radial-gradient(2px 2px at 80% 60%, var(--retro-cyan), transparent),
+    radial-gradient(2px 2px at 10% 80%, var(--retro-green), transparent),
+    radial-gradient(2px 2px at 90% 40%, var(--retro-magenta), transparent);
+  animation: twinkle 2s steps(2) infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Header */
+.game-header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.game-header h1 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 2.2rem;
+  color: var(--retro-cyan);
+  text-shadow:
+    4px 4px 0px var(--retro-magenta),
+    -2px -2px 0px var(--retro-yellow),
+    0 0 30px var(--retro-cyan);
+  letter-spacing: 4px;
+  animation: titleGlow 1.5s steps(2) infinite alternate;
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow:
+      4px 4px 0px var(--retro-magenta),
+      -2px -2px 0px var(--retro-yellow),
+      0 0 20px var(--retro-cyan);
+  }
+  100% {
+    text-shadow:
+      4px 4px 0px var(--retro-magenta),
+      -2px -2px 0px var(--retro-yellow),
+      0 0 40px var(--retro-cyan),
+      0 0 60px var(--retro-cyan);
+  }
+}
+
+.subtitle {
+  font-family: "VT323", monospace;
+  color: var(--retro-yellow);
+  font-size: 1.4rem;
+  margin-top: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+/* Game Stats - Arcade Style */
+.game-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 90px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item {
+  text-align: center;
+  background: var(--bg-secondary);
+  padding: 15px 25px;
+  border: var(--pixel-border) var(--retro-cyan);
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.3);
+  position: relative;
+}
+
+/* Pixel corner decorations */
+.stat-item::before,
+.stat-item::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--retro-magenta);
+}
+
+.stat-item::before {
+  top: -4px;
+  left: -4px;
+}
+
+.stat-item::after {
+  bottom: -4px;
+  right: -4px;
+}
+
+.stat-label {
+  display: block;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  display: block;
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.6rem;
+  color: var(--retro-yellow);
+  text-shadow: 2px 2px 0px var(--retro-orange);
+}
+
+/* In-Game Vertical Progress Bar */
+.main-progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  width: 24px;
+  margin-top: 5px;
+  padding-bottom: 5px;
+}
+
+.main-progress-bar {
+  width: 100%;
+  flex: 1;
+  background: var(--bg-secondary);
+  border: 2px solid var(--text-secondary);
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+.main-progress-fill {
+  width: 100%;
+  height: 0%;
+  background: var(--retro-cyan);
+  transition: height 0.3s steps(5);
+  position: relative;
+}
+
+.main-progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.3) 4px,
+    rgba(0, 0, 0, 0.3) 8px
+  );
+}
+
+/* Game Area */
+.game-area {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 50px;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Deck Area */
+.deck-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.deck {
+  width: 110px;
+  height: 154px;
+  position: relative;
+  cursor: default;
+}
+
+.deck-cards {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-card);
+  border: var(--pixel-border) var(--retro-magenta);
+  box-shadow: var(--pixel-shadow) rgba(255, 0, 255, 0.4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pixel pattern on deck */
+.deck-cards::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 2px dashed var(--retro-magenta);
+  opacity: 0.5;
+}
+
+.deck-cards::after {
+  content: "?";
+  font-family: "Press Start 2P", cursive;
+  font-size: 2rem;
+  color: var(--retro-magenta);
+  text-shadow: 2px 2px 0px var(--retro-purple);
+  animation: pulse 1s steps(2) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Stacked deck effect */
+.deck::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: -4px;
+  bottom: -4px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-purple);
+  z-index: -1;
+}
+
+.deck-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--retro-cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.deck.empty .deck-cards {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.deck.empty .deck-cards::after {
+  content: "?";
+  color: var(--retro-red);
+  animation: none;
+}
+
+/* Card Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* Individual Card Stack */
+.card-stack {
+  position: relative;
+  width: 110px;
+  height: 154px;
+  perspective: 1000px;
+}
+
+/* Card Styling */
+.card {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  transform-style: preserve-3d;
+}
+
+/* Hover zones container */
+.card-hover-zones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+}
+
+.card:not(.locked):not(.flipping):hover .card-hover-zones {
+  display: flex;
+}
+
+/* Higher zone (top half) */
+.hover-zone-higher {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 255, 0, 0.25);
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.hover-zone-higher:hover {
+  background: rgba(0, 255, 0, 0.5);
+}
+
+.hover-zone-higher span {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.55rem;
+  color: #00ff00;
+  text-shadow: 2px 2px 0px #000000;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 5px 8px;
+  border: 2px solid #00ff00;
+}
+
+/* Lower zone (bottom half) */
+.hover-zone-lower {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 51, 51, 0.25);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.hover-zone-lower:hover {
+  background: rgba(255, 51, 51, 0.5);
+}
+
+.hover-zone-lower span {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.55rem;
+  color: #ff3333;
+  text-shadow: 2px 2px 0px #000000;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 5px 8px;
+  border: 2px solid #ff3333;
+}
+
+.card:hover:not(.locked):not(.flipping) {
+  transform: translateY(-4px);
+}
+
+.card.selected {
+  transform: translateY(-10px);
+  filter: brightness(1.3);
+}
+
+.card.locked {
+  cursor: not-allowed;
+}
+
+/* Flying card animation */
+.flying-card {
+  position: fixed;
+  width: 110px;
+  height: 154px;
+  z-index: 5000;
+  pointer-events: none;
+  transition: none;
+}
+
+.flying-card .card-front {
+  width: 100%;
+  height: 100%;
+  background: var(--card-white);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  position: absolute;
+  border: 4px solid var(--card-black);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+.flying-card .card-front.red {
+  color: var(--card-red);
+}
+
+.flying-card .card-front.black {
+  color: var(--card-black);
+}
+
+/* Card Front - Crisp Pixel Style */
+.card-front {
+  width: 100%;
+  height: 100%;
+  background: var(--card-white);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  position: absolute;
+  backface-visibility: hidden;
+  border: 4px solid var(--card-black);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Inner border for cards */
+.card-front::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.card-front.red {
+  color: var(--card-red);
+}
+
+.card-front.black {
+  color: var(--card-black);
+}
+
+/* Card corners */
+.card-corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  z-index: 1;
+}
+
+.card-corner.top {
+  align-self: flex-start;
+}
+
+.card-corner.bottom {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.card-value {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+.card-suit-small {
+  font-size: 1.05rem;
+  margin-top: 2px;
+}
+
+/* Card center */
+.card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.75rem;
+}
+
+/* Card Back - Retro Pixel Pattern */
+.card-back {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-card);
+  position: absolute;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  border: 4px solid var(--retro-purple);
+  box-shadow: 4px 4px 0px rgba(153, 102, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Checkerboard pattern */
+.card-back::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-conic-gradient(
+    var(--retro-purple) 0deg 90deg,
+    var(--bg-card) 90deg 180deg
+  );
+  background-size: 16px 16px;
+  opacity: 0.3;
+}
+
+.card-back::after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--retro-magenta);
+  position: relative;
+  z-index: 1;
+}
+
+/* Flipped/Locked card */
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+/* Ensure only back is visible when flipped/locked */
+.card.flipped .card-front,
+.card.locked .card-front {
+  opacity: 0;
+}
+
+.card.flipped .card-back,
+.card.locked .card-back {
+  opacity: 1;
+  z-index: 2;
+}
+
+.card.locked .card-back {
+  /* opacity: 0.5; filter: grayscale(50%); - Removed to ensure card is opaque */
+}
+
+/* Card flip animation */
+.card.flipping {
+  animation: flipCard 0.5s steps(8) forwards;
+}
+
+@keyframes flipCard {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+/* Stacked cards visual */
+.card-stack .card:nth-child(2) {
+  top: -3px;
+  left: 3px;
+}
+
+.card-stack .card:nth-child(3) {
+  top: -6px;
+  left: 6px;
+}
+
+/* Choice Container - Arcade Control Panel */
+.choice-container {
+  position: fixed;
+  bottom: -250px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  padding: 25px 35px;
+  border: var(--pixel-border) var(--retro-cyan);
+  border-bottom: none;
+  box-shadow:
+    0 -4px 0px var(--retro-magenta),
+    inset 0 0 30px rgba(0, 255, 247, 0.1);
+  transition: var(--transition-medium);
+  z-index: 100;
+  text-align: center;
+}
+
+.choice-container.visible {
+  bottom: 0;
+}
+
+.choice-prompt {
+  margin-bottom: 20px;
+}
+
+.choice-prompt p {
+  font-family: "VT323", monospace;
+  color: var(--text-secondary);
+  font-size: 1.3rem;
+}
+
+.selected-card-display {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.2rem;
+  color: var(--retro-yellow);
+  text-shadow: 2px 2px 0px var(--retro-orange);
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 35px;
+  border: var(--pixel-border) currentColor;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.choice-btn .btn-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.choice-btn.higher {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border-color: #00cc00;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.4);
+}
+
+.choice-btn.higher:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 255, 0, 0.5);
+}
+
+.choice-btn.higher:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 0, 0.3);
+}
+
+.choice-btn.lower {
+  background: var(--retro-red);
+  color: var(--text-primary);
+  border-color: #cc0000;
+  box-shadow: var(--pixel-shadow) rgba(255, 0, 0, 0.4);
+}
+
+.choice-btn.lower:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(255, 0, 0, 0.5);
+}
+
+.choice-btn.lower:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(255, 0, 0, 0.3);
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 2px solid var(--text-secondary);
+  color: var(--text-secondary);
+  padding: 8px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.cancel-btn:hover {
+  border-color: var(--retro-cyan);
+  color: var(--retro-cyan);
+}
+
+/* Drawn Card Overlay */
+.drawn-card-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 35, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s steps(4);
+}
+
+.drawn-card-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.drawn-card-container {
+  text-align: center;
+  transform: scale(0.8);
+  transition: transform 0.2s steps(4);
+}
+
+.drawn-card-overlay.visible .drawn-card-container {
+  transform: scale(1);
+}
+
+.drawn-card {
+  width: 140px;
+  height: 196px;
+  margin: 0 auto 30px;
+}
+
+.drawn-card .card-front {
+  padding: 10px;
+}
+
+.drawn-card .card-value {
+  font-size: 1rem;
+}
+
+.drawn-card .card-suit-small {
+  font-size: 1.2rem;
+}
+
+.drawn-card .card-center {
+  font-size: 3.5rem;
+}
+
+.result-message {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  animation: resultFlash 0.3s steps(2) infinite;
+}
+
+@keyframes resultFlash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.result-message.correct {
+  color: var(--retro-green);
+  text-shadow:
+    4px 4px 0px #006600,
+    0 0 20px var(--retro-green);
+}
+
+.result-message.wrong {
+  color: var(--retro-red);
+  text-shadow:
+    4px 4px 0px #660000,
+    0 0 20px var(--retro-red);
+}
+
+/* Game Over Modal - Arcade Style */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 35, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s steps(4);
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  padding: 40px 50px;
+  text-align: center;
+  border: var(--pixel-border) var(--retro-cyan);
+  box-shadow:
+    8px 8px 0px var(--retro-magenta),
+    0 0 50px rgba(0, 255, 247, 0.3);
+  transform: scale(0.8);
+  transition: transform 0.2s steps(4);
+  position: relative;
+  z-index: 50001;
+  pointer-events: auto;
+}
+
+/* Ensure all modal content is above decorative elements */
+.modal > * {
+  position: relative;
+  z-index: 1;
+}
+
+.modal-overlay.visible .modal {
+  transform: scale(1);
+}
+
+/* Betting Modal Specific Styles */
+.betting-modal {
+  min-width: 450px;
+  max-width: 500px;
+}
+
+.betting-modal .settings-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+}
+
+@media (max-width: 600px) {
+  .betting-modal {
+    min-width: 90%;
+    max-width: 95%;
+    padding: 30px 20px;
+  }
+}
+
+/* Decorative corners */
+.modal::before,
+.modal::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--retro-yellow);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.modal::before {
+  top: -8px;
+  left: -8px;
+}
+
+.modal::after {
+  bottom: -8px;
+  right: -8px;
+}
+
+.modal-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  animation: bounce 0.5s steps(4) infinite alternate;
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-10px);
+  }
+}
+
+.modal h2 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.2rem;
+  color: var(--retro-cyan);
+  margin-bottom: 15px;
+  text-shadow: 3px 3px 0px var(--retro-magenta);
+}
+
+.modal p {
+  font-family: "VT323", monospace;
+  color: var(--text-secondary);
+  font-size: 1.3rem;
+  margin-bottom: 25px;
+}
+
+.modal-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.modal-stat {
+  text-align: center;
+}
+
+.modal-stat-value {
+  display: block;
+  font-family: "Press Start 2P", cursive;
+  font-size: 2rem;
+  color: var(--retro-yellow);
+  text-shadow: 3px 3px 0px var(--retro-orange);
+}
+
+.modal-stat-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.play-again-btn {
+  background: var(--retro-yellow);
+  color: var(--bg-primary);
+  border: var(--pixel-border) var(--retro-orange);
+  padding: 15px 40px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: var(--pixel-shadow) rgba(255, 153, 0, 0.5);
+}
+
+.play-again-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(255, 153, 0, 0.6);
+}
+
+.play-again-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(255, 153, 0, 0.3);
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 5;
+}
+
+.close-modal-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: var(--pixel-border) var(--retro-cyan);
+  padding: 15px 40px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 255, 0.3);
+}
+
+.close-modal-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 255, 255, 0.4);
+}
+
+.close-modal-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 255, 0.2);
+}
+
+.reveal-btn {
+  background: var(--bg-tertiary);
+  color: var(--retro-cyan);
+  border: var(--pixel-border) var(--retro-cyan);
+  padding: 15px 40px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.3);
+}
+
+.reveal-btn:hover {
+  transform: translate(-2px, -2px);
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  box-shadow: 6px 6px 0px rgba(0, 255, 247, 0.4);
+}
+
+.reveal-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 247, 0.2);
+}
+
+/* Instructions */
+.instructions {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 50;
+}
+
+.instructions-toggle {
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-cyan);
+  color: var(--retro-cyan);
+  padding: 10px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  box-shadow: 3px 3px 0px rgba(0, 255, 247, 0.3);
+}
+
+.instructions-toggle:hover {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+}
+
+.instructions-content {
+  position: absolute;
+  bottom: 50px;
+  left: 0;
+  background: var(--bg-secondary);
+  padding: 20px;
+  border: 3px solid var(--retro-cyan);
+  box-shadow: 4px 4px 0px rgba(0, 255, 247, 0.3);
+  width: 320px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: var(--transition-fast);
+}
+
+.instructions-content.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.instructions-content h3 {
+  font-family: "Press Start 2P", cursive;
+  color: var(--retro-yellow);
+  margin-bottom: 15px;
+  font-size: 0.7rem;
+}
+
+.instructions-content ol {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.instructions-content li {
+  font-family: "VT323", monospace;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.instructions-content li strong {
+  color: var(--retro-green);
+}
+
+.instructions-content .note {
+  font-family: "VT323", monospace;
+  font-size: 1rem;
+  color: var(--retro-orange);
+  padding-top: 10px;
+  border-top: 2px dashed var(--text-secondary);
+}
+
+/* Card Animations - Pixel Style */
+@keyframes dealCard {
+  0% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-20px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card.dealing {
+  animation: dealCard 0.3s steps(6) forwards;
+}
+
+@keyframes cardPlaced {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.card.placed {
+  animation: cardPlaced 0.2s steps(4);
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.card-stack.shake {
+  animation: shake 0.3s steps(5);
+}
+
+/* Modal Progress Bar (Arcade Style) */
+.modal-progress-container {
+  width: 100%;
+  margin-bottom: 30px;
+  padding: 0 10px;
+}
+
+.modal-progress-bar {
+  width: 100%;
+  height: 32px;
+  background: var(--bg-primary);
+  border: 3px solid var(--text-secondary);
+  position: relative;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+.modal-progress-fill {
+  height: 100%;
+  background: var(--retro-green);
+  width: 0%;
+  transition: width 1s cubic-bezier(0.1, 0.7, 0.1, 1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+/* Retro striped pattern */
+.modal-progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.2) 10px,
+    rgba(0, 0, 0, 0.2) 20px
+  );
+  animation: barberpole 20s linear infinite;
+}
+
+@keyframes barberpole {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.modal-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  color: #fff;
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+  z-index: 10;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* High Score Text Flash Effect */
+@keyframes scoreFlash {
+  0%,
+  100% {
+    color: var(--retro-yellow);
+  }
+  25% {
+    color: var(--retro-green);
+  }
+  50% {
+    color: var(--retro-cyan);
+  }
+  75% {
+    color: var(--retro-magenta);
+  }
+}
+
+.stat-value.highlight {
+  animation: scoreFlash 1s steps(4) infinite;
+}
+
+/* CRT Screen Edge Effect */
+.game-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* Wallet Stat */
+.wallet-stat .stat-value {
+  color: #ffd700;
+  text-shadow: 2px 2px 0px #b8860b;
+}
+
+/* Betting Modal Styles */
+.betting-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin: 20px 0;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border: 2px solid var(--retro-purple);
+  position: relative;
+}
+
+.current-balance {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.9rem;
+  color: #ffd700;
+  text-align: center;
+}
+
+.bet-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bet-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.currency-symbol {
+  font-family: "Press Start 2P", cursive;
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.bet-input {
+  background: var(--bg-primary);
+  border: var(--pixel-border) var(--retro-cyan);
+  color: var(--retro-cyan);
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.2rem;
+  padding: 10px;
+  width: 120px;
+  text-align: center;
+  outline: none;
+}
+
+.bet-input:focus {
+  box-shadow: 0 0 10px var(--retro-cyan);
+}
+
+.bet-slider-container {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.bet-slider {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-tertiary);
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  border: 2px solid var(--retro-purple);
+}
+
+.bet-slider:hover {
+  opacity: 1;
+}
+
+.bet-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: var(--retro-magenta);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.bet-slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: var(--retro-magenta);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.potential-payout {
+  text-align: center;
+  font-family: "VT323", monospace;
+  font-size: 1.4rem;
+  color: var(--retro-green);
+  border-top: 2px dashed var(--retro-purple);
+  padding-top: 15px;
+}
+
+.payout-amount {
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  margin-left: 10px;
+}
+
+/* Modal Buttons */
+.bet-btn {
+  background: var(--retro-red);
+  color: #fff;
+  border: var(--pixel-border) #cc0000;
+  padding: 15px 25px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  box-shadow: var(--pixel-shadow) rgba(255, 0, 0, 0.4);
+}
+
+.bet-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(255, 0, 0, 0.5);
+}
+
+.bet-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(255, 0, 0, 0.2);
+}
+
+.play-btn {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: var(--pixel-border) #00cc00;
+  padding: 15px 30px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.4);
+}
+
+.play-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 255, 0, 0.5);
+}
+
+.play-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 0, 0.2);
+}
+
+/* Win Payout Highlight */
+.win-payout-stat .modal-stat-value {
+  color: #ffd700;
+  text-shadow: 2px 2px 0px #b8860b;
+}
+
+/* Unified Game Buttons - Same size styling */
+.place-bet-btn,
+.new-game-btn,
+.settings-hint,
+.restart-bet-btn,
+.forfeit-btn {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  z-index: 50;
+  text-transform: uppercase;
+  border: 3px solid;
+  box-sizing: border-box;
+  min-width: 170px;
+  text-align: center;
+}
+
+.place-bet-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--retro-magenta);
+  color: var(--bg-primary);
+  border-color: var(--retro-purple);
+  box-shadow: 3px 3px 0px rgba(255, 0, 255, 0.3);
+}
+
+.place-bet-btn:hover {
+  background: #ff33ff;
+  box-shadow: 5px 5px 0px rgba(255, 0, 255, 0.5);
+  transform: translate(-2px, -2px);
+}
+
+.place-bet-btn:active {
+  box-shadow: 1px 1px 0px rgba(255, 0, 255, 0.2);
+  transform: translate(1px, 1px);
+}
+
+.restart-bet-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--retro-yellow);
+  color: var(--bg-primary);
+  border-color: var(--retro-yellow);
+  box-shadow: 3px 3px 0px rgba(255, 215, 0, 0.3);
+}
+
+.restart-bet-btn:hover {
+  background: #ffe066;
+  color: var(--bg-primary);
+  box-shadow: 5px 5px 0px rgba(255, 215, 0, 0.5);
+  transform: translate(-2px, -2px);
+}
+
+.restart-bet-btn:active {
+  box-shadow: 1px 1px 0px rgba(255, 215, 0, 0.2);
+  transform: translate(1px, 1px);
+}
+
+.forfeit-btn {
+  position: fixed;
+  bottom: 85px;
+  right: 20px;
+  background: var(--retro-red);
+  color: var(--bg-primary);
+  border-color: var(--retro-red);
+  box-shadow: 3px 3px 0px rgba(255, 51, 51, 0.3);
+}
+
+.forfeit-btn:hover {
+  background: #ff6666;
+  box-shadow: 5px 5px 0px rgba(255, 51, 51, 0.5);
+  transform: translate(-2px, -2px);
+}
+
+.forfeit-btn:active {
+  box-shadow: 1px 1px 0px rgba(255, 51, 51, 0.2);
+  transform: translate(1px, 1px);
+}
+
+.new-game-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: transparent;
+  color: var(--retro-magenta);
+  border-color: var(--retro-magenta);
+  box-shadow: 3px 3px 0px rgba(255, 0, 255, 0.3);
+}
+
+.new-game-btn:hover {
+  background: var(--retro-magenta);
+  color: var(--bg-primary);
+  box-shadow: 5px 5px 0px rgba(255, 0, 255, 0.5);
+  transform: translate(-2px, -2px);
+}
+
+.new-game-btn:active {
+  box-shadow: 1px 1px 0px rgba(255, 0, 255, 0.2);
+  transform: translate(1px, 1px);
+}
+
+/* Dev Tools Styles */
+.dev-tools-toggle {
+  position: fixed;
+  top: 60px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(51, 51, 51, 0.9);
+  color: var(--retro-green);
+  border: 2px solid var(--retro-green);
+  padding: 8px 15px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: var(--transition-fast);
+}
+
+.dev-tools-toggle:hover {
+  opacity: 1;
+  background: rgba(51, 51, 51, 1);
+  box-shadow: 0 0 10px var(--retro-green);
+}
+
+.dev-tools-panel {
+  position: fixed;
+  top: 110px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.95);
+  border: 2px solid var(--retro-green);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: "Press Start 2P", cursive;
+  min-width: 200px;
+  box-shadow: 4px 4px 0px rgba(0, 255, 0, 0.3);
+}
+
+.dev-btn {
+  background: #222;
+  color: #fff;
+  border: 2px solid #666;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  transition: var(--transition-fast);
+}
+
+.dev-btn:hover {
+  background: #444;
+  border-color: var(--retro-green);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}
+
+.dev-btn:active {
+  background: var(--retro-green);
+  color: #000;
+}
+
+.settings-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+  box-shadow: 3px 3px 0px rgba(128, 128, 128, 0.3);
+  opacity: 0.9;
+}
+
+.settings-hint:hover {
+  background: var(--text-secondary);
+  color: var(--bg-primary);
+  box-shadow: 5px 5px 0px rgba(128, 128, 128, 0.5);
+  transform: translate(-2px, -2px);
+  opacity: 1;
+}
+
+.settings-hint:active {
+  box-shadow: 1px 1px 0px rgba(128, 128, 128, 0.2);
+  transform: translate(1px, 1px);
+}
+
+.home-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: transparent;
+  color: var(--retro-cyan);
+  border: 3px solid var(--retro-cyan);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  z-index: 50;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0px rgba(0, 255, 247, 0.3);
+  box-sizing: border-box;
+  min-width: 140px;
+  text-align: center;
+}
+
+.home-btn:hover {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  box-shadow: 5px 5px 0px rgba(0, 255, 247, 0.5);
+  transform: translate(-2px, -2px);
+}
+
+.home-btn:active {
+  box-shadow: 1px 1px 0px rgba(0, 255, 247, 0.2);
+  transform: translate(1px, 1px);
+}
+
+/* Home Page Styles */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 40px;
+}
+
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.game-link {
+  display: block;
+  background: var(--bg-secondary);
+  border: var(--pixel-border) var(--retro-cyan);
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-family: "Press Start 2P", cursive;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.3);
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.game-link:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0px rgba(0, 255, 247, 0.5);
+  background: var(--bg-tertiary);
+  color: var(--retro-cyan);
+}
+
+.game-link:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 247, 0.2);
+}
+
+.game-link::before {
+  content: ">";
+  position: absolute;
+  left: 20px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.game-link:hover::before {
+  opacity: 1;
+  color: var(--retro-magenta);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1366px), (max-height: 800px) {
+  .game-container {
+    max-width: 95%;
+    padding: 10px;
+  }
+
+  .game-header {
+    margin-bottom: 15px;
+  }
+
+  .game-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    margin-top: 8px;
+  }
+
+  .game-stats {
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+
+  .main-progress-container {
+    margin-bottom: 15px;
+    max-width: 400px;
+  }
+
+  .stat-item {
+    padding: 8px 15px;
+  }
+
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.45rem;
+  }
+
+  .game-area {
+    gap: 30px;
+    margin-bottom: 20px;
+  }
+
+  .card-stack,
+  .card,
+  .deck {
+    width: 90px;
+    height: 126px;
+  }
+
+  .flying-card {
+    width: 90px;
+    height: 126px;
+  }
+
+  .card-center {
+    font-size: 2.2rem;
+  }
+
+  .card-grid {
+    gap: 12px;
+  }
+
+  .choice-container {
+    padding: 15px 25px;
+    bottom: -200px;
+  }
+
+  .choice-prompt {
+    margin-bottom: 15px;
+  }
+
+  .choice-prompt p {
+    font-size: 1.1rem;
+  }
+
+  .choice-btn {
+    padding: 10px 25px;
+    font-size: 0.6rem;
+  }
+
+  .choice-btn .btn-icon {
+    font-size: 1.2rem;
+  }
+
+  .drawn-card {
+    width: 110px;
+    height: 154px;
+    margin-bottom: 20px;
+  }
+
+  .drawn-card .card-center {
+    font-size: 2.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .game-stats {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    padding: 10px 15px;
+  }
+
+  .stat-label {
+    font-size: 0.4rem;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+  }
+
+  .game-area {
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+  }
+
+  .main-progress-container {
+    flex-direction: row;
+    width: 100%;
+    max-width: 280px;
+    height: 20px;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .main-progress-bar {
+    width: 100%;
+    height: 12px;
+    flex-direction: row;
+    margin-bottom: 0;
+    flex: 1;
+  }
+
+  .main-progress-fill {
+    height: 100%;
+    width: 0%;
+  }
+
+  .main-progress-text {
+    display: none;
+  }
+
+  .card-grid {
+    gap: 10px;
+  }
+
+  .card-stack,
+  .card,
+  .deck {
+    width: 80px;
+    height: 112px;
+  }
+
+  .card-value {
+    font-size: 0.6rem;
+  }
+
+  .card-suit-small {
+    font-size: 0.85rem;
+  }
+
+  .card-center {
+    font-size: 1.8rem;
+  }
+
+  .choice-container {
+    padding: 20px;
+    width: 100%;
+  }
+
+  .choice-buttons {
+    gap: 15px;
+  }
+
+  .choice-btn {
+    padding: 12px 25px;
+    font-size: 0.6rem;
+  }
+
+  .instructions {
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .instructions-content {
+    width: 280px;
+  }
+
+  .new-game-btn {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .dev-tools-toggle {
+    top: 50px;
+    left: 10px;
+    padding: 6px 10px;
+    font-size: 0.4rem;
+  }
+
+  .dev-tools-panel {
+    top: 90px;
+    left: 10px;
+    min-width: 160px;
+    padding: 10px;
+  }
+
+  .dev-btn {
+    padding: 6px 8px;
+    font-size: 0.35rem;
+  }
+
+  .modal {
+    padding: 30px;
+    margin: 20px;
+  }
+
+  .modal h2 {
+    font-size: 1rem;
+  }
+
+  .modal-stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* Settings-based body classes */
+body.no-scanlines::before {
+  display: none !important;
+}
+
+body.no-vignette .game-container::before {
+  display: none !important;
+}
+
+body.no-bg-animation .bg-decoration::before {
+  animation: none !important;
+  display: none !important;
+}
+
+body.high-contrast .card-front {
+  border-width: 5px !important;
+}
+
+body.high-contrast .card-front.red {
+  color: #ff0000 !important;
+}
+
+body.high-contrast .card-front.black {
+  color: #000000 !important;
+}
+
+body.reduce-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ============================================
+   SETTINGS MENU
+   ============================================ */
+
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+}
+
+.settings-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.settings-modal {
+  background: var(--bg-secondary);
+  border: 4px solid var(--retro-cyan);
+  box-shadow: 8px 8px 0px var(--retro-magenta);
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 3px solid var(--retro-cyan);
+  background: var(--bg-primary);
+}
+
+.settings-header h2 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1rem;
+  color: var(--retro-cyan);
+  margin: 0;
+}
+
+.settings-close {
+  background: transparent;
+  border: 3px solid var(--retro-red);
+  color: var(--retro-red);
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-family: "Press Start 2P", cursive;
+  transition: 0.1s;
+}
+
+.settings-close:hover {
+  background: var(--retro-red);
+  color: var(--bg-primary);
+}
+
+.settings-content {
+  padding: 20px;
+}
+
+.settings-section {
+  margin-bottom: 25px;
+}
+
+.settings-section h3 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  color: var(--retro-yellow);
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed var(--text-secondary);
+}
+
+/* Theme Grid */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.theme-btn {
+  background: var(--bg-card);
+  border: 3px solid var(--text-secondary);
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.1s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-btn:hover {
+  border-color: var(--retro-cyan);
+  transform: translateY(-2px);
+}
+
+.theme-btn.active {
+  border-color: var(--retro-green);
+  box-shadow: 0 0 10px var(--retro-green);
+}
+
+.theme-preview {
+  width: 100%;
+  height: 24px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: 1fr;
+  gap: 0px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-preview span {
+  display: block;
+}
+
+.theme-name {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  color: var(--text-primary);
+}
+
+/* Settings Rows */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.settings-select {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 3px solid var(--text-secondary);
+  cursor: pointer;
+}
+
+.settings-select:hover {
+  border-color: var(--retro-cyan);
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: var(--retro-cyan);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 50px;
+  height: 26px;
+  background: var(--bg-card);
+  border: 3px solid var(--text-secondary);
+  display: block;
+  position: relative;
+  transition: 0.15s;
+}
+
+.toggle-slider::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--text-secondary);
+  top: 3px;
+  left: 3px;
+  transition: 0.15s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  border-color: var(--retro-green);
+}
+
+.toggle-switch input:checked + .toggle-slider::after {
+  left: 27px;
+  background: var(--retro-green);
+}
+
+/* Settings Button */
+.settings-btn {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 3px solid var(--text-secondary);
+  cursor: pointer;
+  transition: 0.1s;
+}
+
+.settings-btn:hover {
+  transform: translateY(-2px);
+}
+
+.settings-btn.danger {
+  border-color: var(--retro-red);
+  color: var(--retro-red);
+}
+
+.settings-btn.danger:hover {
+  background: var(--retro-red);
+  color: var(--bg-primary);
+}
+
+/* ============================================
+   POKER GAME STYLES
+   ============================================ */
+
+/* Poker Container - Full viewport, no scroll */
+.poker-container {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+/* Connection Status */
+.connection-status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  left: auto;
+  transform: none;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  padding: 6px 12px;
+  z-index: 100;
+  border: 2px solid;
+}
+
+.connection-status.connecting {
+  color: var(--retro-yellow);
+  border-color: var(--retro-yellow);
+  background: rgba(255, 255, 0, 0.1);
+}
+
+.connection-status.connected {
+  color: var(--retro-green);
+  border-color: var(--retro-green);
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.connection-status.disconnected {
+  color: var(--retro-red);
+  border-color: var(--retro-red);
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* Poker Lobby */
+.poker-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 25px;
+  padding: 20px;
+}
+
+.poker-lobby h2 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.5rem;
+  color: var(--retro-cyan);
+  text-shadow: 3px 3px 0 var(--retro-magenta);
+  text-align: center;
+}
+
+.lobby-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.lobby-info {
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.lobby-info .highlight {
+  color: var(--retro-yellow);
+}
+
+.poker-input {
+  width: 100%;
+  padding: 12px 15px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-cyan);
+  color: var(--text-primary);
+  font-family: "VT323", monospace;
+  font-size: 1.3rem;
+  text-align: center;
+  outline: none;
+}
+
+.poker-input:focus {
+  box-shadow: 0 0 10px var(--retro-cyan);
+}
+
+.poker-input.room-code {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.5rem;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+}
+
+.poker-btn {
+  width: 100%;
+  padding: 15px 25px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  border: 3px solid;
+}
+
+.poker-btn.primary {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border-color: #00cc00;
+  box-shadow: 4px 4px 0 rgba(0, 255, 0, 0.3);
+}
+
+.poker-btn.primary:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 255, 0, 0.4);
+}
+
+.poker-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.poker-btn.secondary {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  border-color: #00cccc;
+  box-shadow: 4px 4px 0 rgba(0, 255, 247, 0.3);
+}
+
+.poker-btn.secondary:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 255, 247, 0.4);
+}
+
+.poker-btn.back {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+.poker-btn.back:hover {
+  color: var(--retro-magenta);
+  border-color: var(--retro-magenta);
+}
+
+.poker-error {
+  background: rgba(255, 0, 0, 0.2);
+  border: 2px solid var(--retro-red);
+  color: var(--retro-red);
+  padding: 10px 20px;
+  font-family: "VT323", monospace;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* Waiting Room */
+.waiting-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 25px;
+  padding: 20px;
+}
+
+.room-code-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-code-display .label {
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.room-code-display .code {
+  font-family: "Press Start 2P", cursive;
+  font-size: 2.5rem;
+  color: var(--retro-yellow);
+  text-shadow: 4px 4px 0 var(--retro-orange);
+  letter-spacing: 10px;
+  background: var(--bg-secondary);
+  padding: 15px 25px;
+  border: 3px solid var(--retro-yellow);
+}
+
+.players-list {
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-cyan);
+  padding: 15px 25px;
+  min-width: 250px;
+}
+
+.players-list h3 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  color: var(--retro-cyan);
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.players-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.players-list li {
+  font-family: "VT323", monospace;
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.players-list li:last-child {
+  border-bottom: none;
+}
+
+.players-list li.you {
+  color: var(--retro-yellow);
+}
+
+.host-badge,
+.you-badge {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  padding: 3px 6px;
+}
+
+.host-badge {
+  background: var(--retro-magenta);
+  color: white;
+}
+
+.you-badge {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+}
+
+.waiting-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 250px;
+}
+
+.waiting-text {
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  text-align: center;
+  animation: blink 1s step-end infinite;
+}
+
+/* Poker Game */
+.poker-game {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+}
+
+.poker-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 3px solid var(--retro-purple);
+  z-index: 10;
+}
+
+.room-info,
+.phase-info {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+}
+
+.room-info {
+  color: var(--text-secondary);
+}
+
+.phase-info {
+  color: var(--retro-yellow);
+  background: rgba(255, 255, 0, 0.1);
+  padding: 5px 10px;
+  border: 2px solid var(--retro-yellow);
+}
+
+.leave-btn {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.45rem;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--retro-red);
+  border: 2px solid var(--retro-red);
+  cursor: pointer;
+}
+
+.leave-btn:hover {
+  background: var(--retro-red);
+  color: white;
+}
+
+/* Poker Table */
+.poker-table {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  position: relative;
+}
+
+.table-felt {
+  width: 90%;
+  max-width: 900px;
+  height: 70vh;
+  max-height: 450px;
+  background: linear-gradient(135deg, #1a5c3a 0%, #0d3d26 100%);
+  border: 12px solid #4a3728;
+  border-radius: 50%;
+  position: relative;
+  box-shadow:
+    inset 0 0 50px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(0, 0, 0, 0.8),
+    0 8px 0 #2d1f14;
+}
+
+/* Pot Display */
+.pot-display {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.pot-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pot-amount {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.2rem;
+  color: var(--retro-yellow);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Community Cards */
+.community-cards {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+}
+
+.community-card-slot {
+  width: 55px;
+  height: 77px;
+}
+
+.empty-card-slot {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+/* Poker Card */
+.poker-card {
+  width: 55px;
+  height: 77px;
+  background: #f8f8f8;
+  border: 2px solid #333;
+  border-radius: 4px;
+  position: relative;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.poker-card.small {
+  width: 40px;
+  height: 56px;
+}
+
+.poker-card.red {
+  color: #cc0000;
+}
+
+.poker-card.black {
+  color: #111;
+}
+
+.poker-card.face-down {
+  background: var(--bg-card);
+  border-color: var(--retro-purple);
+}
+
+.poker-card .card-back-pattern {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--retro-purple),
+    var(--retro-purple) 4px,
+    var(--bg-card) 4px,
+    var(--bg-card) 8px
+  );
+  opacity: 0.5;
+}
+
+.poker-card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Press Start 2P", cursive;
+  line-height: 1;
+}
+
+.poker-card-corner.top {
+  top: 3px;
+  left: 3px;
+}
+
+.poker-card-corner.bottom {
+  bottom: 3px;
+  right: 3px;
+  transform: rotate(180deg);
+}
+
+.poker-card-value {
+  font-size: 0.5rem;
+}
+
+.poker-card-suit {
+  font-size: 0.6rem;
+}
+
+.poker-card.small .poker-card-value {
+  font-size: 0.35rem;
+}
+
+.poker-card.small .poker-card-suit {
+  font-size: 0.45rem;
+}
+
+.poker-card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+}
+
+.poker-card.small .poker-card-center {
+  font-size: 1rem;
+}
+
+/* Player Seats - Positioned around the table */
+.player-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.player-seat.active-turn {
+  filter: brightness(1.2);
+}
+
+.player-seat.active-turn::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border: 3px solid var(--retro-yellow);
+  border-radius: 8px;
+  animation: pulse 1s infinite;
+  pointer-events: none;
+}
+
+.player-seat.folded {
+  opacity: 0.4;
+}
+
+/* Seat positions around oval table */
+.seat-bottom {
+  bottom: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.seat-bottom-left {
+  bottom: 5%;
+  left: 10%;
+}
+
+.seat-left {
+  top: 50%;
+  left: -5%;
+  transform: translateY(-50%);
+}
+
+.seat-top-left {
+  top: 5%;
+  left: 10%;
+}
+
+.seat-top {
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.seat-top-right {
+  top: 5%;
+  right: 10%;
+}
+
+.seat-right {
+  top: 50%;
+  right: -5%;
+  transform: translateY(-50%);
+}
+
+.seat-bottom-right {
+  bottom: 5%;
+  right: 10%;
+}
+
+/* Seat cards */
+.seat-cards {
+  display: flex;
+  gap: 3px;
+}
+
+.player-seat.is-you .seat-cards {
+  gap: 5px;
+}
+
+/* Seat info box */
+.seat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-secondary);
+  padding: 5px 10px;
+  border: 2px solid var(--retro-cyan);
+  min-width: 80px;
+}
+
+.seat-name {
+  font-family: "VT323", monospace;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.seat-chips {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.45rem;
+  color: var(--retro-yellow);
+}
+
+/* Bet display */
+.seat-bet {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 3px 8px;
+  border: 2px solid var(--retro-orange);
+  border-radius: 10px;
+}
+
+.seat-bet span {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  color: var(--retro-orange);
+}
+
+/* Position bet displays towards center */
+.seat-bottom .seat-bet {
+  top: -30px;
+}
+.seat-bottom-left .seat-bet {
+  top: -20px;
+  right: -20px;
+}
+.seat-left .seat-bet {
+  right: -40px;
+}
+.seat-top-left .seat-bet {
+  bottom: -20px;
+  right: -20px;
+}
+.seat-top .seat-bet {
+  bottom: -30px;
+}
+.seat-top-right .seat-bet {
+  bottom: -20px;
+  left: -20px;
+}
+.seat-right .seat-bet {
+  left: -40px;
+}
+.seat-bottom-right .seat-bet {
+  top: -20px;
+  left: -20px;
+}
+
+/* Dealer chip */
+.dealer-chip {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: white;
+  color: black;
+  border: 3px solid #333;
+  border-radius: 50%;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: -15px;
+  right: -15px;
+  z-index: 5;
+}
+
+/* Fold overlay */
+.fold-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  color: var(--retro-red);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 5px 10px;
+  border: 2px solid var(--retro-red);
+}
+
+/* All-in badge */
+.allin-badge {
+  position: absolute;
+  bottom: -25px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  color: var(--retro-magenta);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 3px 8px;
+  border: 2px solid var(--retro-magenta);
+  animation: pulse 0.5s infinite;
+}
+
+/* Betting Controls */
+.betting-controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 3px solid var(--retro-cyan);
+  padding: 15px 20px;
+  z-index: 20;
+}
+
+.betting-controls.disabled {
+  opacity: 0.7;
+}
+
+.betting-controls .waiting-message {
+  display: block;
+  text-align: center;
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 12px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  cursor: pointer;
+  border: 3px solid;
+  transition: var(--transition-fast);
+}
+
+.action-btn.fold {
+  background: var(--retro-red);
+  color: white;
+  border-color: #cc0000;
+}
+
+.action-btn.check {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  border-color: #00cccc;
+}
+
+.action-btn.call {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border-color: #00cc00;
+}
+
+.action-btn.raise {
+  background: var(--retro-yellow);
+  color: var(--bg-primary);
+  border-color: #cccc00;
+}
+
+.action-btn.allin {
+  background: var(--retro-magenta);
+  color: white;
+  border-color: #cc00cc;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Raise controls */
+.raise-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.raise-slider {
+  width: 120px;
+  height: 8px;
+  background: var(--bg-primary);
+  border: 2px solid var(--retro-yellow);
+  outline: none;
+  cursor: pointer;
+}
+
+.raise-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--retro-yellow);
+  cursor: pointer;
+}
+
+.raise-amount {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--retro-yellow);
+  min-width: 60px;
+}
+
+/* Showdown Overlay */
+.showdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 35, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.showdown-content {
+  background: var(--bg-secondary);
+  padding: 30px 50px;
+  border: 4px solid var(--retro-yellow);
+  box-shadow: 8px 8px 0 var(--retro-orange);
+  text-align: center;
+}
+
+.showdown-content h2 {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.5rem;
+  color: var(--retro-yellow);
+  margin-bottom: 20px;
+  text-shadow: 3px 3px 0 var(--retro-orange);
+}
+
+.winner-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+  padding: 15px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 2px solid var(--retro-green);
+}
+
+.winner-name {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  color: var(--retro-cyan);
+}
+
+.winner-amount {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1rem;
+  color: var(--retro-green);
+}
+
+.winner-hand {
+  font-family: "VT323", monospace;
+  font-size: 1.2rem;
+  color: var(--retro-magenta);
+}
+
+/* Responsive adjustments for poker */
+@media (max-width: 900px) {
+  .table-felt {
+    width: 95%;
+    height: 60vh;
+  }
+
+  .poker-card {
+    width: 45px;
+    height: 63px;
+  }
+
+  .poker-card.small {
+    width: 32px;
+    height: 45px;
+  }
+
+  .community-card-slot {
+    width: 45px;
+    height: 63px;
+  }
+
+  .seat-info {
+    padding: 3px 6px;
+    min-width: 60px;
+  }
+
+  .seat-name {
+    font-size: 0.7rem;
+  }
+
+  .seat-chips {
+    font-size: 0.35rem;
+  }
+
+  .action-buttons {
+    gap: 5px;
+  }
+
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 0.4rem;
+  }
+
+  .raise-slider {
+    width: 80px;
+  }
+}
+
+@media (max-width: 600px) {
+  .table-felt {
+    height: 50vh;
+    border-width: 8px;
+  }
+
+  .poker-card {
+    width: 38px;
+    height: 53px;
+  }
+
+  .poker-card.small {
+    width: 28px;
+    height: 39px;
+  }
+
+  .community-card-slot {
+    width: 38px;
+    height: 53px;
+  }
+
+  .community-cards {
+    gap: 4px;
+  }
+
+  .pot-display {
+    top: 20%;
+  }
+
+  .pot-amount {
+    font-size: 0.9rem;
+  }
+
+  .seat-cards {
+    gap: 2px;
+  }
+
+  .betting-controls {
+    padding: 10px;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 0.35rem;
+  }
+
+  .raise-controls {
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+  }
+}
+
+/* ============================================
+   THEME DEFINITIONS
+   ============================================ */
+
+/* Default Arcade Theme - already in :root */
+
+/* Black & White Theme */
+body.theme-blackwhite {
+  --bg-primary: #111111;
+  --bg-secondary: #222222;
+  --bg-card: #333333;
+  --retro-cyan: #ffffff;
+  --retro-magenta: #888888;
+  --retro-yellow: #dddddd;
+  --retro-green: #cccccc;
+  --retro-red: #666666;
+  --retro-orange: #999999;
+  --retro-blue: #aaaaaa;
+  --retro-purple: #777777;
+  --card-white: #f0f0f0;
+  --card-red: #444444;
+  --card-black: #111111;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+}
+
+/* Dracula Theme */
+body.theme-dracula {
+  --bg-primary: #282a36;
+  --bg-secondary: #44475a;
+  --bg-card: #383a59;
+  --retro-cyan: #8be9fd;
+  --retro-magenta: #ff79c6;
+  --retro-yellow: #f1fa8c;
+  --retro-green: #50fa7b;
+  --retro-red: #ff5555;
+  --retro-orange: #ffb86c;
+  --retro-blue: #6272a4;
+  --retro-purple: #bd93f9;
+  --card-white: #f8f8f2;
+  --card-red: #ff5555;
+  --card-black: #282a36;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+}
+
+/* Monokai Theme */
+body.theme-monokai {
+  --bg-primary: #272822;
+  --bg-secondary: #3e3d32;
+  --bg-card: #49483e;
+  --retro-cyan: #66d9ef;
+  --retro-magenta: #f92672;
+  --retro-yellow: #e6db74;
+  --retro-green: #a6e22e;
+  --retro-red: #f92672;
+  --retro-orange: #fd971f;
+  --retro-blue: #66d9ef;
+  --retro-purple: #ae81ff;
+  --card-white: #f8f8f2;
+  --card-red: #f92672;
+  --card-black: #272822;
+  --text-primary: #f8f8f2;
+  --text-secondary: #75715e;
+}
+
+/* Nord Theme */
+body.theme-nord {
+  --bg-primary: #2e3440;
+  --bg-secondary: #3b4252;
+  --bg-card: #434c5e;
+  --retro-cyan: #88c0d0;
+  --retro-magenta: #b48ead;
+  --retro-yellow: #ebcb8b;
+  --retro-green: #a3be8c;
+  --retro-red: #bf616a;
+  --retro-orange: #d08770;
+  --retro-blue: #81a1c1;
+  --retro-purple: #b48ead;
+  --card-white: #eceff4;
+  --card-red: #bf616a;
+  --card-black: #2e3440;
+  --text-primary: #eceff4;
+  --text-secondary: #7b88a1;
+}
+
+/* Solarized Dark Theme */
+body.theme-solarized {
+  --bg-primary: #002b36;
+  --bg-secondary: #073642;
+  --bg-card: #094959;
+  --retro-cyan: #2aa198;
+  --retro-magenta: #d33682;
+  --retro-yellow: #b58900;
+  --retro-green: #859900;
+  --retro-red: #dc322f;
+  --retro-orange: #cb4b16;
+  --retro-blue: #268bd2;
+  --retro-purple: #6c71c4;
+  --card-white: #fdf6e3;
+  --card-red: #dc322f;
+  --card-black: #002b36;
+  --text-primary: #93a1a1;
+  --text-secondary: #657b83;
+}
+
+/* Synthwave Theme */
+body.theme-synthwave {
+  --bg-primary: #241b2f;
+  --bg-secondary: #2a2139;
+  --bg-card: #34294f;
+  --retro-cyan: #36f9f6;
+  --retro-magenta: #ff7edb;
+  --retro-yellow: #fede5d;
+  --retro-green: #72f1b8;
+  --retro-red: #fe4450;
+  --retro-orange: #f97e72;
+  --retro-blue: #36f9f6;
+  --retro-purple: #b893ce;
+  --card-white: #f0f0f0;
+  --card-red: #fe4450;
+  --card-black: #241b2f;
+  --text-primary: #ffffff;
+  --text-secondary: #848bbd;
+}
+
+/* Gruvbox Theme */
+body.theme-gruvbox {
+  --bg-primary: #282828;
+  --bg-secondary: #3c3836;
+  --bg-card: #504945;
+  --retro-cyan: #83a598;
+  --retro-magenta: #d3869b;
+  --retro-yellow: #fabd2f;
+  --retro-green: #b8bb26;
+  --retro-red: #fb4934;
+  --retro-orange: #fe8019;
+  --retro-blue: #83a598;
+  --retro-purple: #d3869b;
+  --card-white: #fbf1c7;
+  --card-red: #cc241d;
+  --card-black: #282828;
+  --text-primary: #ebdbb2;
+  --text-secondary: #a89984;
+}
+
+/* Catppuccin Mocha Theme */
+body.theme-catppuccin {
+  --bg-primary: #1e1e2e;
+  --bg-secondary: #313244;
+  --bg-card: #45475a;
+  --retro-cyan: #89dceb;
+  --retro-magenta: #f5c2e7;
+  --retro-yellow: #f9e2af;
+  --retro-green: #a6e3a1;
+  --retro-red: #f38ba8;
+  --retro-orange: #fab387;
+  --retro-blue: #89b4fa;
+  --retro-purple: #cba6f7;
+  --card-white: #cdd6f4;
+  --card-red: #f38ba8;
+  --card-black: #1e1e2e;
+  --text-primary: #cdd6f4;
+  --text-secondary: #7f849c;
+}
+
+/* Cyberpunk Theme */
+body.theme-cyberpunk {
+  --bg-primary: #0d0221;
+  --bg-secondary: #190535;
+  --bg-card: #261447;
+  --retro-cyan: #05d9e8;
+  --retro-magenta: #ff2a6d;
+  --retro-yellow: #d1f7ff;
+  --retro-green: #01ff70;
+  --retro-red: #ff2a6d;
+  --retro-orange: #f7a904;
+  --retro-blue: #05d9e8;
+  --retro-purple: #9d4edd;
+  --card-white: #d1f7ff;
+  --card-red: #ff2a6d;
+  --card-black: #0d0221;
+  --text-primary: #d1f7ff;
+  --text-secondary: #7b61a7;
+}
+
+/* GameBoy Theme */
+body.theme-gameboy {
+  --bg-primary: #0f380f;
+  --bg-secondary: #306230;
+  --bg-card: #4a7c4a;
+  --retro-cyan: #9bbc0f;
+  --retro-magenta: #8bac0f;
+  --retro-yellow: #9bbc0f;
+  --retro-green: #9bbc0f;
+  --retro-red: #306230;
+  --retro-orange: #8bac0f;
+  --retro-blue: #9bbc0f;
+  --retro-purple: #8bac0f;
+  --card-white: #9bbc0f;
+  --card-red: #306230;
+  --card-black: #0f380f;
+  --text-primary: #9bbc0f;
+  --text-secondary: #8bac0f;
+}
+
+/* Disable colorful effects for B&W and GameBoy themes */
+body.theme-blackwhite .bg-decoration::before,
+body.theme-gameboy .bg-decoration::before {
+  display: none;
+}
+
+/* ============================================
+   GAMBLING LOGIC - STAKE & MULTIPLIER DISPLAY
+   Positioned on the right side of the screen
+   ============================================ */
+
+.stake-display {
+  position: fixed;
+  top: 200px;
+  right: 20px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-yellow);
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+  box-shadow: 4px 4px 0px rgba(255, 255, 0, 0.3);
+  min-width: 160px;
+}
+
+.stake-display span {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  color: var(--retro-yellow);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.cash-out-btn {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: 3px solid #00cc00;
+  padding: 10px 20px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  cursor: pointer;
+  transition: 0.1s;
+  box-shadow: 3px 3px 0px rgba(0, 255, 0, 0.3);
+  width: 100%;
+}
+
+.cash-out-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px rgba(0, 255, 0, 0.5);
+  background: #00ff00;
+}
+
+.cash-out-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px rgba(0, 255, 0, 0.2);
+}
+
+.multipliers-display {
+  position: fixed;
+  top: 320px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-secondary);
+  padding: 15px 20px;
+  border: 2px solid var(--retro-cyan);
+  box-shadow: 3px 3px 0px rgba(0, 255, 247, 0.3);
+  min-width: 160px;
+}
+
+.multipliers-display span {
+  font-family: "VT323", monospace;
+  font-size: 1.1rem;
+  color: var(--retro-cyan);
+  text-align: center;
+}
+
+.multipliers-display .higher {
+  color: var(--retro-green);
+}
+
+.multipliers-display .lower {
+  color: var(--retro-red);
+}
+
+/* Responsive: Move to top center on smaller screens */
+@media (max-width: 1200px) {
+  .stake-display {
+    top: 70px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    min-width: auto;
+  }
+
+  .stake-display span {
+    font-size: 0.5rem;
+  }
+
+  .cash-out-btn {
+    width: auto;
+  }
+
+  .multipliers-display {
+    top: 130px;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    min-width: auto;
+    gap: 20px;
+  }
+}
+
+/* Betting Modal Styles - Matching Original Retro Theme */
+.betting-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin: 20px 0;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border: 2px solid var(--retro-purple);
+  position: relative;
+  z-index: 1;
+}
+
+.current-balance {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.9rem;
+  color: #ffd700;
+  text-align: center;
+}
+
+.bet-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bet-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.currency-symbol {
+  font-family: "Press Start 2P", cursive;
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.bet-input {
+  background: var(--bg-primary);
+  border: var(--pixel-border) var(--retro-cyan);
+  color: var(--retro-cyan);
+  font-family: "Press Start 2P", cursive;
+  font-size: 1.2rem;
+  padding: 10px;
+  width: 120px;
+  text-align: center;
+  outline: none;
+}
+
+.bet-input:focus {
+  box-shadow: 0 0 10px var(--retro-cyan);
+}
+
+.bet-slider-container {
+  width: 100%;
+  padding: 0 10px;
+}
+
+.bet-slider {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-tertiary);
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  border: 2px solid var(--retro-purple);
+}
+
+.bet-slider:hover {
+  opacity: 1;
+}
+
+.bet-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  background: var(--retro-magenta);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.bet-slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: var(--retro-magenta);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 0px #000;
+}
+
+.potential-payout {
+  text-align: center;
+  font-family: "VT323", monospace;
+  font-size: 1.4rem;
+  color: var(--retro-green);
+  border-top: 2px dashed var(--retro-purple);
+  padding-top: 15px;
+}
+
+.payout-amount {
+  color: #00ff00;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  margin-left: 10px;
+}
+
+/* Modal Buttons */
+.bet-btn {
+  background: var(--retro-red);
+  color: #fff;
+  border: var(--pixel-border) #cc0000;
+  padding: 15px 25px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  box-shadow: var(--pixel-shadow) rgba(255, 0, 0, 0.4);
+}
+
+.bet-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(255, 0, 0, 0.5);
+}
+
+.bet-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(255, 0, 0, 0.2);
+}
+
+.play-btn {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: var(--pixel-border) #00cc00;
+  padding: 15px 30px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.4);
+}
+
+.play-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 255, 0, 0.5);
+}
+
+.play-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 0, 0.2);
+}
+
+/* Win Payout Highlight */
+.win-payout-stat .modal-stat-value {
+  color: #ffd700;
+  text-shadow: 2px 2px 0px #b8860b;
+}
+
+/* ============================================
+   LEADERBOARD STYLES
+   ============================================ */
+
+.leaderboard-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 40px 20px;
+  font-family: "Press Start 2P", cursive;
+}
+
+.leaderboard-header {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-cyan);
+  color: var(--retro-cyan);
+  text-decoration: none;
+  font-size: 0.7rem;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px rgba(0, 255, 247, 0.3);
+}
+
+.leaderboard-title {
+  font-size: 1.8rem;
+  color: var(--retro-yellow);
+  text-shadow: 3px 3px 0px rgba(255, 255, 0, 0.3);
+}
+
+.leaderboard-controls {
+  max-width: 800px;
+  margin: 0 auto 30px;
+}
+
+.week-selector {
+  width: 100%;
+  padding: 15px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-magenta);
+  color: var(--text-primary);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.week-selector:focus {
+  outline: none;
+  border-color: var(--retro-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 247, 0.3);
+}
+
+.leaderboard-info {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 3px solid var(--retro-purple);
+  text-align: center;
+}
+
+.week-dates {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.prize-pot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.prize-label {
+  font-size: 0.8rem;
+  color: var(--retro-yellow);
+}
+
+.prize-amount {
+  font-size: 1.2rem;
+  color: var(--retro-green);
+  text-shadow: 2px 2px 0px rgba(0, 255, 0, 0.3);
+}
+
+.prize-description {
+  margin-top: 15px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.leaderboard-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 4px solid var(--retro-cyan);
+  box-shadow: 6px 6px 0px rgba(0, 255, 247, 0.2);
+}
+
+.loading-message,
+.empty-message {
+  padding: 60px 20px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.leaderboard-list {
+  padding: 0;
+}
+
+.leaderboard-entry {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 2px solid var(--bg-primary);
+  transition: var(--transition-fast);
+  background: var(--bg-secondary);
+}
+
+.leaderboard-entry:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-entry:hover {
+  background: rgba(0, 255, 247, 0.05);
+}
+
+.leaderboard-entry.current-user {
+  background: rgba(255, 0, 255, 0.1);
+  border: 2px solid var(--retro-magenta);
+  margin: 2px;
+}
+
+.leaderboard-entry.top-1 {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 215, 0, 0.1) 0%,
+    var(--bg-secondary) 100%
+  );
+}
+
+.leaderboard-entry.top-2 {
+  background: linear-gradient(
+    90deg,
+    rgba(192, 192, 192, 0.1) 0%,
+    var(--bg-secondary) 100%
+  );
+}
+
+.leaderboard-entry.top-3 {
+  background: linear-gradient(
+    90deg,
+    rgba(205, 127, 50, 0.1) 0%,
+    var(--bg-secondary) 100%
+  );
+}
+
+.rank {
+  font-size: 1.5rem;
+  text-align: center;
+  color: var(--retro-yellow);
+}
+
+.top-1 .rank {
+  color: #ffd700;
+  text-shadow: 2px 2px 0px #b8860b;
+}
+
+.top-2 .rank {
+  color: #c0c0c0;
+  text-shadow: 2px 2px 0px #808080;
+}
+
+.top-3 .rank {
+  color: #cd7f32;
+  text-shadow: 2px 2px 0px #8b4513;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.you-badge {
+  font-size: 0.6rem;
+  padding: 4px 8px;
+  background: var(--retro-magenta);
+  color: var(--text-primary);
+  border: 2px solid var(--retro-cyan);
+}
+
+.balance {
+  font-size: 1rem;
+  color: var(--retro-green);
+  text-shadow: 2px 2px 0px rgba(0, 255, 0, 0.3);
+  white-space: nowrap;
+}
+
+.user-rank-card {
+  max-width: 800px;
+  margin: 30px auto 0;
+  padding: 25px;
+  background: var(--bg-card);
+  border: 4px solid var(--retro-magenta);
+  box-shadow: 6px 6px 0px rgba(255, 0, 255, 0.2);
+  text-align: center;
+}
+
+.user-rank-card h3 {
+  font-size: 1rem;
+  color: var(--retro-cyan);
+  margin-bottom: 20px;
+}
+
+.user-rank-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 15px;
+}
+
+.user-rank-position {
+  font-size: 1.3rem;
+  color: var(--retro-yellow);
+}
+
+.user-rank-balance {
+  font-size: 1.3rem;
+  color: var(--retro-green);
+}
+
+.rank-message {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 15px;
+}
+
+/* ============================================
+   ADMIN PANEL STYLES
+   ============================================ */
+
+.admin-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 40px 20px;
+  font-family: "Press Start 2P", cursive;
+}
+
+.admin-header {
+  max-width: 900px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.admin-title {
+  font-size: 1.8rem;
+  color: var(--retro-orange);
+  text-shadow: 3px 3px 0px rgba(255, 153, 0, 0.3);
+}
+
+.admin-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.admin-card {
+  background: var(--bg-card);
+  border: 4px solid var(--retro-orange);
+  box-shadow: 6px 6px 0px rgba(255, 153, 0, 0.2);
+  padding: 30px;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  color: var(--retro-yellow);
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.prize-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  color: var(--retro-cyan);
+}
+
+.form-select,
+.form-input {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-magenta);
+  color: var(--text-primary);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  transition: var(--transition-fast);
+}
+
+.form-select:focus,
+.form-input:focus {
+  outline: none;
+  border-color: var(--retro-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 247, 0.3);
+}
+
+.form-textarea {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-magenta);
+  color: var(--text-primary);
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  resize: vertical;
+  line-height: 1.6;
+  transition: var(--transition-fast);
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--retro-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 247, 0.3);
+}
+
+.message {
+  padding: 15px;
+  text-align: center;
+  font-size: 0.7rem;
+  border: 3px solid;
+}
+
+.message.success {
+  background: rgba(0, 255, 0, 0.1);
+  border-color: var(--retro-green);
+  color: var(--retro-green);
+}
+
+.message.error {
+  background: rgba(255, 51, 51, 0.1);
+  border-color: var(--retro-red);
+  color: var(--retro-red);
+}
+
+.submit-btn {
+  padding: 15px 30px;
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: 4px solid #00cc00;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0px rgba(0, 255, 0, 0.3);
+}
+
+.submit-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px rgba(0, 255, 0, 0.4);
+}
+
+.submit-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 255, 0, 0.2);
+}
+
+.admin-info {
+  background: var(--bg-card);
+  border: 4px solid var(--retro-purple);
+  box-shadow: 6px 6px 0px rgba(153, 102, 255, 0.2);
+  padding: 25px;
+  height: fit-content;
+}
+
+.info-title {
+  font-size: 0.9rem;
+  color: var(--retro-purple);
+  margin-bottom: 20px;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.info-list li {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-left: 20px;
+  position: relative;
+}
+
+.info-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  color: var(--retro-cyan);
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    grid-template-columns: 1fr;
+  }
+}
