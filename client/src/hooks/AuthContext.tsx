@@ -68,6 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else document.body.classList.remove(className);
   };
 
+  // Track whether we need to validate a restored session against Convex
+  const [pendingValidation, setPendingValidation] = useState(false);
+
   // Load user from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("convex_user");
@@ -75,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
+        setPendingValidation(true); // need Convex to confirm user still exists
       } catch (e) {
         localStorage.removeItem("convex_user");
       }
@@ -91,11 +95,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // Sync with Convex query
+  // Sync with Convex query — if the user was deleted from the DB,
+  // getCurrentUserQuery will return null and we must log out.
   useEffect(() => {
-    if (getCurrentUserQuery) {
+    if (getCurrentUserQuery === undefined) {
+      // Query still loading, do nothing
+      return;
+    }
+    if (getCurrentUserQuery === null) {
+      // User no longer exists in DB — force logout
+      setUser(null);
+      localStorage.removeItem("convex_user");
+    } else {
       setUser(getCurrentUserQuery as User);
     }
+    setPendingValidation(false);
   }, [getCurrentUserQuery]);
 
   // Apply theme and visual toggles whenever user settings change
@@ -162,8 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
-        isLoading,
+        isAuthenticated: !!user && !pendingValidation,
+        isLoading: isLoading || pendingValidation,
         register,
         login,
         logout,

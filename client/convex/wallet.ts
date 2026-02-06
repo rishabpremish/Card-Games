@@ -10,7 +10,7 @@ export const getWallet = query({
     const user = await ctx.db.get(args.userId);
 
     if (!user) {
-      throw new Error("User not found");
+      return null;
     }
 
     return {
