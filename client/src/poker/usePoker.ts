@@ -79,7 +79,7 @@ const WS_URL =
   import.meta.env.VITE_WS_URL ||
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
     ? `ws://${window.location.hostname}:3001`
-    : `wss://${window.location.host}`);
+    : `wss://card-games-web.onrender.com`);
 
 export function usePoker(): UsePokerReturn {
   const wsRef = useRef<WebSocket | null>(null);
