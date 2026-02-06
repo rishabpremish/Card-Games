@@ -1475,16 +1475,16 @@ body::before {
 }
 
 .payout-amount {
-  color: #00ff00;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  color: var(--retro-green);
+  text-shadow: 0 0 5px var(--retro-green);
   margin-left: 10px;
 }
 
 /* Modal Buttons */
 .bet-btn {
   background: var(--retro-red);
-  color: #fff;
-  border: var(--pixel-border) #cc0000;
+  color: var(--card-white);
+  border: var(--pixel-border) var(--retro-red);
   padding: 15px 25px;
   font-family: "Press Start 2P", cursive;
   font-size: 0.7rem;
@@ -1507,7 +1507,7 @@ body::before {
 .play-btn {
   background: var(--retro-green);
   color: var(--bg-primary);
-  border: var(--pixel-border) #00cc00;
+  border: var(--pixel-border) var(--retro-green);
   padding: 15px 30px;
   font-family: "Press Start 2P", cursive;
   font-size: 0.8rem;
@@ -3767,7 +3767,7 @@ body.theme-gameboy .bg-decoration::before {
   height: 25px;
   background: var(--retro-magenta);
   cursor: pointer;
-  border: 2px solid #fff;
+  border: 2px solid var(--card-white);
   box-shadow: 2px 2px 0px #000;
 }
 
@@ -3776,7 +3776,7 @@ body.theme-gameboy .bg-decoration::before {
   height: 25px;
   background: var(--retro-magenta);
   cursor: pointer;
-  border: 2px solid #fff;
+  border: 2px solid var(--card-white);
   box-shadow: 2px 2px 0px #000;
 }
 
