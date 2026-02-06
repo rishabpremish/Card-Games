@@ -148,6 +148,7 @@ function CardStack({
   onHigher,
   onLower,
   onHover,
+  onLeave,
   dealing = false,
   shaking = false,
   disabled = false,
@@ -157,6 +158,7 @@ function CardStack({
   onHigher: () => void;
   onLower: () => void;
   onHover?: () => void;
+  onLeave?: () => void;
   dealing?: boolean;
   shaking?: boolean;
   disabled?: boolean;
@@ -170,6 +172,7 @@ function CardStack({
       className={stackClasses.join(" ")}
       data-index={index}
       onMouseEnter={onHover}
+      onMouseLeave={onLeave}
     >
       {Array.from({ length: cardsToShow }).map((_, i) => {
         const card =
@@ -576,13 +579,18 @@ export default function HigherLowerGame() {
   const [gamblingStake, setGamblingStake] = useState(
     restored?.gamblingStake ?? 0,
   );
-  const [multipliers, setMultipliers] = useState({ higher: 1, lower: 1 });
+  const [multipliers, setMultipliers] = useState<{
+    higher: number | null;
+    lower: number | null;
+  }>({ higher: null, lower: null });
+  const [hoveredStack, setHoveredStack] = useState<number | null>(null);
   const [showCashOut, setShowCashOut] = useState(
     restored?.showCashOut ?? false,
   );
   const [hasCashedOut, setHasCashedOut] = useState(
     restored?.hasCashedOut ?? false,
   );
+  const [hasLostBet, setHasLostBet] = useState(false);
 
   // Modal states
   const [showGameOverModal, setShowGameOverModal] = useState(
@@ -662,6 +670,7 @@ export default function HigherLowerGame() {
     setRevealMode(false);
     setShowGameOverModal(false);
     setHasCashedOut(false);
+    setHasLostBet(false);
 
     setTimeout(() => setDealing(false), 1000);
   }, []);
@@ -729,6 +738,46 @@ export default function HigherLowerGame() {
     [currentBet],
   );
 
+  // Compute multipliers for a specific stack (used by hover + handleChoice)
+  const computeMultipliersForStack = useCallback(
+    (stackIndex: number): { higher: number | null; lower: number | null } => {
+      if (!isActive() || grid[stackIndex].locked) {
+        return { higher: null, lower: null };
+      }
+
+      const currentCard =
+        grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
+      const remainingValues = deck.map((card) => card.numericValue);
+
+      const higherMult = getMultiplier(
+        "higher",
+        currentCard.numericValue,
+        remainingValues,
+      );
+      const lowerMult = getMultiplier(
+        "lower",
+        currentCard.numericValue,
+        remainingValues,
+      );
+
+      return { higher: higherMult, lower: lowerMult };
+    },
+    [grid, deck],
+  );
+
+  const handleHoverStack = useCallback(
+    (stackIndex: number) => {
+      setHoveredStack(stackIndex);
+      setMultipliers(computeMultipliersForStack(stackIndex));
+    },
+    [computeMultipliersForStack],
+  );
+
+  const handleLeaveStack = useCallback(() => {
+    setHoveredStack(null);
+    setMultipliers({ higher: null, lower: null });
+  }, []);
+
   // Handle quick choice (higher/lower)
   const handleChoice = useCallback(
     (stackIndex: number, choice: "higher" | "lower") => {
@@ -794,8 +843,15 @@ export default function HigherLowerGame() {
         const flightId = ++flightIdRef.current;
         // Capture the multiplier at click time so it stays correct even if
         // the user hovers a different stack during the animation.
-        const usedMultiplier =
-          choice === "higher" ? multipliers.higher : multipliers.lower;
+        const computedMultipliers = computeMultipliersForStack(stackIndex);
+        const usedMultiplierRaw =
+          choice === "higher"
+            ? computedMultipliers.higher
+            : computedMultipliers.lower;
+        const usedMultiplier = usedMultiplierRaw ?? 1;
+        // Keep display in sync with the stack being played
+        setMultipliers(computedMultipliers);
+        setHoveredStack(stackIndex);
         flyingCardRef.current = true;
         setFlyingCard({
           card: drawnCard,
@@ -832,7 +888,7 @@ export default function HigherLowerGame() {
         setIsProcessing(false);
       }
     },
-    [gameOver, grid, deck],
+    [gameOver, grid, deck, computeMultipliersForStack],
   );
 
   // Handle flying card animation complete
@@ -876,10 +932,11 @@ export default function HigherLowerGame() {
       // Update stake display
       setGamblingStake(gamblingResult.newStake);
 
-      // If lost or tied (and not pushed), hide cash out
+      // If lost or tied (and not pushed), hide cash out and mark bet as lost
       if (gamblingResult.result === "loss" || gamblingResult.result === "tie") {
         setShowCashOut(false);
         setCurrentBet(0);
+        setHasLostBet(true);
       }
     }
 
@@ -908,6 +965,40 @@ export default function HigherLowerGame() {
     setIsProcessing(false);
     processingRef.current = false;
 
+    // If the card landed correctly, recalculate multipliers for the stack
+    // so the display updates even if the mouse hasn't moved
+    if (isCorrect && hoveredStack === stackIndex) {
+      // Use setTimeout to let React commit the new grid state first
+      setTimeout(() => {
+        setGrid((currentGrid) => {
+          setDeck((currentDeck) => {
+            if (!currentGrid[stackIndex].locked) {
+              const topCard =
+                currentGrid[stackIndex].cards[
+                  currentGrid[stackIndex].cards.length - 1
+                ];
+              const remainingValues = currentDeck.map((c) => c.numericValue);
+              const higherMult = getMultiplier(
+                "higher",
+                topCard.numericValue,
+                remainingValues,
+              );
+              const lowerMult = getMultiplier(
+                "lower",
+                topCard.numericValue,
+                remainingValues,
+              );
+              setMultipliers({ higher: higherMult, lower: lowerMult });
+            } else {
+              setMultipliers({ higher: null, lower: null });
+            }
+            return currentDeck;
+          });
+          return currentGrid;
+        });
+      }, 60);
+    }
+
     // Check game over after state updates - use functional updates to get latest state
     setTimeout(() => {
       setDeck((currentDeck) => {
@@ -918,11 +1009,11 @@ export default function HigherLowerGame() {
         return currentDeck;
       });
     }, 50);
-  }, [flyingCard, checkGameOver, currentBet]);
+  }, [flyingCard, checkGameOver, currentBet, hoveredStack]);
 
   // Handle place bet
   const handlePlaceBet = async (amount: number) => {
-    if (hasCashedOut) {
+    if (hasCashedOut || hasLostBet) {
       setShowBettingModal(false);
       return;
     }
@@ -943,34 +1034,6 @@ export default function HigherLowerGame() {
       }
     }
   };
-
-  // Calculate multipliers for a specific stack
-  const calculateMultipliers = useCallback(
-    (stackIndex: number) => {
-      if (!isActive() || grid[stackIndex].locked) {
-        setMultipliers({ higher: 1, lower: 1 });
-        return;
-      }
-
-      const currentCard =
-        grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
-      const remainingValues = deck.map((card) => card.numericValue);
-
-      const higherMult = getMultiplier(
-        "higher",
-        currentCard.numericValue,
-        remainingValues,
-      );
-      const lowerMult = getMultiplier(
-        "lower",
-        currentCard.numericValue,
-        remainingValues,
-      );
-
-      setMultipliers({ higher: higherMult, lower: lowerMult });
-    },
-    [grid, deck],
-  );
 
   // Handle cash out
   const handleCashOut = async () => {
@@ -997,6 +1060,7 @@ export default function HigherLowerGame() {
     setGamblingStake(0);
     setShowCashOut(false);
     setHasCashedOut(false);
+    setHasLostBet(false);
     resetGame();
     initGame();
   };
@@ -1022,6 +1086,7 @@ export default function HigherLowerGame() {
     setGamblingStake(0);
     setShowCashOut(false);
     setHasCashedOut(false);
+    setHasLostBet(false);
     resetGame();
     initGame();
   };
@@ -1047,6 +1112,7 @@ export default function HigherLowerGame() {
     setGamblingStake(0);
     setShowCashOut(false);
     setHasCashedOut(false);
+    setHasLostBet(false);
 
     resetGame(); // Clears utils state
     initGame(); // Reshuffles and deals
@@ -1092,9 +1158,17 @@ export default function HigherLowerGame() {
       {showCashOut && (
         <div className="multipliers-display">
           <span className="higher">
-            Higher: {multipliers.higher.toFixed(2)}x
+            Higher:{" "}
+            {multipliers.higher == null
+              ? "--"
+              : `${multipliers.higher.toFixed(2)}x`}
           </span>
-          <span className="lower">Lower: {multipliers.lower.toFixed(2)}x</span>
+          <span className="lower">
+            Lower:{" "}
+            {multipliers.lower == null
+              ? "--"
+              : `${multipliers.lower.toFixed(2)}x`}
+          </span>
         </div>
       )}
 
@@ -1187,7 +1261,8 @@ export default function HigherLowerGame() {
                 index={index}
                 onHigher={() => handleChoice(index, "higher")}
                 onLower={() => handleChoice(index, "lower")}
-                onHover={() => calculateMultipliers(index)}
+                onHover={() => handleHoverStack(index)}
+                onLeave={handleLeaveStack}
                 dealing={dealing}
                 shaking={shakingStack === index}
                 disabled={flyingCard !== null}
@@ -1231,7 +1306,7 @@ export default function HigherLowerGame() {
       )}
 
       {/* Place Bet / Restart Betting */}
-      {!hasCashedOut ? (
+      {!hasCashedOut && !hasLostBet ? (
         <button
           className={`place-bet-btn${showCashOut ? " disabled" : ""}`}
           onClick={() => !showCashOut && setShowBettingModal(true)}

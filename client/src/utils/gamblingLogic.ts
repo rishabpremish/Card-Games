@@ -18,7 +18,7 @@ const CARD_VALUES = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
  */
 export function initializeGame(startingStake: number): void {
   if (startingStake <= 0) {
-    throw new Error('Starting stake must be greater than 0');
+    throw new Error("Starting stake must be greater than 0");
   }
   currentStake = Math.floor(startingStake * 100) / 100; // Round down to 2 decimal places
   isGameActive = true;
@@ -41,43 +41,62 @@ export function isActive(): boolean {
 /**
  * Calculate the multiplier for a bet based on probability
  * @param direction - 'higher' or 'lower'
- * @param currentCardValue - The value of the current card (2-14, where 14 = Ace)
+ * @param currentCardValue - The value of the current card (1-14)
  * @param remainingCards - Array of remaining card values in the deck
- * @returns The payout multiplier
+ * @returns The payout multiplier (always >= 1)
+ *
+ * Edge-case rules:
+ *  - Ace=1 mode:  lower on King(13) → 1x, higher on Ace(1) → 1x
+ *  - Ace=14 mode: lower on Ace(14) → 1x, higher on 2 → 1x
+ *  - Any time there are zero losing outcomes → 1x (risk-free)
+ *  - Winning should never shrink your stake → clamp to min 1x
  */
 export function getMultiplier(
-  direction: 'higher' | 'lower',
+  direction: "higher" | "lower",
   currentCardValue: number,
-  remainingCards: number[]
+  remainingCards: number[],
 ): number {
   if (remainingCards.length === 0) {
     return 1;
   }
 
-  // Count cards that are higher or lower than current
+  // Count favorable (win) and losing outcomes separately.
+  // Equal-value cards are pushes (stake unchanged) — they are neither.
   let favorableOutcomes = 0;
-  
+  let losingOutcomes = 0;
+
   for (const cardValue of remainingCards) {
-    if (direction === 'higher' && cardValue > currentCardValue) {
-      favorableOutcomes++;
-    } else if (direction === 'lower' && cardValue < currentCardValue) {
-      favorableOutcomes++;
+    if (direction === "higher") {
+      if (cardValue > currentCardValue) favorableOutcomes++;
+      else if (cardValue < currentCardValue) losingOutcomes++;
+    } else {
+      if (cardValue < currentCardValue) favorableOutcomes++;
+      else if (cardValue > currentCardValue) losingOutcomes++;
     }
   }
 
-  // Calculate probability
-  const probability = favorableOutcomes / remainingCards.length;
-  
-  // If no favorable outcomes, return minimum multiplier of 1
-  if (probability === 0) {
+  // No way to win → 1x (only pushes or losses possible)
+  if (favorableOutcomes === 0) {
     return 1;
   }
 
-  // Calculate multiplier: (1 / probability) * (1 - HOUSE_EDGE)
+  // No risk of losing → 1x  (can only win or push, so risk-free)
+  // e.g. lower on King when ace=1, higher on 2 when ace=14
+  if (losingOutcomes === 0) {
+    return 1;
+  }
+
+  // Calculate probability of a favorable outcome out of ALL remaining cards
+  const probability = favorableOutcomes / remainingCards.length;
+
+  // Payout multiplier with house edge
   const rawMultiplier = (1 / probability) * (1 - HOUSE_EDGE);
-  
+
+  // A correct guess must never shrink your stake → floor at 1x
+  const clampedMultiplier = Math.max(1, rawMultiplier);
+
   // Round down to 2 decimal places
-  return Math.floor(rawMultiplier * 100) / 100;
+  return Math.floor(clampedMultiplier * 100) / 100;
 }
 
 /**
@@ -86,11 +105,11 @@ export function getMultiplier(
  */
 export function getBothMultipliers(
   currentCardValue: number,
-  remainingCards: number[]
+  remainingCards: number[],
 ): { higher: number; lower: number } {
   return {
-    higher: getMultiplier('higher', currentCardValue, remainingCards),
-    lower: getMultiplier('lower', currentCardValue, remainingCards)
+    higher: getMultiplier("higher", currentCardValue, remainingCards),
+    lower: getMultiplier("lower", currentCardValue, remainingCards),
   };
 }
 
@@ -104,62 +123,62 @@ export function getBothMultipliers(
  * @returns Object containing result and updated stake
  */
 export function processResult(
-  playerGuess: 'higher' | 'lower',
+  playerGuess: "higher" | "lower",
   currentCardValue: number,
   nextCardValue: number,
   multiplier: number,
-  pushAllowed: boolean = true
-): { 
-  result: 'win' | 'loss' | 'tie' | 'push'; 
+  pushAllowed: boolean = true,
+): {
+  result: "win" | "loss" | "tie" | "push";
   previousStake: number;
   newStake: number;
   payout: number;
 } {
   if (!isGameActive) {
-    throw new Error('No active game. Call initializeGame() first.');
+    throw new Error("No active game. Call initializeGame() first.");
   }
 
   const previousStake = currentStake;
-  let result: 'win' | 'loss' | 'tie' | 'push';
+  let result: "win" | "loss" | "tie" | "push";
 
   // Check for tie (equal value)
   if (nextCardValue === currentCardValue) {
     if (pushAllowed) {
-      result = 'push';
+      result = "push";
       // Stake remains unchanged
       return {
         result,
         previousStake,
         newStake: currentStake,
-        payout: currentStake
+        payout: currentStake,
       };
     } else {
-      result = 'tie';
+      result = "tie";
       currentStake = 0;
       isGameActive = false;
       return {
         result,
         previousStake,
         newStake: 0,
-        payout: 0
+        payout: 0,
       };
     }
   }
 
   // Check if guess was correct
   const isHigher = nextCardValue > currentCardValue;
-  const guessedCorrectly = 
-    (playerGuess === 'higher' && isHigher) || 
-    (playerGuess === 'lower' && !isHigher);
+  const guessedCorrectly =
+    (playerGuess === "higher" && isHigher) ||
+    (playerGuess === "lower" && !isHigher);
 
   if (guessedCorrectly) {
-    result = 'win';
+    result = "win";
     // Calculate new stake: currentStake * multiplier
     const rawPayout = currentStake * multiplier;
     // Round down to 2 decimal places
     currentStake = Math.floor(rawPayout * 100) / 100;
   } else {
-    result = 'loss';
+    result = "loss";
     currentStake = 0;
     isGameActive = false;
   }
@@ -168,7 +187,7 @@ export function processResult(
     result,
     previousStake,
     newStake: currentStake,
-    payout: result === 'win' ? currentStake : 0
+    payout: result === "win" ? currentStake : 0,
   };
 }
 
@@ -184,7 +203,7 @@ export function cashOut(): number {
   const payout = Math.floor(currentStake * 100) / 100;
   currentStake = 0;
   isGameActive = false;
-  
+
   return payout;
 }
 
@@ -201,8 +220,19 @@ export function resetGame(): void {
  */
 export function cardRankToValue(rank: string): number {
   const rankMap: { [key: string]: number } = {
-    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
-    'J': 11, 'Q': 12, 'K': 13, 'A': 14
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5,
+    "6": 6,
+    "7": 7,
+    "8": 8,
+    "9": 9,
+    "10": 10,
+    J: 11,
+    Q: 12,
+    K: 13,
+    A: 14,
   };
   return rankMap[rank] || parseInt(rank) || 2;
 }

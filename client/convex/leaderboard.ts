@@ -19,19 +19,30 @@ function getWeekEnd(weekStart: number): number {
   return d.getTime();
 }
 
-// Get current week's leaderboard
+// Get current week's leaderboard (real-time from users table)
 export const getCurrentLeaderboard = query({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
     const weekStart = getWeekStart(new Date(now));
 
-    // Get top 10 players by balance
-    const entries = await ctx.db
-      .query("leaderboards")
-      .withIndex("by_current", (q) => q.eq("isCurrent", true))
-      .order("asc")
-      .take(10);
+    // Query users directly for real-time balances instead of the
+    // cached leaderboards table (which only updates via hourly cron).
+    const users = await ctx.db.query("users").collect();
+
+    const sortedUsers = users
+      .sort((a, b) => b.wallet - a.wallet)
+      .slice(0, 10);
+
+    const entries = sortedUsers.map((user, i) => ({
+      userId: user._id,
+      username: user.username,
+      balance: user.wallet,
+      rank: i + 1,
+      weekStart,
+      weekEnd: getWeekEnd(weekStart),
+      isCurrent: true,
+    }));
 
     // Get prize pot for current week
     const prizePot = await ctx.db
@@ -49,7 +60,7 @@ export const getCurrentLeaderboard = query({
   },
 });
 
-// Get user's rank in current week
+// Get user's rank in current week (real-time)
 export const getUserRank = query({
   args: {
     userId: v.id("users"),
@@ -63,15 +74,22 @@ export const getUserRank = query({
 
     const weekStart = getWeekStart(new Date());
 
-    // Check if user has entry in current leaderboard
-    const entry = await ctx.db
-      .query("leaderboards")
-      .withIndex("by_user_and_week", (q) =>
-        q.eq("userId", args.userId).eq("weekStart", weekStart),
-      )
-      .first();
+    // Count how many users have a higher wallet balance
+    const allUsers = await ctx.db.query("users").collect();
+    const sorted = allUsers.sort((a, b) => b.wallet - a.wallet);
+    const rank = sorted.findIndex((u) => u._id === args.userId) + 1;
 
-    return entry || null;
+    if (rank === 0) return null;
+
+    return {
+      userId: args.userId,
+      username: user.username,
+      balance: user.wallet,
+      rank,
+      weekStart,
+      weekEnd: getWeekEnd(weekStart),
+      isCurrent: true,
+    };
   },
 });
 
