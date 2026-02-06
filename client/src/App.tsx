@@ -4,6 +4,7 @@ import Auth from "./components/Auth";
 import Home from "./pages/Home";
 import HigherLowerGame from "./pages/HigherLowerGame";
 import Blackjack from "./pages/Blackjack";
+import PokerPage from "./poker/PokerPage";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
 import "./styles.css";
@@ -40,6 +41,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/higher-lower" element={<HigherLowerGame />} />
         <Route path="/blackjack" element={<Blackjack />} />
+        <Route path="/poker" element={<PokerPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>

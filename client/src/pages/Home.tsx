@@ -79,6 +79,9 @@ export default function Home() {
           <Link to="/blackjack" className="game-link">
             Blackjack
           </Link>
+          <Link to="/poker" className="game-link">
+            Poker
+          </Link>
           <Link to="/leaderboard" className="game-link">
             🏆 Leaderboard
           </Link>
