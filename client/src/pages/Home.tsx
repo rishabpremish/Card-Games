@@ -76,6 +76,9 @@ export default function Home() {
           <Link to="/higher-lower" className="game-link">
             Higher or Lower
           </Link>
+          <Link to="/blackjack" className="game-link">
+            Blackjack
+          </Link>
           <Link to="/leaderboard" className="game-link">
             🏆 Leaderboard
           </Link>
