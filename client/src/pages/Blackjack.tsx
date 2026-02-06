@@ -244,7 +244,6 @@ export default function Blackjack() {
 
         setGameState("GAME_OVER");
         setShowModal(true);
-        setTimeout(() => setShowModal(false), 4000);
       }, 2000);
     },
     [walletAddWinnings],
@@ -537,6 +536,36 @@ export default function Blackjack() {
   const displayBet = gameState === "BETTING" ? stagedBet : totalBetInPlay;
   const availableForBet = (wallet ?? 0) - stagedBet;
 
+  // Viewport-based scaling for responsive layout
+  const [gameScale, setGameScale] = useState(1);
+
+  useEffect(() => {
+    const calculateScale = () => {
+      // Base dimensions the game was designed for
+      const baseWidth = 1000;
+      const baseHeight = 850;
+
+      // Available viewport space (accounting for padding)
+      const availableWidth = window.innerWidth - 40;
+      const availableHeight = window.innerHeight - 40;
+
+      // Calculate scale to fit in both dimensions
+      const scaleX = availableWidth / baseWidth;
+      const scaleY = availableHeight / baseHeight;
+
+      // Use the smaller scale to ensure everything fits
+      // Clamp between 0.5 (minimum readable) and 1.0 (maximum)
+      const optimalScale = Math.min(scaleX, scaleY, 1.0);
+      const clampedScale = Math.max(optimalScale, 0.5);
+
+      setGameScale(clampedScale);
+    };
+
+    calculateScale();
+    window.addEventListener("resize", calculateScale);
+    return () => window.removeEventListener("resize", calculateScale);
+  }, []);
+
   // ─── Render ───────────────────────────────────────────
 
   if (walletLoading) {
@@ -550,10 +579,25 @@ export default function Blackjack() {
   }
 
   return (
-    <div className="game-container" style={{ height: "100vh", display: "flex", flexDirection: "column", padding: "10px" }}>
-      {/* Home Button */}
+    <div className="game-container" style={{ height: "100vh", display: "flex", flexDirection: "column", padding: "10px", overflow: "hidden" }}>
+      {/* Home Button - Outside scaled area */}
       <button className="home-btn" onClick={() => navigate("/")}>🏠 HOME</button>
       <div className="bg-decoration" />
+
+      {/* Scaled Game Content */}
+      <div
+        className="scaled-game-wrapper"
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          transform: `scale(${gameScale})`,
+          transformOrigin: "top center",
+          width: "1000px",
+          margin: "0 auto",
+          minHeight: "850px",
+        }}
+      >
 
       {/* Header */}
       <header className="game-header" style={{ marginBottom: "10px", flexShrink: 0 }}>
@@ -695,23 +739,76 @@ export default function Blackjack() {
       </div>
 
       {/* Game Over Modal */}
-      <div className={`modal-overlay ${gameState === "GAME_OVER" && showModal ? "visible" : ""}`}>
-        <div className="modal">
+      <div className={`bj-modal-overlay ${gameState === "GAME_OVER" && showModal ? "visible" : ""}`}>
+        <div className="bj-result-modal">
           <div className="modal-icon">
             {msg.type === "win" ? "🎉" : msg.type === "bad" ? "😔" : "🤝"}
           </div>
-          <h2 style={{
-            color:
-              msg.type === "win" ? "var(--retro-green)" :
-              msg.type === "bad" ? "var(--retro-red)" :
-              "var(--retro-yellow)",
-          }}>
+          <h2 className={`result-title ${msg.type}`}>
             {msg.text}
           </h2>
+          
+          {/* Hand Summary */}
+          <div className="hand-summary">
+            {/* Dealer Hand */}
+            <div className="summary-section dealer-summary">
+              <div className="summary-label">Dealer</div>
+              <div className="summary-cards">
+                {dealerHand.map((card, i) => (
+                  <BJCard key={`modal-d-${i}`} card={card} />
+                ))}
+              </div>
+              <div className="summary-score">
+                Score: {calculateScore(dealerHand)}
+              </div>
+            </div>
+            
+            {/* VS Divider */}
+            <div className="vs-divider">VS</div>
+            
+            {/* Player Hand(s) */}
+            <div className="summary-section player-summary">
+              <div className="summary-label">Player</div>
+              {playerHands.length === 1 ? (
+                <>
+                  <div className="summary-cards">
+                    {playerHands[0].cards.map((card, i) => (
+                      <BJCard key={`modal-p-${i}`} card={card} />
+                    ))}
+                  </div>
+                  <div className="summary-score">
+                    Score: {calculateScore(playerHands[0].cards)}
+                    {playerHands[0].status === "blackjack" && " ⭐ Blackjack!"}
+                    {playerHands[0].status === "bust" && " 💥 Bust"}
+                  </div>
+                </>
+              ) : (
+                <div className="split-hands-summary">
+                  {playerHands.map((hand, idx) => (
+                    <div key={`modal-split-${idx}`} className="split-hand">
+                      <div className="split-label">Hand {idx + 1}</div>
+                      <div className="summary-cards split-cards">
+                        {hand.cards.map((card, i) => (
+                          <BJCard key={`modal-s-${idx}-${i}`} card={card} />
+                        ))}
+                      </div>
+                      <div className="summary-score">
+                        {calculateScore(hand.cards)}
+                        {hand.status === "blackjack" && " ⭐"}
+                        {hand.status === "bust" && " 💥"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
           <div className="modal-buttons">
             <button className="play-again-btn" onClick={resetHand}>New Hand</button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Blackjack Styles */}
@@ -1010,6 +1107,234 @@ export default function Blackjack() {
           .player-area { min-height: 150px; }
           .game-header h1 { font-size: 1.5rem; }
           .action-btn { padding: 10px 15px; font-size: 0.6rem; }
+        }
+
+        /* Scaled wrapper adjustments */
+        .scaled-game-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+        }
+
+        /* Ensure game container handles scaled content properly */
+        .game-container {
+          position: relative;
+          overflow: auto;
+        }
+
+        /* Popup-style Modal (not full screen) */
+        .bj-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(15, 15, 35, 0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 50000;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.2s steps(4);
+          padding: 20px;
+        }
+
+        .bj-modal-overlay.visible {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+        }
+
+        .bj-result-modal {
+          background: var(--bg-secondary);
+          padding: 25px 30px;
+          text-align: center;
+          border: var(--pixel-border) var(--retro-cyan);
+          box-shadow:
+            8px 8px 0px var(--retro-magenta),
+            0 0 50px rgba(0, 255, 247, 0.3);
+          max-width: 600px;
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          transform: scale(0.8);
+          transition: transform 0.2s steps(4);
+        }
+
+        .bj-modal-overlay.visible .bj-result-modal {
+          transform: scale(1);
+        }
+
+        .bj-result-modal .modal-icon {
+          font-size: 2.5rem;
+          margin-bottom: 10px;
+          animation: bounce 0.5s steps(4) infinite alternate;
+        }
+
+        .bj-result-modal .result-title {
+          font-family: "Press Start 2P", cursive;
+          font-size: 1rem;
+          margin-bottom: 20px;
+          text-shadow: 3px 3px 0px var(--retro-magenta);
+        }
+
+        .bj-result-modal .result-title.win {
+          color: var(--retro-green);
+        }
+
+        .bj-result-modal .result-title.bad {
+          color: var(--retro-red);
+        }
+
+        .bj-result-modal .result-title.neutral {
+          color: var(--retro-yellow);
+        }
+
+        /* Hand Summary Styles */
+        .hand-summary {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-bottom: 20px;
+          padding: 15px;
+          background: rgba(0, 0, 0, 0.3);
+          border: 2px solid var(--retro-purple);
+        }
+
+        .summary-section {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .summary-label {
+          font-family: "Press Start 2P", cursive;
+          font-size: 0.6rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .summary-cards {
+          display: flex;
+          justify-content: center;
+          gap: 5px;
+          flex-wrap: wrap;
+        }
+
+        .summary-cards .bj-card {
+          width: 50px;
+          height: 70px;
+          margin-left: -15px;
+        }
+
+        .summary-cards .bj-card:first-child {
+          margin-left: 0;
+        }
+
+        /* Scale down card content for modal display */
+        .summary-cards .bj-card .card-front {
+          padding: 3px;
+          border-width: 2px;
+          box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .summary-cards .bj-card .card-value {
+          font-size: 0.4rem;
+        }
+
+        .summary-cards .bj-card .card-suit-small {
+          font-size: 0.55rem;
+          margin-top: 1px;
+        }
+
+        .summary-cards .bj-card .card-center {
+          font-size: 1.4rem;
+        }
+
+        .summary-score {
+          font-family: "Press Start 2P", cursive;
+          font-size: 0.6rem;
+          color: var(--retro-yellow);
+          padding: 5px 10px;
+          background: var(--bg-primary);
+          border: 2px solid var(--retro-cyan);
+        }
+
+        .vs-divider {
+          font-family: "Press Start 2P", cursive;
+          font-size: 0.7rem;
+          color: var(--retro-magenta);
+          padding: 5px 0;
+          border-top: 2px dashed var(--text-secondary);
+          border-bottom: 2px dashed var(--text-secondary);
+        }
+
+        .split-hands-summary {
+          display: flex;
+          gap: 15px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .split-hand {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+          padding: 8px;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--text-secondary);
+        }
+
+        .split-label {
+          font-family: "Press Start 2P", cursive;
+          font-size: 0.45rem;
+          color: var(--retro-cyan);
+        }
+
+        .split-cards .bj-card {
+          width: 40px;
+          height: 56px;
+          margin-left: -12px;
+        }
+
+        /* Scale down split card content even smaller */
+        .split-cards .bj-card .card-front {
+          padding: 2px;
+          border-width: 2px;
+          box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .split-cards .bj-card .card-value {
+          font-size: 0.35rem;
+        }
+
+        .split-cards .bj-card .card-suit-small {
+          font-size: 0.45rem;
+          margin-top: 0px;
+        }
+
+        .split-cards .bj-card .card-center {
+          font-size: 1.1rem;
+        }
+
+        .bj-result-modal .modal-buttons {
+          margin-top: 15px;
+        }
+
+        .bj-result-modal .play-again-btn {
+          padding: 12px 30px;
+          font-size: 0.65rem;
+        }
+
+        @keyframes bounce {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-10px); }
         }
       `}</style>
     </div>

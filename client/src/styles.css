@@ -1769,6 +1769,7 @@ body::before {
   border-color: var(--text-secondary);
   box-shadow: 3px 3px 0px rgba(128, 128, 128, 0.3);
   opacity: 0.9;
+  z-index: 1000;
 }
 
 .settings-hint:hover {
@@ -2185,11 +2186,17 @@ body.reduce-motion * {
 .settings-modal {
   background: var(--bg-secondary);
   border: 4px solid var(--retro-cyan);
-  box-shadow: 8px 8px 0px var(--retro-magenta);
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
+  position: relative;
+}
+
+/* Remove decorative corner pseudo-elements */
+.settings-modal::before,
+.settings-modal::after {
+  display: none;
 }
 
 .settings-header {

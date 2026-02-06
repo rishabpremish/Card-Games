@@ -354,7 +354,7 @@ function GameOverModal({
         <p>
           {isWin
             ? "You've made it through the entire deck!"
-            : "All stacks are locked. Better luck next time!"}
+            : "All stacks are locked. You keep 35% of your stake!"}
         </p>
 
         <div className="modal-stats">
@@ -690,12 +690,18 @@ export default function HigherLowerGame() {
     (currentDeck: Card[], currentGrid: Stack[]) => {
       const activeStacks = currentGrid.filter((s) => !s.locked).length;
 
-      // Lose: no active stacks but cards remain
+      // Lose: no active stacks but cards remain - Partial loss: keep 35%
       if (activeStacks === 0 && currentDeck.length > 0) {
         setGameOver(true);
         setIsWin(false);
-        // Player loses their gambling stake
+        // Player keeps 35% of stake on soft loss (game over without wrong guess)
         if (isActive()) {
+          const finalPayout = Math.floor(gamblingStake * 0.35 * 100) / 100;
+          if (finalPayout > 0) {
+            addWinnings(finalPayout, "Higher-Lower").catch((error) => {
+              console.error("Failed to add partial winnings:", error);
+            });
+          }
           setGamblingStake(0);
           setShowCashOut(false);
           resetGame();
@@ -722,12 +728,18 @@ export default function HigherLowerGame() {
         return;
       }
 
-      // Lose: deck empty and no active stacks
+      // Lose: deck empty and no active stacks - Partial loss: keep 35%
       if (currentDeck.length === 0 && activeStacks === 0) {
         setGameOver(true);
         setIsWin(false);
-        // Player loses their gambling stake
+        // Player keeps 35% of stake on soft loss (game over without wrong guess)
         if (isActive()) {
+          const finalPayout = Math.floor(gamblingStake * 0.35 * 100) / 100;
+          if (finalPayout > 0) {
+            addWinnings(finalPayout, "Higher-Lower").catch((error) => {
+              console.error("Failed to add partial winnings:", error);
+            });
+          }
           setGamblingStake(0);
           setShowCashOut(false);
           resetGame();
@@ -932,11 +944,15 @@ export default function HigherLowerGame() {
       // Update stake display
       setGamblingStake(gamblingResult.newStake);
 
-      // If lost or tied (and not pushed), hide cash out and mark bet as lost
+      // Partial loss system: only end game if stake is depleted
       if (gamblingResult.result === "loss" || gamblingResult.result === "tie") {
-        setShowCashOut(false);
-        setCurrentBet(0);
-        setHasLostBet(true);
+        if (gamblingResult.newStake < 0.01) {
+          // Stake depleted - game over
+          setShowCashOut(false);
+          setCurrentBet(0);
+          setHasLostBet(true);
+        }
+        // If stake remains, game continues - player can cash out reduced amount
       }
     }
 

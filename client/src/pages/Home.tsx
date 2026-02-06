@@ -101,11 +101,7 @@ export default function Home() {
       </div>
 
       {/* Settings modal accessible from home */}
-      <div
-        style={{ position: "fixed", bottom: "20px", left: "20px", zIndex: 120 }}
-      >
-        <Settings />
-      </div>
+      <Settings />
     </div>
   );
 }

@@ -100,6 +100,7 @@ export const getHistoricalLeaderboards = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 10;
+    const currentWeekStart = getWeekStart(new Date());
 
     // Get unique weeks (ordered by most recent)
     const allEntries = await ctx.db
@@ -110,6 +111,12 @@ export const getHistoricalLeaderboards = query({
     // Group by week
     const weekMap = new Map<number, any[]>();
     for (const entry of allEntries) {
+      // Skip current week - it should only appear as "Current Week" option
+      // Normalize both timestamps to ensure proper comparison
+      const entryWeekStart = getWeekStart(new Date(entry.weekStart));
+      if (entryWeekStart === currentWeekStart) {
+        continue;
+      }
       if (!weekMap.has(entry.weekStart)) {
         weekMap.set(entry.weekStart, []);
       }
