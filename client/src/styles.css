@@ -1386,7 +1386,7 @@ body::before {
 .current-balance {
   font-family: "Press Start 2P", cursive;
   font-size: 0.9rem;
-  color: #ffd700;
+  color: var(--retro-yellow);
   text-align: center;
 }
 
@@ -1405,7 +1405,7 @@ body::before {
 
 .currency-symbol {
   font-family: "Press Start 2P", cursive;
-  color: #ffd700;
+  color: var(--retro-yellow);
   font-size: 1.2rem;
 }
 
@@ -1433,7 +1433,7 @@ body::before {
 .bet-slider {
   width: 100%;
   height: 10px;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   outline: none;
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -1571,6 +1571,66 @@ body::before {
 .place-bet-btn:active {
   box-shadow: 1px 1px 0px rgba(255, 0, 255, 0.2);
   transform: translate(1px, 1px);
+}
+
+.place-bet-btn.disabled,
+.place-bet-btn:disabled {
+  background: #555;
+  border-color: #666;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.place-bet-btn.disabled:hover,
+.place-bet-btn:disabled:hover {
+  background: #555;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Forfeit Confirm Modal */
+.forfeit-modal {
+  min-width: 400px;
+  max-width: 480px;
+}
+
+.forfeit-modal p {
+  color: var(--retro-cyan);
+  font-size: 0.7rem;
+  line-height: 1.8;
+}
+
+.forfeit-modal p strong {
+  color: var(--retro-yellow);
+}
+
+.forfeit-confirm-yes {
+  background: var(--retro-red) !important;
+  border-color: #cc0000 !important;
+}
+
+.forfeit-confirm-yes:hover {
+  background: #ff4444 !important;
+}
+
+.forfeit-confirm-no {
+  background: transparent !important;
+  color: var(--retro-cyan) !important;
+  border-color: var(--retro-cyan) !important;
+}
+
+.forfeit-confirm-no:hover {
+  background: rgba(0, 255, 247, 0.1) !important;
+}
+
+@media (max-width: 600px) {
+  .forfeit-modal {
+    min-width: 90%;
+    max-width: 95%;
+    padding: 30px 20px;
+  }
 }
 
 .restart-bet-btn {

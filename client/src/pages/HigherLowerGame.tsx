@@ -150,6 +150,7 @@ function CardStack({
   onHover,
   dealing = false,
   shaking = false,
+  disabled = false,
 }: {
   stack: Stack;
   index: number;
@@ -158,6 +159,7 @@ function CardStack({
   onHover?: () => void;
   dealing?: boolean;
   shaking?: boolean;
+  disabled?: boolean;
 }) {
   const cardsToShow = Math.min(stack.cards.length, 3);
   const stackClasses = ["card-stack"];
@@ -179,8 +181,8 @@ function CardStack({
             card={card}
             isLocked={stack.locked}
             isTopCard={isTopCard}
-            onHigher={!stack.locked ? onHigher : undefined}
-            onLower={!stack.locked ? onLower : undefined}
+            onHigher={!stack.locked && !disabled ? onHigher : undefined}
+            onLower={!stack.locked && !disabled ? onLower : undefined}
             dealing={dealing && isTopCard}
             dealDelay={index * 0.1}
           />
@@ -205,6 +207,12 @@ function FlyingCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const completedRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+  // Use a ref for onComplete to avoid restarting the animation when the
+  // parent re-renders and produces a new callback identity.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -235,7 +243,7 @@ function FlyingCard({
         animationFrameRef.current = requestAnimationFrame(animate);
       } else if (!completedRef.current) {
         completedRef.current = true;
-        onComplete();
+        onCompleteRef.current();
       }
     };
 
@@ -247,7 +255,8 @@ function FlyingCard({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [startPos, endPos, onComplete]);
+    // Only restart animation when positions change, NOT when onComplete changes
+  }, [startPos, endPos]);
 
   return (
     <div
@@ -381,6 +390,49 @@ function GameOverModal({
               View Game
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Forfeit Confirm Modal component
+function ForfeitConfirmModal({
+  stake,
+  onConfirm,
+  onCancel,
+  visible,
+}: {
+  stake: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+  visible: boolean;
+}) {
+  return (
+    <div className={`modal-overlay ${visible ? "visible" : ""}`}>
+      <div className="modal forfeit-modal">
+        <div className="modal-icon">⚠️</div>
+        <h2>Forfeit Game?</h2>
+        <p>
+          You have an active bet! Starting a new game will forfeit your current
+          stake of <strong>${stake.toFixed(2)}</strong>.
+        </p>
+        <p style={{ color: "var(--retro-yellow)", marginTop: "10px" }}>
+          Are you sure?
+        </p>
+        <div className="modal-buttons">
+          <button
+            className="play-again-btn forfeit-confirm-yes"
+            onClick={onConfirm}
+          >
+            YES, FORFEIT
+          </button>
+          <button
+            className="close-modal-btn forfeit-confirm-no"
+            onClick={onCancel}
+          >
+            CANCEL
+          </button>
         </div>
       </div>
     </div>
@@ -537,11 +589,13 @@ export default function HigherLowerGame() {
     restored?.showGameOverModal ?? false,
   );
   const [showBettingModal, setShowBettingModal] = useState(false);
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   // Flying card animation
   const flightIdRef = useRef(0);
   const processedFlightIdRef = useRef<number | null>(null);
+  const flyingCardRef = useRef<boolean>(false);
 
   const [flyingCard, setFlyingCard] = useState<{
     card: Card;
@@ -551,6 +605,8 @@ export default function HigherLowerGame() {
     choice: "higher" | "lower";
     isCorrect: boolean;
     flightId: number;
+    multiplier: number;
+    currentCardValue: number;
   } | null>(null);
 
   // Save game state to sessionStorage on changes
@@ -689,13 +745,14 @@ export default function HigherLowerGame() {
         return;
       }
 
+      // Check flying card ref (synchronous, avoids stale closure)
+      if (flyingCardRef.current) {
+        processingRef.current = false;
+        return;
+      }
+
       // Validation checks
-      if (
-        gameOver ||
-        grid[stackIndex].locked ||
-        deck.length === 0 ||
-        flyingCard !== null
-      ) {
+      if (gameOver || grid[stackIndex].locked || deck.length === 0) {
         processingRef.current = false; // release on invalid state
         return;
       }
@@ -706,34 +763,26 @@ export default function HigherLowerGame() {
       const currentCard =
         grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
 
-      // Atomically capture and pop the card using functional update
-      let drawnCard: Card | null = null;
-      setDeck((prevDeck) => {
-        if (prevDeck.length === 0) return prevDeck; // safety
-        drawnCard = prevDeck[prevDeck.length - 1];
-        return prevDeck.slice(0, -1);
-      });
-
-      // If no card was captured, abort
-      if (!drawnCard) {
-        processingRef.current = false;
-        setIsProcessing(false);
-        return;
-      }
+      // Read the top card directly from the deck (deck is current via
+      // useCallback deps). Do NOT try to capture it inside a setState
+      // updater — React 18 defers updater execution to the render phase,
+      // so the captured variable would still be null here.
+      const drawnCard = deck[deck.length - 1];
+      setDeck((prev) => prev.slice(0, -1));
 
       // Determine if correct (equal values count as correct - "pushed")
       const pushedAllowed = localStorage.getItem("pushed") !== "false";
       let isCorrect = false;
       if (choice === "higher") {
         isCorrect =
-          drawnCard!.numericValue > currentCard.numericValue ||
+          drawnCard.numericValue > currentCard.numericValue ||
           (pushedAllowed &&
-            drawnCard!.numericValue === currentCard.numericValue);
+            drawnCard.numericValue === currentCard.numericValue);
       } else {
         isCorrect =
-          drawnCard!.numericValue < currentCard.numericValue ||
+          drawnCard.numericValue < currentCard.numericValue ||
           (pushedAllowed &&
-            drawnCard!.numericValue === currentCard.numericValue);
+            drawnCard.numericValue === currentCard.numericValue);
       }
 
       // Get positions for animation
@@ -741,8 +790,13 @@ export default function HigherLowerGame() {
       const stackEl = gridRef.current?.children[stackIndex] as HTMLElement;
       const stackRect = stackEl?.getBoundingClientRect();
 
-      if (deckRect && stackRect && drawnCard) {
+      if (deckRect && stackRect) {
         const flightId = ++flightIdRef.current;
+        // Capture the multiplier at click time so it stays correct even if
+        // the user hovers a different stack during the animation.
+        const usedMultiplier =
+          choice === "higher" ? multipliers.higher : multipliers.lower;
+        flyingCardRef.current = true;
         setFlyingCard({
           card: drawnCard,
           startPos: { x: deckRect.left, y: deckRect.top },
@@ -751,15 +805,34 @@ export default function HigherLowerGame() {
           choice,
           isCorrect,
           flightId,
+          multiplier: usedMultiplier,
+          currentCardValue: currentCard.numericValue,
         });
         processedFlightIdRef.current = null;
       } else {
-        // Safety: release processing lock if animation cannot start
+        // No animation possible — apply card placement immediately
+        if (isCorrect) {
+          setGrid((prev) => {
+            const newGrid = [...prev];
+            newGrid[stackIndex] = {
+              ...newGrid[stackIndex],
+              cards: [...newGrid[stackIndex].cards, drawnCard],
+            };
+            return newGrid;
+          });
+          setCardsPlaced((prev) => prev + 1);
+        } else {
+          setGrid((prev) => {
+            const newGrid = [...prev];
+            newGrid[stackIndex] = { ...newGrid[stackIndex], locked: true };
+            return newGrid;
+          });
+        }
         processingRef.current = false;
         setIsProcessing(false);
       }
     },
-    [gameOver, grid, deck, flyingCard],
+    [gameOver, grid, deck],
   );
 
   // Handle flying card animation complete
@@ -769,7 +842,15 @@ export default function HigherLowerGame() {
       return;
     }
 
-    const { stackIndex, isCorrect, card, choice, flightId } = flyingCard;
+    const {
+      stackIndex,
+      isCorrect,
+      card,
+      choice,
+      flightId,
+      multiplier,
+      currentCardValue,
+    } = flyingCard;
 
     // Ignore duplicate completions for the same flight (can happen in StrictMode replays)
     if (processedFlightIdRef.current === flightId) {
@@ -781,19 +862,14 @@ export default function HigherLowerGame() {
     // Deck was already popped in handleChoice — do NOT pop again here
 
     // Process through gambling logic if active
-    let gamblingResult = null;
     if (isActive() && currentBet > 0) {
-      const currentCard =
-        grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
-      const usedMultiplier =
-        choice === "higher" ? multipliers.higher : multipliers.lower;
       const pushedAllowed = localStorage.getItem("pushed") !== "false";
 
-      gamblingResult = processResult(
+      const gamblingResult = processResult(
         choice,
-        currentCard.numericValue,
+        currentCardValue,
         card.numericValue,
-        usedMultiplier,
+        multiplier,
         pushedAllowed,
       );
 
@@ -827,6 +903,7 @@ export default function HigherLowerGame() {
       setTimeout(() => setShakingStack(null), 300);
     }
 
+    flyingCardRef.current = false;
     setFlyingCard(null);
     setIsProcessing(false);
     processingRef.current = false;
@@ -841,7 +918,7 @@ export default function HigherLowerGame() {
         return currentDeck;
       });
     }, 50);
-  }, [flyingCard, checkGameOver, grid, currentBet, multipliers]);
+  }, [flyingCard, checkGameOver, currentBet]);
 
   // Handle place bet
   const handlePlaceBet = async (amount: number) => {
@@ -954,11 +1031,16 @@ export default function HigherLowerGame() {
     const hasActiveBet = isActive() && gamblingStake > 0;
 
     if (hasActiveBet) {
-      const confirmForfeit = window.confirm(
-        "You have an active bet! Starting a new game will forfeit your current stake. Are you sure?",
-      );
-      if (!confirmForfeit) return;
+      setShowForfeitConfirm(true);
+      return;
     }
+
+    // No active bet — just restart
+    doForfeitRestart();
+  };
+
+  const doForfeitRestart = () => {
+    setShowForfeitConfirm(false);
 
     // Reset game and betting state
     setCurrentBet(0);
@@ -1108,6 +1190,7 @@ export default function HigherLowerGame() {
                 onHover={() => calculateMultipliers(index)}
                 dealing={dealing}
                 shaking={shakingStack === index}
+                disabled={flyingCard !== null}
               />
             ))}
           </div>
@@ -1150,10 +1233,11 @@ export default function HigherLowerGame() {
       {/* Place Bet / Restart Betting */}
       {!hasCashedOut ? (
         <button
-          className="place-bet-btn"
-          onClick={() => setShowBettingModal(true)}
+          className={`place-bet-btn${showCashOut ? " disabled" : ""}`}
+          onClick={() => !showCashOut && setShowBettingModal(true)}
+          disabled={showCashOut}
         >
-          PLACE BET
+          {showCashOut ? "ACTIVE BET" : "PLACE BET"}
         </button>
       ) : (
         <button className="restart-bet-btn" onClick={handleRestartAfterCashOut}>
@@ -1194,6 +1278,14 @@ export default function HigherLowerGame() {
         onClose={() => setShowGameOverModal(false)}
         onReveal={handleReveal}
         visible={showGameOverModal}
+      />
+
+      {/* Forfeit Confirm Modal */}
+      <ForfeitConfirmModal
+        stake={gamblingStake}
+        onConfirm={doForfeitRestart}
+        onCancel={() => setShowForfeitConfirm(false)}
+        visible={showForfeitConfirm}
       />
     </div>
   );
