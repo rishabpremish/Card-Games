@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Types
 interface Card {
@@ -11,21 +11,35 @@ interface Card {
 interface PlayerHand {
   cards: Card[];
   bet: number;
-  status: 'playing' | 'stood' | 'bust' | 'blackjack';
+  status: "playing" | "stood" | "bust" | "blackjack";
 }
 
 // Constants
-const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
-const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const SUITS = ["hearts", "diamonds", "clubs", "spades"];
+const RANKS = [
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+  "A",
+];
 
 // Create deck
 function createDeck(): Card[] {
   const deck: Card[] = [];
-  SUITS.forEach(suit => {
-    RANKS.forEach(rank => {
+  SUITS.forEach((suit) => {
+    RANKS.forEach((rank) => {
       let value = parseInt(rank);
-      if (['J', 'Q', 'K'].includes(rank)) value = 10;
-      if (rank === 'A') value = 11;
+      if (["J", "Q", "K"].includes(rank)) value = 10;
+      if (rank === "A") value = 11;
       deck.push({ suit, rank, value });
     });
   });
@@ -46,10 +60,10 @@ function shuffleDeck(deck: Card[]): Card[] {
 function calculateScore(cards: Card[]): number {
   let score = 0;
   let aces = 0;
-  
-  cards.forEach(card => {
+
+  cards.forEach((card) => {
     score += card.value;
-    if (card.rank === 'A') aces++;
+    if (card.rank === "A") aces++;
   });
 
   while (score > 21 && aces > 0) {
@@ -61,22 +75,27 @@ function calculateScore(cards: Card[]): number {
 
 // Get suit symbol
 function getSuitSymbol(suit: string): string {
-  switch(suit) {
-    case 'hearts': return '♥';
-    case 'diamonds': return '♦';
-    case 'clubs': return '♣';
-    case 'spades': return '♠';
-    default: return '';
+  switch (suit) {
+    case "hearts":
+      return "♥";
+    case "diamonds":
+      return "♦";
+    case "clubs":
+      return "♣";
+    case "spades":
+      return "♠";
+    default:
+      return "";
   }
 }
 
 // Card Component
 function BJCard({ card, hidden = false }: { card: Card; hidden?: boolean }) {
-  const isRed = ['hearts', 'diamonds'].includes(card.suit);
-  
+  const isRed = ["hearts", "diamonds"].includes(card.suit);
+
   return (
-    <div className={`bj-card ${hidden ? 'hidden' : ''}`}>
-      <div className={`card-front ${isRed ? 'red' : 'black'}`}>
+    <div className={`bj-card ${hidden ? "hidden" : ""}`}>
+      <div className={`card-front ${isRed ? "red" : "black"}`}>
         <div className="card-corner top">
           <span className="card-value">{card.rank}</span>
           <span className="card-suit-small">{getSuitSymbol(card.suit)}</span>
@@ -93,11 +112,19 @@ function BJCard({ card, hidden = false }: { card: Card; hidden?: boolean }) {
 }
 
 // Chip Component
-function Chip({ value, onClick, disabled = false }: { value: number | string; onClick: () => void; disabled?: boolean }) {
-  const valueClass = value === 'ALL' ? 'c-max' : `c-${value}`;
+function Chip({
+  value,
+  onClick,
+  disabled = false,
+}: {
+  value: number | string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const valueClass = value === "ALL" ? "c-max" : `c-${value}`;
   return (
-    <div 
-      className={`chip ${valueClass} ${disabled ? 'disabled' : ''}`}
+    <div
+      className={`chip ${valueClass} ${disabled ? "disabled" : ""}`}
       onClick={disabled ? undefined : onClick}
     >
       {value}
@@ -106,32 +133,39 @@ function Chip({ value, onClick, disabled = false }: { value: number | string; on
 }
 
 // Game Over Modal
-function GameOverModal({ 
-  message, 
-  type, 
-  onNewHand, 
-  visible 
-}: { 
-  message: string; 
-  type: 'win' | 'bad' | 'neutral';
+function GameOverModal({
+  message,
+  type,
+  onNewHand,
+  visible,
+}: {
+  message: string;
+  type: "win" | "bad" | "neutral";
   onNewHand: () => void;
   visible: boolean;
 }) {
   const getColor = () => {
-    switch(type) {
-      case 'win': return 'var(--retro-green)';
-      case 'bad': return 'var(--retro-red)';
-      default: return 'var(--retro-yellow)';
+    switch (type) {
+      case "win":
+        return "var(--retro-green)";
+      case "bad":
+        return "var(--retro-red)";
+      default:
+        return "var(--retro-yellow)";
     }
   };
 
   return (
-    <div className={`modal-overlay ${visible ? 'visible' : ''}`}>
+    <div className={`modal-overlay ${visible ? "visible" : ""}`}>
       <div className="modal">
-        <div className="modal-icon">{type === 'win' ? '🎉' : type === 'bad' ? '😔' : '🤝'}</div>
+        <div className="modal-icon">
+          {type === "win" ? "🎉" : type === "bad" ? "😔" : "🤝"}
+        </div>
         <h2 style={{ color: getColor() }}>{message}</h2>
         <div className="modal-buttons">
-          <button className="play-again-btn" onClick={onNewHand}>New Hand</button>
+          <button className="play-again-btn" onClick={onNewHand}>
+            New Hand
+          </button>
         </div>
       </div>
     </div>
@@ -141,28 +175,32 @@ function GameOverModal({
 // Main Game Component
 export default function Blackjack() {
   const navigate = useNavigate();
-  
+
   // Game state
   const [deck, setDeck] = useState<Card[]>([]);
   const [dealerHand, setDealerHand] = useState<Card[]>([]);
   const [playerHands, setPlayerHands] = useState<PlayerHand[]>([]);
   const [currentHandIndex, setCurrentHandIndex] = useState(0);
-  const [gameState, setGameState] = useState<'BETTING' | 'PLAYING' | 'DEALER_TURN' | 'GAME_OVER'>('BETTING');
+  const [gameState, setGameState] = useState<
+    "BETTING" | "PLAYING" | "DEALER_TURN" | "GAME_OVER"
+  >("BETTING");
   const [currentBet, setCurrentBet] = useState(0);
   const [baseBet, setBaseBet] = useState(0);
-  const [betHistory, setBetHistory] = useState<number[]>([]); // Track individual bets for undo
-  const [message, setMessage] = useState({ text: '', type: 'neutral' as 'win' | 'bad' | 'neutral' });
+  const [message, setMessage] = useState({
+    text: "",
+    type: "neutral" as "win" | "bad" | "neutral",
+  });
   const [showMessage, setShowMessage] = useState(false);
-  
+
   // Wallet state
   const [wallet, setWallet] = useState(() => {
-    const saved = localStorage.getItem('gameWallet');
+    const saved = localStorage.getItem("gameWallet");
     return saved ? parseInt(saved) : 1000;
   });
 
   // Save wallet to localStorage
   useEffect(() => {
-    localStorage.setItem('gameWallet', wallet.toString());
+    localStorage.setItem("gameWallet", wallet.toString());
   }, [wallet]);
 
   // Initialize new deck
@@ -172,13 +210,12 @@ export default function Blackjack() {
 
   // Start new hand
   const resetGame = useCallback(() => {
-    setGameState('BETTING');
+    setGameState("BETTING");
     setDealerHand([]);
     setPlayerHands([]);
     setCurrentHandIndex(0);
     setCurrentBet(0);
     setBaseBet(0);
-    setBetHistory([]);
     setShowMessage(false);
     initDeck();
   }, [initDeck]);
@@ -189,262 +226,37 @@ export default function Blackjack() {
   }, [initDeck]);
 
   // Place bet
-  const placeBet = useCallback((amount: number) => {
-    if (gameState !== 'BETTING') return;
-    if (wallet >= amount) {
-      setWallet(prev => prev - amount);
-      setCurrentBet(prev => prev + amount);
-      setBaseBet(prev => prev + amount);
-      setBetHistory(prev => [...prev, amount]);
-    }
-  }, [gameState, wallet]);
+  const placeBet = useCallback(
+    (amount: number) => {
+      if (gameState !== "BETTING") return;
+      if (wallet >= amount) {
+        setWallet((prev) => prev - amount);
+        setCurrentBet((prev) => prev + amount);
+        setBaseBet((prev) => prev + amount);
+      }
+    },
+    [gameState, wallet],
+  );
 
   // Clear bet
   const clearBet = useCallback(() => {
-    if (gameState !== 'BETTING') return;
-    setWallet(prev => prev + currentBet);
+    if (gameState !== "BETTING") return;
+    setWallet((prev) => prev + currentBet);
     setCurrentBet(0);
     setBaseBet(0);
-    setBetHistory([]);
   }, [gameState, currentBet]);
-
-  // Undo last bet
-  const undoBet = useCallback(() => {
-    if (gameState !== 'BETTING' || betHistory.length === 0) return;
-    const lastBet = betHistory[betHistory.length - 1];
-    setWallet(prev => prev + lastBet);
-    setCurrentBet(prev => prev - lastBet);
-    setBaseBet(prev => prev - lastBet);
-    setBetHistory(prev => prev.slice(0, -1));
-  }, [gameState, betHistory]);
-
-  // Deal initial cards
-  const dealInitial = useCallback(() => {
-    if (currentBet === 0) return;
-    
-    const newDeck = shuffleDeck(createDeck());
-    
-    const hand: PlayerHand = {
-      cards: [newDeck.pop()!, newDeck.pop()!],
-      bet: baseBet || currentBet,
-      status: 'playing'
-    };
-    
-    const dHand = [newDeck.pop()!, newDeck.pop()!];
-    
-    setDeck(newDeck);
-    setPlayerHands([hand]);
-    setDealerHand(dHand);
-    setGameState('PLAYING');
-    setCurrentHandIndex(0);
-
-    // Check for blackjack
-    const pScore = calculateScore(hand.cards);
-    if (pScore === 21) {
-      setPlayerHands([{ ...hand, status: 'blackjack' }]);
-      handleGameOver();
-    }
-  }, [currentBet, baseBet]);
-
-  // Hit
-  const hit = useCallback(() => {
-    if (gameState !== 'PLAYING') return;
-    
-    const currentHand = playerHands[currentHandIndex];
-    if (!currentHand) return;
-
-    const newCard = deck[deck.length - 1];
-    const newDeck = deck.slice(0, -1);
-    const newCards = [...currentHand.cards, newCard];
-    const score = calculateScore(newCards);
-    
-    setDeck(newDeck);
-    
-    if (score > 21) {
-      setPlayerHands(prev => {
-        const updated = [...prev];
-        updated[currentHandIndex] = { ...currentHand, cards: newCards, status: 'bust' };
-        return updated;
-      });
-      setMessage({ text: 'BUST!', type: 'bad' });
-      setShowMessage(true);
-      setTimeout(() => setShowMessage(false), 1000);
-      advanceHand();
-    } else if (score === 21) {
-      setPlayerHands(prev => {
-        const updated = [...prev];
-        updated[currentHandIndex] = { ...currentHand, cards: newCards, status: 'stood' };
-        return updated;
-      });
-      stand();
-    } else {
-      setPlayerHands(prev => {
-        const updated = [...prev];
-        updated[currentHandIndex] = { ...currentHand, cards: newCards, status: 'playing' };
-        return updated;
-      });
-    }
-  }, [gameState, playerHands, currentHandIndex, deck]);
-
-  // Stand
-  const stand = useCallback(() => {
-    if (gameState !== 'PLAYING') return;
-    
-    const currentHand = playerHands[currentHandIndex];
-    if (!currentHand || currentHand.status !== 'playing') return;
-
-    setPlayerHands(prev => {
-      const updated = [...prev];
-      updated[currentHandIndex] = { ...currentHand, status: 'stood' };
-      return updated;
-    });
-    
-    advanceHand();
-  }, [gameState, playerHands, currentHandIndex]);
-
-  // Advance to next hand or dealer
-  const advanceHand = useCallback(() => {
-    if (currentHandIndex < playerHands.length - 1) {
-      setCurrentHandIndex(prev => prev + 1);
-    } else {
-      setGameState('DEALER_TURN');
-      setTimeout(() => dealerPlay(), 800);
-    }
-  }, [currentHandIndex, playerHands.length]);
-
-  // Double down
-  const doubleDown = useCallback(() => {
-    if (gameState !== 'PLAYING') return;
-    
-    const currentHand = playerHands[currentHandIndex];
-    if (!currentHand || currentHand.cards.length !== 2) return;
-    if (wallet < currentHand.bet) return;
-
-    setWallet(prev => prev - currentHand.bet);
-    setCurrentBet(prev => prev + currentHand.bet);
-    
-    const newCard = deck[deck.length - 1];
-    const newDeck = deck.slice(0, -1);
-    const newCards = [...currentHand.cards, newCard];
-    const score = calculateScore(newCards);
-    
-    setDeck(newDeck);
-    
-    if (score > 21) {
-      setPlayerHands(prev => {
-        const updated = [...prev];
-        updated[currentHandIndex] = { ...currentHand, cards: newCards, bet: currentHand.bet * 2, status: 'bust' };
-        return updated;
-      });
-      setMessage({ text: 'BUST!', type: 'bad' });
-      setShowMessage(true);
-      setTimeout(() => setShowMessage(false), 1000);
-    } else {
-      setPlayerHands(prev => {
-        const updated = [...prev];
-        updated[currentHandIndex] = { ...currentHand, cards: newCards, bet: currentHand.bet * 2, status: 'stood' };
-        return updated;
-      });
-    }
-    
-    advanceHand();
-  }, [gameState, playerHands, currentHandIndex, deck, wallet]);
-
-  // Split
-  const split = useCallback(() => {
-    if (gameState !== 'PLAYING') return;
-    if (playerHands.length >= 2) return;
-    
-    const currentHand = playerHands[currentHandIndex];
-    if (!currentHand || currentHand.cards.length !== 2) return;
-    
-    const c1 = currentHand.cards[0];
-    const c2 = currentHand.cards[1];
-    const canSplit = (c1.rank === c2.rank) || (c1.value === 10 && c2.value === 10);
-    
-    if (!canSplit) return;
-    if (wallet < currentHand.bet) return;
-
-    setWallet(prev => prev - currentHand.bet);
-    setCurrentBet(prev => prev + currentHand.bet);
-
-    const newCard1 = deck[deck.length - 1];
-    const newCard2 = deck[deck.length - 2];
-    const newDeck = deck.slice(0, -2);
-
-    const hand1: PlayerHand = {
-      cards: [c1, newCard1],
-      bet: currentHand.bet,
-      status: 'playing'
-    };
-    
-    const hand2: PlayerHand = {
-      cards: [c2, newCard2],
-      bet: currentHand.bet,
-      status: 'playing'
-    };
-
-    setDeck(newDeck);
-    setPlayerHands([hand1, hand2]);
-  }, [gameState, playerHands, currentHandIndex, deck, wallet]);
-
-  // Dealer logic - using refs to avoid stale closure issues
-  const dealerHandRef = useRef(dealerHand);
-  const deckRef = useRef(deck);
-  
-  useEffect(() => {
-    dealerHandRef.current = dealerHand;
-  }, [dealerHand]);
-  
-  useEffect(() => {
-    deckRef.current = deck;
-  }, [deck]);
-
-  const dealerPlay = useCallback(() => {
-    const allBusted = playerHands.every(h => h.status === 'bust');
-    
-    if (allBusted) {
-      handleGameOver();
-      return;
-    }
-
-    const currentHand = dealerHandRef.current;
-    const currentDeck = deckRef.current;
-    const score = calculateScore(currentHand);
-    
-    if (score < 17 && currentDeck.length > 0) {
-      const newCard = currentDeck[currentDeck.length - 1];
-      const newHand = [...currentHand, newCard];
-      const newDeck = currentDeck.slice(0, -1);
-      
-      setDealerHand(newHand);
-      setDeck(newDeck);
-      dealerHandRef.current = newHand;
-      deckRef.current = newDeck;
-      
-      // Check again after state updates
-      const newScore = calculateScore(newHand);
-      if (newScore < 17) {
-        setTimeout(() => dealerPlay(), 800);
-      } else {
-        setTimeout(() => handleGameOver(), 800);
-      }
-    } else {
-      handleGameOver();
-    }
-  }, [playerHands, handleGameOver]);
 
   // Handle game over
   const handleGameOver = useCallback(() => {
-    setGameState('GAME_OVER');
+    setGameState("GAME_OVER");
 
     const dScore = calculateScore(dealerHand);
     let totalWin = 0;
     let anyWin = false;
     let anyPush = false;
 
-    playerHands.forEach(hand => {
-      if (hand.status === 'bust') return;
+    playerHands.forEach((hand) => {
+      if (hand.status === "bust") return;
 
       const pScore = calculateScore(hand.cards);
       let win = 0;
@@ -462,31 +274,270 @@ export default function Blackjack() {
       totalWin += win;
     });
 
-    setWallet(prev => prev + totalWin);
+    setWallet((prev) => prev + totalWin);
 
-    let msgText = '';
-    let msgType: 'win' | 'bad' | 'neutral' = 'neutral';
+    let msgText = "";
+    let msgType: "win" | "bad" | "neutral" = "neutral";
 
     if (totalWin === 0) {
-      msgText = 'DEALER WINS';
-      msgType = 'bad';
+      msgText = "DEALER WINS";
+      msgType = "bad";
     } else if (anyWin) {
-      msgText = 'YOU WIN!';
-      msgType = 'win';
+      msgText = "YOU WIN!";
+      msgType = "win";
     } else if (anyPush) {
-      msgText = 'PUSH';
-      msgType = 'neutral';
+      msgText = "PUSH";
+      msgType = "neutral";
     }
 
     setMessage({ text: msgText, type: msgType });
   }, [dealerHand, playerHands]);
 
+  // Deal initial cards
+  const dealInitial = useCallback(() => {
+    if (currentBet === 0) return;
+
+    const newDeck = shuffleDeck(createDeck());
+
+    const hand: PlayerHand = {
+      cards: [newDeck.pop()!, newDeck.pop()!],
+      bet: baseBet || currentBet,
+      status: "playing",
+    };
+
+    const dHand = [newDeck.pop()!, newDeck.pop()!];
+
+    setDeck(newDeck);
+    setPlayerHands([hand]);
+    setDealerHand(dHand);
+    setGameState("PLAYING");
+    setCurrentHandIndex(0);
+
+    // Check for blackjack
+    const pScore = calculateScore(hand.cards);
+    if (pScore === 21) {
+      setPlayerHands([{ ...hand, status: "blackjack" }]);
+      handleGameOver();
+    }
+  }, [currentBet, baseBet]);
+
+  // Hit
+  const hit = useCallback(() => {
+    if (gameState !== "PLAYING") return;
+
+    const currentHand = playerHands[currentHandIndex];
+    if (!currentHand) return;
+
+    const newCard = deck[deck.length - 1];
+    const newDeck = deck.slice(0, -1);
+    const newCards = [...currentHand.cards, newCard];
+    const score = calculateScore(newCards);
+
+    setDeck(newDeck);
+
+    if (score > 21) {
+      setPlayerHands((prev) => {
+        const updated = [...prev];
+        updated[currentHandIndex] = {
+          ...currentHand,
+          cards: newCards,
+          status: "bust",
+        };
+        return updated;
+      });
+      setMessage({ text: "BUST!", type: "bad" });
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 1000);
+      advanceHand();
+    } else if (score === 21) {
+      setPlayerHands((prev) => {
+        const updated = [...prev];
+        updated[currentHandIndex] = {
+          ...currentHand,
+          cards: newCards,
+          status: "stood",
+        };
+        return updated;
+      });
+      stand();
+    } else {
+      setPlayerHands((prev) => {
+        const updated = [...prev];
+        updated[currentHandIndex] = {
+          ...currentHand,
+          cards: newCards,
+          status: "playing",
+        };
+        return updated;
+      });
+    }
+  }, [gameState, playerHands, currentHandIndex, deck]);
+
+  // Stand
+  const stand = useCallback(() => {
+    if (gameState !== "PLAYING") return;
+
+    const currentHand = playerHands[currentHandIndex];
+    if (!currentHand || currentHand.status !== "playing") return;
+
+    setPlayerHands((prev) => {
+      const updated = [...prev];
+      updated[currentHandIndex] = { ...currentHand, status: "stood" };
+      return updated;
+    });
+
+    advanceHand();
+  }, [gameState, playerHands, currentHandIndex]);
+
+  // Advance to next hand or dealer
+  const advanceHand = useCallback(() => {
+    if (currentHandIndex < playerHands.length - 1) {
+      setCurrentHandIndex((prev) => prev + 1);
+    } else {
+      setGameState("DEALER_TURN");
+      setTimeout(() => dealerPlay(), 800);
+    }
+  }, [currentHandIndex, playerHands.length]);
+
+  // Double down
+  const doubleDown = useCallback(() => {
+    if (gameState !== "PLAYING") return;
+
+    const currentHand = playerHands[currentHandIndex];
+    if (!currentHand || currentHand.cards.length !== 2) return;
+    if (wallet < currentHand.bet) return;
+
+    setWallet((prev) => prev - currentHand.bet);
+    setCurrentBet((prev) => prev + currentHand.bet);
+
+    const newCard = deck[deck.length - 1];
+    const newDeck = deck.slice(0, -1);
+    const newCards = [...currentHand.cards, newCard];
+    const score = calculateScore(newCards);
+
+    setDeck(newDeck);
+
+    if (score > 21) {
+      setPlayerHands((prev) => {
+        const updated = [...prev];
+        updated[currentHandIndex] = {
+          ...currentHand,
+          cards: newCards,
+          bet: currentHand.bet * 2,
+          status: "bust",
+        };
+        return updated;
+      });
+      setMessage({ text: "BUST!", type: "bad" });
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 1000);
+    } else {
+      setPlayerHands((prev) => {
+        const updated = [...prev];
+        updated[currentHandIndex] = {
+          ...currentHand,
+          cards: newCards,
+          bet: currentHand.bet * 2,
+          status: "stood",
+        };
+        return updated;
+      });
+    }
+
+    advanceHand();
+  }, [gameState, playerHands, currentHandIndex, deck, wallet]);
+
+  // Split
+  const split = useCallback(() => {
+    if (gameState !== "PLAYING") return;
+    if (playerHands.length >= 2) return;
+
+    const currentHand = playerHands[currentHandIndex];
+    if (!currentHand || currentHand.cards.length !== 2) return;
+
+    const c1 = currentHand.cards[0];
+    const c2 = currentHand.cards[1];
+    const canSplit =
+      c1.rank === c2.rank || (c1.value === 10 && c2.value === 10);
+
+    if (!canSplit) return;
+    if (wallet < currentHand.bet) return;
+
+    setWallet((prev) => prev - currentHand.bet);
+    setCurrentBet((prev) => prev + currentHand.bet);
+
+    const newCard1 = deck[deck.length - 1];
+    const newCard2 = deck[deck.length - 2];
+    const newDeck = deck.slice(0, -2);
+
+    const hand1: PlayerHand = {
+      cards: [c1, newCard1],
+      bet: currentHand.bet,
+      status: "playing",
+    };
+
+    const hand2: PlayerHand = {
+      cards: [c2, newCard2],
+      bet: currentHand.bet,
+      status: "playing",
+    };
+
+    setDeck(newDeck);
+    setPlayerHands([hand1, hand2]);
+  }, [gameState, playerHands, currentHandIndex, deck, wallet]);
+
+  // Dealer logic - using refs to avoid stale closure issues
+  const dealerHandRef = useRef(dealerHand);
+  const deckRef = useRef(deck);
+
+  useEffect(() => {
+    dealerHandRef.current = dealerHand;
+  }, [dealerHand]);
+
+  useEffect(() => {
+    deckRef.current = deck;
+  }, [deck]);
+
+  const dealerPlay = useCallback(() => {
+    const allBusted = playerHands.every((h) => h.status === "bust");
+
+    if (allBusted) {
+      handleGameOver();
+      return;
+    }
+
+    const currentHand = dealerHandRef.current;
+    const currentDeck = deckRef.current;
+    const score = calculateScore(currentHand);
+
+    if (score < 17 && currentDeck.length > 0) {
+      const newCard = currentDeck[currentDeck.length - 1];
+      const newHand = [...currentHand, newCard];
+      const newDeck = currentDeck.slice(0, -1);
+
+      setDealerHand(newHand);
+      setDeck(newDeck);
+      dealerHandRef.current = newHand;
+      deckRef.current = newDeck;
+
+      // Check again after state updates
+      const newScore = calculateScore(newHand);
+      if (newScore < 17) {
+        setTimeout(() => dealerPlay(), 800);
+      } else {
+        setTimeout(() => handleGameOver(), 800);
+      }
+    } else {
+      handleGameOver();
+    }
+  }, [playerHands, handleGameOver]);
+
   // Bankruptcy check
   useEffect(() => {
-    if (wallet < 10 && currentBet === 0 && gameState === 'BETTING') {
+    if (wallet < 10 && currentBet === 0 && gameState === "BETTING") {
       const timer = setTimeout(() => {
         setWallet(500);
-        setMessage({ text: 'Bankrupt! +$500 Gift', type: 'win' });
+        setMessage({ text: "Bankrupt! +$500 Gift", type: "win" });
         setShowMessage(true);
         setTimeout(() => setShowMessage(false), 2000);
       }, 2000);
@@ -495,25 +546,39 @@ export default function Blackjack() {
   }, [wallet, currentBet, gameState]);
 
   // Can split check
-  const canSplit = playerHands.length === 1 && 
-    playerHands[0]?.cards.length === 2 && 
-    playerHands[0]?.status === 'playing' &&
-    ((playerHands[0].cards[0].rank === playerHands[0].cards[1].rank) || 
-     (playerHands[0].cards[0].value === 10 && playerHands[0].cards[1].value === 10)) &&
+  const canSplit =
+    playerHands.length === 1 &&
+    playerHands[0]?.cards.length === 2 &&
+    playerHands[0]?.status === "playing" &&
+    (playerHands[0].cards[0].rank === playerHands[0].cards[1].rank ||
+      (playerHands[0].cards[0].value === 10 &&
+        playerHands[0].cards[1].value === 10)) &&
     wallet >= playerHands[0].bet;
 
   // Can double check
-  const canDouble = gameState === 'PLAYING' && 
+  const canDouble =
+    gameState === "PLAYING" &&
     playerHands[currentHandIndex]?.cards.length === 2 &&
     wallet >= (playerHands[currentHandIndex]?.bet || 0);
 
-  const dealerScore = gameState === 'PLAYING' ? '?' : calculateScore(dealerHand);
-  const playerScore = playerHands[currentHandIndex] ? calculateScore(playerHands[currentHandIndex].cards) : 0;
+  const dealerScore =
+    gameState === "PLAYING" ? "?" : calculateScore(dealerHand);
+  const playerScore = playerHands[currentHandIndex]
+    ? calculateScore(playerHands[currentHandIndex].cards)
+    : 0;
 
   return (
-    <div className="game-container" style={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: '10px' }}>
+    <div
+      className="game-container"
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        padding: "10px",
+      }}
+    >
       {/* Home Button */}
-      <button className="home-btn" onClick={() => navigate('/')}>
+      <button className="home-btn" onClick={() => navigate("/")}>
         🏠 HOME
       </button>
 
@@ -521,13 +586,19 @@ export default function Blackjack() {
       <div className="bg-decoration"></div>
 
       {/* Header */}
-      <header className="game-header" style={{ marginBottom: '10px', flexShrink: 0 }}>
+      <header
+        className="game-header"
+        style={{ marginBottom: "10px", flexShrink: 0 }}
+      >
         <h1>BLACKJACK</h1>
         <p className="subtitle">Pixel Casino</p>
       </header>
 
       {/* Game Stats */}
-      <div className="game-stats" style={{ marginBottom: '10px', flexShrink: 0 }}>
+      <div
+        className="game-stats"
+        style={{ marginBottom: "10px", flexShrink: 0 }}
+      >
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
           <span className="stat-value">${wallet}</span>
@@ -539,49 +610,172 @@ export default function Blackjack() {
       </div>
 
       {/* Main Game Area */}
-      <div className="bj-game-area" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1, width: '100%', maxWidth: '1000px', margin: '0 auto', padding: '10px 0', overflow: 'hidden' }}>
-        
+      <div
+        className="bj-game-area"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          flexGrow: 1,
+          width: "100%",
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "10px 0",
+          overflow: "hidden",
+        }}
+      >
         {/* Dealer Area */}
-        <div className="dealer-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', minHeight: '150px', flexShrink: 0 }}>
+        <div
+          className="dealer-area"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            position: "relative",
+            minHeight: "150px",
+            flexShrink: 0,
+          }}
+        >
           <div className="hand-label">Dealer</div>
           <div className="hand-score">{dealerScore}</div>
-          <div className="hand-container" style={{ display: 'flex', justifyContent: 'center', gap: '-30px', margin: '5px 0', minWidth: '120px', minHeight: '120px' }}>
+          <div
+            className="hand-container"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "-30px",
+              margin: "5px 0",
+              minWidth: "120px",
+              minHeight: "120px",
+            }}
+          >
             {dealerHand.map((card, i) => (
-              <BJCard key={`dealer-${i}`} card={card} hidden={gameState === 'PLAYING' && i === 1} />
+              <BJCard
+                key={`dealer-${i}`}
+                card={card}
+                hidden={gameState === "PLAYING" && i === 1}
+              />
             ))}
           </div>
         </div>
 
         {/* Center Table */}
-        <div className="table-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '10px', minHeight: '100px' }}>
-          <div className={`message-overlay ${showMessage ? 'visible' : ''}`} style={{ opacity: showMessage ? 1 : 0 }}>
-            <div className="big-text" style={{ color: message.type === 'win' ? 'var(--retro-green)' : message.type === 'bad' ? 'var(--retro-red)' : 'var(--retro-yellow)' }}>
+        <div
+          className="table-center"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            flexGrow: 1,
+            gap: "10px",
+            minHeight: "100px",
+          }}
+        >
+          <div
+            className={`message-overlay ${showMessage ? "visible" : ""}`}
+            style={{ opacity: showMessage ? 1 : 0 }}
+          >
+            <div
+              className="big-text"
+              style={{
+                color:
+                  message.type === "win"
+                    ? "var(--retro-green)"
+                    : message.type === "bad"
+                      ? "var(--retro-red)"
+                      : "var(--retro-yellow)",
+              }}
+            >
               {message.text}
             </div>
           </div>
-          
-          <div className="deck-shoe" title="Deck Shoe" style={{ width: '90px', height: '126px', background: 'var(--bg-card)', border: '4px solid var(--retro-purple)', position: 'relative', boxShadow: '6px 6px 0 rgba(0,0,0,0.5)' }}></div>
+
+          <div
+            className="deck-shoe"
+            title="Deck Shoe"
+            style={{
+              width: "90px",
+              height: "126px",
+              background: "var(--bg-card)",
+              border: "4px solid var(--retro-purple)",
+              position: "relative",
+              boxShadow: "6px 6px 0 rgba(0,0,0,0.5)",
+            }}
+          ></div>
         </div>
 
         {/* Player Area */}
-        <div className="player-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', minHeight: '180px', flexShrink: 0, justifyContent: 'flex-end' }}>
-          
+        <div
+          className="player-area"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            position: "relative",
+            minHeight: "180px",
+            flexShrink: 0,
+            justifyContent: "flex-end",
+          }}
+        >
           {/* Player Hands */}
           {playerHands.length === 0 ? (
-            <div className="hand-container" style={{ display: 'flex', justifyContent: 'center', gap: '-30px', margin: '5px 0', minWidth: '120px', minHeight: '120px' }}></div>
+            <div
+              className="hand-container"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "-30px",
+                margin: "5px 0",
+                minWidth: "120px",
+                minHeight: "120px",
+              }}
+            ></div>
           ) : playerHands.length === 1 ? (
-            <div className="hand-container" style={{ display: 'flex', justifyContent: 'center', gap: '-30px', margin: '5px 0', minWidth: '120px', minHeight: '120px' }}>
+            <div
+              className="hand-container"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "-30px",
+                margin: "5px 0",
+                minWidth: "120px",
+                minHeight: "120px",
+              }}
+            >
               {playerHands[0].cards.map((card, i) => (
                 <BJCard key={`player-${i}`} card={card} />
               ))}
             </div>
           ) : (
-            <div className="split-wrapper" style={{ display: 'flex', gap: '20px', justifyContent: 'center', width: '100%' }}>
+            <div
+              className="split-wrapper"
+              style={{
+                display: "flex",
+                gap: "20px",
+                justifyContent: "center",
+                width: "100%",
+              }}
+            >
               {playerHands.map((hand, idx) => (
-                <div key={`hand-${idx}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div 
-                    className={`hand-container ${idx === currentHandIndex && gameState === 'PLAYING' ? 'active-hand' : 'inactive-hand'}`}
-                    style={{ display: 'flex', justifyContent: 'center', gap: '-30px', margin: '5px 0', minWidth: '100px', minHeight: '100px' }}
+                <div
+                  key={`hand-${idx}`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    className={`hand-container ${idx === currentHandIndex && gameState === "PLAYING" ? "active-hand" : "inactive-hand"}`}
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "-30px",
+                      margin: "5px 0",
+                      minWidth: "100px",
+                      minHeight: "100px",
+                    }}
                   >
                     {hand.cards.map((card, i) => (
                       <BJCard key={`split-${idx}-${i}`} card={card} />
@@ -592,35 +786,64 @@ export default function Blackjack() {
               ))}
             </div>
           )}
-          
+
           {playerHands.length === 1 && (
             <div className="hand-score">{playerScore}</div>
           )}
           <div className="hand-label">Player</div>
 
           {/* Controls */}
-          <div className="control-panel" style={{ marginTop: '10px' }}>
-            
+          <div className="control-panel" style={{ marginTop: "10px" }}>
             {/* Betting Phase Controls */}
-            {gameState === 'BETTING' && (
-              <div className="betting-controls" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className="chip-rack" style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                  <Chip value={10} onClick={() => placeBet(10)} disabled={wallet < 10} />
-                  <Chip value={50} onClick={() => placeBet(50)} disabled={wallet < 50} />
-                  <Chip value={100} onClick={() => placeBet(100)} disabled={wallet < 100} />
-                  <Chip value={500} onClick={() => placeBet(500)} disabled={wallet < 500} />
-                  <Chip value="ALL" onClick={() => placeBet(wallet)} disabled={wallet === 0} />
+            {gameState === "BETTING" && (
+              <div
+                className="betting-controls"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  className="chip-rack"
+                  style={{ display: "flex", gap: "10px", marginBottom: "10px" }}
+                >
+                  <Chip
+                    value={10}
+                    onClick={() => placeBet(10)}
+                    disabled={wallet < 10}
+                  />
+                  <Chip
+                    value={50}
+                    onClick={() => placeBet(50)}
+                    disabled={wallet < 50}
+                  />
+                  <Chip
+                    value={100}
+                    onClick={() => placeBet(100)}
+                    disabled={wallet < 100}
+                  />
+                  <Chip
+                    value={500}
+                    onClick={() => placeBet(500)}
+                    disabled={wallet < 500}
+                  />
+                  <Chip
+                    value="ALL"
+                    onClick={() => placeBet(wallet)}
+                    disabled={wallet === 0}
+                  />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
-                    className="action-btn" 
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    className="action-btn"
                     onClick={clearBet}
-                    style={{ borderColor: '#888', color: '#aaa' }}
+                    style={{ borderColor: "#888", color: "#aaa" }}
                   >
                     Clear
                   </button>
-                  <button 
-                    className="action-btn btn-hit" 
+                  <button
+                    className="action-btn btn-hit"
                     onClick={dealInitial}
                     disabled={currentBet === 0}
                   >
@@ -631,27 +854,41 @@ export default function Blackjack() {
             )}
 
             {/* Playing Phase Controls */}
-            {gameState === 'PLAYING' && (
-              <div className="action-controls" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                <button className="action-btn btn-hit" onClick={hit}>HIT</button>
-                <button className="action-btn btn-stand" onClick={stand}>STAND</button>
-                <button 
-                  className="action-btn btn-double" 
+            {gameState === "PLAYING" && (
+              <div
+                className="action-controls"
+                style={{ display: "flex", gap: "15px", marginTop: "10px" }}
+              >
+                <button className="action-btn btn-hit" onClick={hit}>
+                  HIT
+                </button>
+                <button className="action-btn btn-stand" onClick={stand}>
+                  STAND
+                </button>
+                <button
+                  className="action-btn btn-double"
                   onClick={doubleDown}
                   disabled={!canDouble}
                 >
                   DOUBLE
                 </button>
                 {canSplit && (
-                  <button className="action-btn btn-split" onClick={split}>SPLIT</button>
+                  <button className="action-btn btn-split" onClick={split}>
+                    SPLIT
+                  </button>
                 )}
               </div>
             )}
 
             {/* Game Over Controls */}
-            {gameState === 'GAME_OVER' && (
-              <div className="action-controls" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                <button className="action-btn btn-hit" onClick={resetGame}>New Hand</button>
+            {gameState === "GAME_OVER" && (
+              <div
+                className="action-controls"
+                style={{ display: "flex", gap: "15px", marginTop: "10px" }}
+              >
+                <button className="action-btn btn-hit" onClick={resetGame}>
+                  New Hand
+                </button>
               </div>
             )}
           </div>
@@ -663,7 +900,7 @@ export default function Blackjack() {
         message={message.text}
         type={message.type}
         onNewHand={resetGame}
-        visible={gameState === 'GAME_OVER'}
+        visible={gameState === "GAME_OVER"}
       />
 
       {/* Settings Button */}
