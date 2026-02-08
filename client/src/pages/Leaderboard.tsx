@@ -62,11 +62,17 @@ export default function Leaderboard() {
               {formatDate(currentLeaderboard.weekStart)} - {formatDate(currentLeaderboard.weekEnd)}
             </option>
           )}
-          {historicalLeaderboards?.map((lb) => (
-            <option key={lb.weekStart} value={String(lb.weekStart)}>
-              {formatDate(lb.weekStart)} - {formatDate(lb.weekEnd)}
-            </option>
-          ))}
+          {historicalLeaderboards
+            ?.filter(
+              (lb) =>
+                !currentLeaderboard ||
+                lb.weekStart !== currentLeaderboard.weekStart,
+            )
+            .map((lb) => (
+              <option key={lb.weekStart} value={String(lb.weekStart)}>
+                {formatDate(lb.weekStart)} - {formatDate(lb.weekEnd)}
+              </option>
+            ))}
         </select>
       </div>
 

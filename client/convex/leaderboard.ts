@@ -108,19 +108,18 @@ export const getHistoricalLeaderboards = query({
       .order("desc")
       .collect();
 
-    // Group by week
+    // Group by normalized week start (so timezone/ms differences don't create duplicate weeks)
     const weekMap = new Map<number, any[]>();
     for (const entry of allEntries) {
-      // Skip current week - it should only appear as "Current Week" option
-      // Normalize both timestamps to ensure proper comparison
       const entryWeekStart = getWeekStart(new Date(entry.weekStart));
+      // Skip current week - it only appears as the "Current" option in the UI
       if (entryWeekStart === currentWeekStart) {
         continue;
       }
-      if (!weekMap.has(entry.weekStart)) {
-        weekMap.set(entry.weekStart, []);
+      if (!weekMap.has(entryWeekStart)) {
+        weekMap.set(entryWeekStart, []);
       }
-      weekMap.get(entry.weekStart)!.push(entry);
+      weekMap.get(entryWeekStart)!.push(entry);
     }
 
     // Convert to array and sort by week
