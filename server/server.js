@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import { createServer } from "http";
-import { readFileSync, existsSync, statSync } from "fs";
-import { join, extname } from "path";
+import { readFileSync, existsSync, statSync, readdirSync } from "fs";
+import { join, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -23,8 +23,32 @@ const MIME = {
   ".ttf": "font/ttf",
 };
 
-// ── Serve built client files ──
-const CLIENT_DIST = join(__dirname, "..", "client", "dist");
+// ── Locate built client files ──
+// Try multiple possible locations for client/dist
+const candidates = [
+  join(__dirname, "..", "client", "dist"),          // from server/ → ../client/dist
+  join(process.cwd(), "..", "client", "dist"),      // from cwd (server/) → ../client/dist
+  join(process.cwd(), "client", "dist"),            // from repo root → client/dist
+  resolve("client", "dist"),                        // resolve from cwd
+  resolve("..", "client", "dist"),                   // resolve up one level
+];
+
+let CLIENT_DIST = candidates[0]; // default fallback
+
+console.log("── Path diagnostics ──");
+console.log("  __dirname:", __dirname);
+console.log("  cwd:", process.cwd());
+
+for (const candidate of candidates) {
+  const idx = join(candidate, "index.html");
+  const found = existsSync(idx);
+  console.log(`  ${found ? "✓" : "✗"} ${candidate} ${found ? "(index.html found)" : ""}`);
+  if (found && CLIENT_DIST === candidates[0] || found && !existsSync(join(CLIENT_DIST, "index.html"))) {
+    CLIENT_DIST = candidate;
+  }
+}
+
+console.log("  → Using CLIENT_DIST:", CLIENT_DIST);
 
 // Cache index.html in memory once at startup so SPA fallback is instant
 let indexHtml = null;
@@ -34,6 +58,19 @@ if (existsSync(indexPath)) {
   console.log("✓ Loaded index.html from", indexPath);
 } else {
   console.warn("⚠ index.html not found at", indexPath);
+  // Log what IS at the parent directories to help debug
+  try {
+    const parentDir = join(CLIENT_DIST, "..");
+    if (existsSync(parentDir)) {
+      console.warn("  Contents of", parentDir, ":", readdirSync(parentDir).join(", "));
+    }
+    const grandparent = join(CLIENT_DIST, "..", "..");
+    if (existsSync(grandparent)) {
+      console.warn("  Contents of", grandparent, ":", readdirSync(grandparent).join(", "));
+    }
+  } catch (e) {
+    console.warn("  Could not list directories:", e.message);
+  }
 }
 
 const httpServer = createServer((req, res) => {
