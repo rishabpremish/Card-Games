@@ -3,7 +3,7 @@
  * Manages stake calculations, payouts, and game state
  */
 
-// House edge constant (5%)
+// House edge constant (5% — realistic casino-style edge)
 export const HOUSE_EDGE = 0.05;
 
 // Game state
@@ -89,7 +89,7 @@ export function getMultiplier(
   // Calculate probability of a favorable outcome out of ALL remaining cards
   const probability = favorableOutcomes / remainingCards.length;
 
-  // Payout multiplier with house edge
+  // Payout multiplier with house edge (higher edge = lower multipliers)
   const rawMultiplier = (1 / probability) * (1 - HOUSE_EDGE);
 
   // A correct guess must never shrink your stake → floor at 1x
@@ -154,8 +154,8 @@ export function processResult(
       };
     } else {
       result = "tie";
-      // Partial loss on ties too: keep 30% (middle of 25-50% range)
-      currentStake = Math.floor(currentStake * 0.30 * 100) / 100;
+      // Tie penalty: lose half your stake (middle ground)
+      currentStake = Math.floor(currentStake * 0.50 * 100) / 100;
       if (currentStake < 0.01) {
         currentStake = 0;
         isGameActive = false;
@@ -183,19 +183,12 @@ export function processResult(
     currentStake = Math.floor(rawPayout * 100) / 100;
   } else {
     result = "loss";
-    // Partial loss system: Keep 25-50% based on risk level
-    // Riskier bets (lower win probability) = keep more on loss
-    // Safer bets (higher win probability) = keep less on loss
-    const winProbability = 1 / multiplier;
-    // Retention rate: 50% - (winProbability * 25%)
-    // So if 50% chance to win → keep 37.5%
-    // If 20% chance to win → keep 45%
-    // If 80% chance to win → keep 30%
-    const retentionRate = 0.50 - (winProbability * 0.25);
-    const clampedRetention = Math.max(0.25, Math.min(0.50, retentionRate));
-    currentStake = Math.floor(currentStake * clampedRetention * 100) / 100;
-    // Game continues with reduced stake, but house edge is preserved
-    // over time because expected value is still negative
+    // Partial loss scaled by risk: risky guesses lose less, safe guesses lose more.
+    // The multiplier encodes the win probability: winProb ≈ (1 - HOUSE_EDGE) / multiplier
+    const winProbability = Math.min(1, (1 - HOUSE_EDGE) / Math.max(multiplier, 1));
+    // Keep rate: 15% (floor for very safe bets) up to 70% (for very risky bets)
+    const keepRate = 0.15 + 0.55 * (1 - winProbability);
+    currentStake = Math.floor(currentStake * keepRate * 100) / 100;
     if (currentStake < 0.01) {
       currentStake = 0;
       isGameActive = false;

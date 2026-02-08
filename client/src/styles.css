@@ -888,7 +888,7 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 15, 35, 0.98);
+  background: color-mix(in srgb, var(--bg-primary) 96%, black);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -941,6 +941,36 @@ body::before {
   top: 15px;
   right: 15px;
   z-index: 10;
+}
+
+/* All In + DEAL CARDS in Place Bet modal - aligned layout, All In red */
+.betting-modal .modal-buttons .bet-btn,
+.betting-modal .modal-buttons .play-btn {
+  min-width: 160px;
+  padding: 15px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.7rem;
+}
+
+.betting-modal .bet-btn {
+  background: var(--retro-red);
+  color: var(--card-white);
+  border-color: var(--retro-red);
+}
+
+.betting-modal .bet-btn:hover {
+  background: var(--retro-red);
+  filter: brightness(1.15);
+  box-shadow: 6px 6px 0px rgba(255, 0, 0, 0.5);
+}
+
+.betting-modal .bet-btn:disabled {
+  background: var(--text-secondary);
+  border-color: var(--text-secondary);
+  filter: none;
 }
 
 @media (max-width: 600px) {
@@ -3632,9 +3662,54 @@ body.theme-gameboy .bg-decoration::before {
   box-shadow: 1px 1px 0px rgba(0, 255, 0, 0.2);
 }
 
+.cash-out-btn:disabled {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 3px solid var(--text-secondary);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cash-out-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--bg-primary);
+}
+
+/* Level Progress Bar */
+.level-progress-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.level-progress-info {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--retro-cyan);
+  text-align: center;
+}
+
+.level-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--retro-cyan);
+  overflow: hidden;
+}
+
+.level-progress-fill {
+  height: 100%;
+  background: var(--retro-green);
+  transition: width 0.3s ease;
+}
+
 .multipliers-display {
   position: fixed;
-  top: 320px;
+  top: 360px;
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -4305,5 +4380,778 @@ body.theme-gameboy .bg-decoration::before {
 @media (max-width: 768px) {
   .admin-container {
     grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* ============================================
+   BACCARAT - TABLE LAYOUT, SCALED & INTUITIVE
+   ============================================ */
+
+.baccarat-game {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px 20px;
+  position: relative;
+}
+
+.baccarat-game .game-header {
+  margin-bottom: 15px;
+}
+
+.baccarat-game .game-stats {
+  margin-bottom: 25px;
+}
+
+/* Align home + dev buttons like Higher/Lower */
+.baccarat-game .home-btn {
+  top: 20px;
+  left: 20px;
+}
+
+.baccarat-game .dev-tools-toggle {
+  top: 70px;
+  left: 20px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.baccarat-game .dev-tools-panel {
+  top: 120px;
+  left: 20px;
+}
+
+/* Hands row - side by side */
+.baccarat-hands-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(20px, 4vw, 50px);
+  margin-bottom: clamp(15px, 3vh, 30px);
+  position: relative;
+  z-index: 1;
+}
+
+.baccarat-vs {
+  font-family: "Press Start 2P", cursive;
+  font-size: clamp(0.7rem, 1.5vw, 1rem);
+  color: var(--retro-magenta);
+  align-self: center;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.baccarat-hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: clamp(12px, 2vh, 20px) clamp(20px, 3vw, 30px);
+  background: transparent;
+  border: none;
+  min-width: clamp(160px, 30vw, 260px);
+  transition: filter 0.3s;
+}
+
+.baccarat-hand.winner {
+  filter: drop-shadow(0 0 16px rgba(0, 255, 0, 0.5));
+}
+
+.baccarat-hand.winner .baccarat-hand-label {
+  color: var(--retro-green);
+}
+
+.baccarat-hand.winner .baccarat-score {
+  border-color: var(--retro-green);
+  color: var(--retro-green);
+}
+
+.baccarat-hand-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  color: var(--retro-cyan);
+  text-shadow: 2px 2px 0 var(--retro-magenta);
+  margin: 0;
+}
+
+.baccarat-cards-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-height: 115px;
+  align-items: center;
+}
+
+.baccarat-card-placeholder {
+  width: 80px;
+  height: 112px;
+  border: 3px dashed var(--retro-purple);
+  opacity: 0.35;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(153, 102, 255, 0.06) 8px,
+    rgba(153, 102, 255, 0.06) 16px
+  );
+}
+
+.baccarat-card-wrap {
+  animation: baccaratDealCard 0.35s ease-out;
+}
+
+@keyframes baccaratDealCard {
+  from { opacity: 0; transform: translateY(-16px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.baccarat-score {
+  font-family: "Press Start 2P", cursive;
+  font-size: 1rem;
+  color: var(--retro-yellow);
+  padding: 6px 14px;
+  background: var(--bg-secondary);
+  border: var(--pixel-border) var(--retro-yellow);
+  box-shadow: var(--pixel-shadow) rgba(255, 255, 0, 0.3);
+}
+
+.baccarat-card {
+  width: 80px;
+  height: 112px;
+  background: var(--card-white);
+  border: var(--pixel-border) var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  position: relative;
+  box-shadow: var(--pixel-shadow) rgba(0, 0, 0, 0.4);
+}
+
+.baccarat-card.red {
+  color: var(--card-red);
+  border-color: var(--retro-red);
+}
+
+.baccarat-card.black {
+  color: var(--card-black);
+  border-color: var(--text-secondary);
+}
+
+.baccarat-card .card-corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.baccarat-card .card-corner.bottom {
+  transform: rotate(180deg);
+}
+
+.baccarat-card .card-value {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+}
+
+.baccarat-card .card-suit-small {
+  font-size: 0.5rem;
+}
+
+.baccarat-card .card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.6rem;
+}
+
+.baccarat-bet-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2.5vh, 18px);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  margin: clamp(10px, 3vh, 30px) auto 0;
+}
+
+.baccarat-bet-types {
+  display: flex;
+  gap: clamp(10px, 2vw, 18px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.baccarat-bet-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border: var(--pixel-border);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-width: 100px;
+}
+
+.baccarat-bet-btn:hover {
+  transform: translate(-2px, -2px);
+}
+
+.baccarat-bet-btn.player {
+  border-color: var(--retro-blue);
+  color: var(--retro-blue);
+}
+
+.baccarat-bet-btn.player:hover,
+.baccarat-bet-btn.player.selected {
+  background: var(--retro-blue);
+  color: var(--bg-primary);
+  box-shadow: var(--pixel-shadow) rgba(0, 100, 255, 0.5);
+}
+
+.baccarat-bet-btn.banker {
+  border-color: var(--retro-red);
+  color: var(--retro-red);
+}
+
+.baccarat-bet-btn.banker:hover,
+.baccarat-bet-btn.banker.selected {
+  background: var(--retro-red);
+  color: var(--bg-primary);
+  box-shadow: var(--pixel-shadow) rgba(255, 0, 0, 0.5);
+}
+
+.baccarat-bet-btn.tie {
+  border-color: var(--retro-green);
+  color: var(--retro-green);
+}
+
+.baccarat-bet-btn.tie:hover,
+.baccarat-bet-btn.tie.selected {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.5);
+}
+
+.baccarat-bet-name {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.55rem;
+  margin-bottom: 4px;
+}
+
+.baccarat-bet-odds {
+  font-family: "VT323", monospace;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.baccarat-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.baccarat-slider {
+  flex: 1;
+  height: 6px;
+  accent-color: var(--retro-cyan);
+}
+
+.baccarat-amount-display {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.9rem;
+  color: var(--retro-yellow);
+  min-width: 4ch;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.baccarat-quick-bets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.baccarat-quick-bets button {
+  background: var(--bg-secondary);
+  border: 3px solid var(--retro-cyan);
+  color: var(--retro-cyan);
+  padding: 8px 14px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.4rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.baccarat-quick-bets button:hover {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.3);
+  transform: translate(-2px, -2px);
+}
+
+.baccarat-deal-btn {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: var(--pixel-border) var(--retro-green);
+  padding: 14px 40px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.4);
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+}
+
+.baccarat-deal-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 255, 0, 0.5);
+}
+
+.baccarat-deal-btn:disabled {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.baccarat-message {
+  font-family: "Press Start 2P", cursive;
+  font-size: clamp(0.6rem, 1.4vw, 0.85rem);
+  color: var(--retro-yellow);
+  text-align: center;
+  padding: 10px 20px;
+  margin: 0 auto clamp(10px, 2vh, 18px);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  animation: baccaratMessagePulse 1s ease-in-out;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes baccaratMessagePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.baccarat-next-btn {
+  display: block;
+  margin: 0 auto clamp(10px, 2vh, 18px);
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  border: var(--pixel-border) var(--retro-cyan);
+  padding: 14px 30px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: var(--pixel-shadow) rgba(0, 255, 247, 0.35);
+  transition: var(--transition-fast);
+  position: relative;
+  z-index: 1;
+}
+
+.baccarat-next-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 255, 247, 0.5);
+}
+
+.baccarat-dealing {
+  font-family: "Press Start 2P", cursive;
+  font-size: clamp(0.6rem, 1.4vw, 0.8rem);
+  color: var(--retro-cyan);
+  text-align: center;
+  margin: 0 auto clamp(10px, 2vh, 18px);
+  position: relative;
+  z-index: 1;
+  animation: baccaratDealingBlink 0.6s ease-in-out infinite;
+}
+
+@keyframes baccaratDealingBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Betting Controls - Compact (legacy) */
+.betting-controls-baccarat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--retro-yellow);
+  min-width: 300px;
+  flex-shrink: 0;
+}
+
+.bet-amount-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.bet-amount-section label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--retro-yellow);
+}
+
+.bet-amount-section .bet-slider {
+  width: 70%;
+  margin: 5px 0;
+  height: 4px;
+}
+
+.quick-bet-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.quick-bet-buttons button {
+  background: var(--bg-primary);
+  border: 2px solid var(--retro-cyan);
+  color: var(--retro-cyan);
+  padding: 5px 10px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.35rem;
+  cursor: pointer;
+  transition: 0.1s;
+}
+
+.quick-bet-buttons button:hover {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+}
+
+/* Bet Type Buttons - Compact */
+.bet-type-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.bet-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 15px;
+  background: var(--bg-primary);
+  border: 2px solid var(--text-secondary);
+  cursor: pointer;
+  transition: 0.2s;
+  min-width: 80px;
+}
+
+.bet-btn:hover {
+  transform: translate(-2px, -2px);
+}
+
+.bet-btn.player {
+  border-color: var(--retro-blue);
+  color: var(--retro-blue);
+}
+
+.bet-btn.player:hover,
+.bet-btn.player.selected {
+  background: var(--retro-blue);
+  color: var(--bg-primary);
+  box-shadow: 3px 3px 0px rgba(0, 100, 255, 0.4);
+}
+
+.bet-btn.banker {
+  border-color: var(--retro-red);
+  color: var(--retro-red);
+}
+
+.bet-btn.banker:hover,
+.bet-btn.banker.selected {
+  background: var(--retro-red);
+  color: var(--bg-primary);
+  box-shadow: 3px 3px 0px rgba(255, 0, 0, 0.4);
+}
+
+.bet-btn.tie {
+  border-color: var(--retro-green);
+  color: var(--retro-green);
+}
+
+.bet-btn.tie:hover,
+.bet-btn.tie.selected {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  box-shadow: 3px 3px 0px rgba(0, 255, 0, 0.4);
+}
+
+.bet-btn .bet-label {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.45rem;
+  margin-bottom: 4px;
+}
+
+.bet-btn .bet-odds {
+  font-family: "VT323", monospace;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* Deal Button - Compact */
+.deal-btn {
+  background: var(--retro-green);
+  color: var(--bg-primary);
+  border: 2px solid #00cc00;
+  padding: 10px 30px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  cursor: pointer;
+  transition: 0.1s;
+  box-shadow: 3px 3px 0px rgba(0, 255, 0, 0.3);
+}
+
+.deal-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px rgba(0, 255, 0, 0.5);
+  background: #00ff00;
+}
+
+.deal-btn:disabled {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Game Message - Compact */
+.game-message {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.5rem;
+  color: var(--retro-yellow);
+  text-align: center;
+  padding: 8px 15px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--retro-yellow);
+  animation: messagePulse 1s ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes messagePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Next Round Button - Compact */
+.next-round-btn {
+  background: var(--retro-cyan);
+  color: var(--bg-primary);
+  border: 2px solid var(--retro-cyan);
+  padding: 10px 25px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.55rem;
+  cursor: pointer;
+  transition: 0.1s;
+  box-shadow: 3px 3px 0px rgba(0, 255, 247, 0.3);
+  flex-shrink: 0;
+}
+
+.next-round-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px rgba(0, 255, 247, 0.5);
+}
+
+/* Dealing Indicator - Compact */
+.dealing-indicator {
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.6rem;
+  color: var(--retro-cyan);
+  animation: dealingBlink 0.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes dealingBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Baccarat Instructions */
+.baccarat-game .instructions {
+  position: fixed;
+  bottom: clamp(10px, 2vh, 20px);
+  left: clamp(10px, 2vw, 20px);
+  z-index: 100;
+}
+
+.baccarat-game .instructions-toggle {
+  font-size: clamp(0.4rem, 1vw, 0.55rem);
+  padding: 8px 12px;
+}
+
+.baccarat-game .instructions-content {
+  bottom: 42px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.baccarat-game .instructions-content h3 {
+  font-size: clamp(0.5rem, 1.2vw, 0.65rem);
+}
+
+.baccarat-game .instructions-content li {
+  font-size: clamp(0.55rem, 1.3vw, 0.7rem);
+  margin-bottom: 6px;
+}
+
+.baccarat-game .instructions-content .note {
+  font-size: clamp(0.5rem, 1.1vw, 0.6rem);
+}
+
+/* Responsive - Ultra Compact */
+@media (max-width: 900px) {
+  .baccarat-game .game-header h1 {
+    font-size: 1rem;
+  }
+  
+  .hand-area {
+    min-width: 150px;
+    padding: 5px 10px;
+  }
+  
+  .hand-cards {
+    min-height: 55px;
+  }
+  
+  .baccarat-card {
+    width: 40px;
+    height: 55px;
+    padding: 3px;
+  }
+
+  .baccarat-card-placeholder {
+    width: 40px;
+    height: 55px;
+  }
+  
+  .baccarat-card .card-center {
+    font-size: 1rem;
+  }
+  
+  .baccarat-card .card-value {
+    font-size: 0.4rem;
+  }
+  
+  .betting-controls-baccarat {
+    min-width: 250px;
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .bet-btn {
+    min-width: 60px;
+    padding: 8px 10px;
+  }
+  
+  .bet-btn .bet-label {
+    font-size: 0.4rem;
+  }
+  
+  .quick-bet-buttons button {
+    padding: 4px 8px;
+    font-size: 0.3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .baccarat-game {
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  .baccarat-game .game-header {
+    margin-top: 5px;
+  }
+  
+  .baccarat-game .game-header h1 {
+    font-size: 0.8rem;
+  }
+  
+  .baccarat-game .game-header .subtitle {
+    font-size: 0.4rem;
+  }
+  
+  .baccarat-table {
+    gap: 5px;
+    padding: 5px;
+  }
+  
+  .hand-area h3 {
+    font-size: 0.5rem;
+  }
+  
+  .hand-score {
+    font-size: 0.8rem;
+  }
+  
+  .bet-type-buttons {
+    gap: 5px;
+  }
+  
+  .bet-btn {
+    min-width: 50px;
+    padding: 6px 8px;
+  }
+  
+  .bet-btn .bet-odds {
+    font-size: 0.6rem;
+  }
+  
+  .deal-btn {
+    padding: 8px 20px;
+    font-size: 0.5rem;
+  }
+  
+  .game-message {
+    font-size: 0.4rem;
+    padding: 6px 10px;
+  }
+}
+
+/* Baccarat small screens */
+@media (max-width: 600px) {
+  .baccarat-hands-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .baccarat-vs {
+    display: none;
+  }
+
+  .baccarat-card {
+    width: 60px;
+    height: 84px;
+  }
+
+  .baccarat-card-placeholder {
+    width: 60px;
+    height: 84px;
+  }
+
+  .baccarat-card .card-center {
+    font-size: 1.1rem;
+  }
+
+  .baccarat-bet-btn {
+    min-width: 75px;
+    padding: 10px 12px;
   }
 }

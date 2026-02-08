@@ -9,6 +9,7 @@ import {
   resetGame,
 } from "../utils/gamblingLogic";
 import { useWallet } from "../hooks/useWallet";
+import { useAuth } from "../hooks/useAuth";
 
 // Types
 interface Card {
@@ -456,16 +457,43 @@ function BettingModal({
 }) {
   const safeWallet = wallet ?? 0;
   const [betAmount, setBetAmount] = useState(Math.min(10, safeWallet));
+  const [inputDisplay, setInputDisplay] = useState(String(Math.min(10, safeWallet)));
 
   useEffect(() => {
     if (visible) {
-      setBetAmount(Math.min(10, safeWallet));
+      const initial = Math.min(10, safeWallet);
+      setBetAmount(initial);
+      setInputDisplay(String(initial));
     }
   }, [visible, safeWallet]);
 
   const handleBetChange = (value: number) => {
     const clamped = Math.max(1, Math.min(safeWallet, value));
     setBetAmount(clamped);
+    setInputDisplay(String(clamped));
+  };
+
+  const handleInputChange = (raw: string) => {
+    // Allow the field to be empty while typing
+    if (raw === "" || raw === "0") {
+      setInputDisplay(raw);
+      setBetAmount(0);
+      return;
+    }
+    const parsed = parseInt(raw);
+    if (!isNaN(parsed)) {
+      const clamped = Math.min(safeWallet, parsed);
+      setInputDisplay(String(clamped));
+      setBetAmount(clamped);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // On blur, enforce minimum of 1
+    if (betAmount < 1) {
+      setBetAmount(1);
+      setInputDisplay("1");
+    }
   };
 
   return (
@@ -492,8 +520,9 @@ function BettingModal({
                 className="bet-input"
                 min="1"
                 max={safeWallet}
-                value={betAmount}
-                onChange={(e) => handleBetChange(parseInt(e.target.value) || 0)}
+                value={inputDisplay}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onBlur={handleInputBlur}
               />
             </div>
             <div className="bet-slider-container">
@@ -507,24 +536,25 @@ function BettingModal({
               />
             </div>
           </div>
-
-          <div className="potential-payout">
-            <span>Bet Amount:</span>
-            <span className="payout-amount">${betAmount.toFixed(2)}</span>
-          </div>
         </div>
         <div className="modal-buttons">
           <button
             className="bet-btn"
-            onClick={() => setBetAmount(safeWallet)}
+            onClick={() => {
+              setBetAmount(safeWallet);
+              setInputDisplay(String(safeWallet));
+              onPlaceBet(safeWallet);
+            }}
             type="button"
+            disabled={safeWallet < 1}
           >
             ALL IN!
           </button>
           <button
             className="play-btn"
-            onClick={() => onPlaceBet(betAmount)}
+            onClick={() => onPlaceBet(Math.max(1, betAmount))}
             type="button"
+            disabled={safeWallet < 1 || betAmount < 1}
           >
             DEAL CARDS
           </button>
@@ -573,6 +603,7 @@ export default function HigherLowerGame() {
     cashOut: cashOutMutation,
     updateWallet,
   } = useWallet();
+  const { user } = useAuth();
   const [currentBet, setCurrentBet] = useState(restored?.currentBet ?? 0);
 
   // Gambling state
@@ -591,6 +622,14 @@ export default function HigherLowerGame() {
     restored?.hasCashedOut ?? false,
   );
   const [hasLostBet, setHasLostBet] = useState(false);
+
+  // Level progression state - cards required before cashout
+  const [currentLevel, setCurrentLevel] = useState(restored?.currentLevel ?? 1);
+  const [cardsPlayedThisLevel, setCardsPlayedThisLevel] = useState(
+    restored?.cardsPlayedThisLevel ?? 0,
+  );
+  // Level 1: 4 cards, Level 2: 3 cards, Level 3: 2 cards, Level 4+: 0 (can cash out anytime)
+  const cardsRequiredForCashout = currentLevel === 1 ? 4 : currentLevel === 2 ? 3 : currentLevel === 3 ? 2 : 0;
 
   // Modal states
   const [showGameOverModal, setShowGameOverModal] = useState(
@@ -632,6 +671,8 @@ export default function HigherLowerGame() {
         showCashOut,
         hasCashedOut,
         showGameOverModal,
+        currentLevel,
+        cardsPlayedThisLevel,
       };
       sessionStorage.setItem("hlGameState", JSON.stringify(state));
     }
@@ -647,6 +688,8 @@ export default function HigherLowerGame() {
     showCashOut,
     hasCashedOut,
     showGameOverModal,
+    currentLevel,
+    cardsPlayedThisLevel,
   ]);
 
   // Initialize game
@@ -966,6 +1009,17 @@ export default function HigherLowerGame() {
         return newGrid;
       });
       setCardsPlaced((prev) => prev + 1);
+      // Track cards played for level progression and auto-advance if threshold reached
+      setCardsPlayedThisLevel((prev) => {
+        const newCount = prev + 1;
+        const required = currentLevel === 1 ? 4 : currentLevel === 2 ? 3 : currentLevel === 3 ? 2 : 0;
+        if (required > 0 && newCount >= required) {
+          // Auto-advance to next level silently
+          setCurrentLevel((level) => level + 1);
+          return 0;
+        }
+        return newCount;
+      });
     } else {
       setGrid((prev) => {
         const newGrid = [...prev];
@@ -1044,6 +1098,10 @@ export default function HigherLowerGame() {
         setGamblingStake(amount);
         setShowCashOut(true);
 
+        // Reset level progression for new bet
+        setCurrentLevel(1);
+        setCardsPlayedThisLevel(0);
+
         initGame();
       } catch (error) {
         console.error("Failed to place bet:", error);
@@ -1054,6 +1112,12 @@ export default function HigherLowerGame() {
   // Handle cash out
   const handleCashOut = async () => {
     if (isActive()) {
+      // Check if player has played enough cards for this level
+      if (cardsPlayedThisLevel >= 1 && cardsPlayedThisLevel < cardsRequiredForCashout) {
+        alert(`You must play ${cardsRequiredForCashout - cardsPlayedThisLevel} more card${cardsRequiredForCashout - cardsPlayedThisLevel === 1 ? '' : 's'} before you can cash out!`);
+        return;
+      }
+
       const payout = cashOut();
       try {
         await cashOutMutation(payout, "Higher-Lower");
@@ -1063,6 +1127,9 @@ export default function HigherLowerGame() {
         resetGame();
         setHasCashedOut(true);
         setShowBettingModal(false);
+        // Advance to next level and reset cards played
+        setCurrentLevel((prev) => prev + 1);
+        setCardsPlayedThisLevel(0);
       } catch (error) {
         console.error("Failed to cash out:", error);
       }
@@ -1077,6 +1144,8 @@ export default function HigherLowerGame() {
     setShowCashOut(false);
     setHasCashedOut(false);
     setHasLostBet(false);
+    setCurrentLevel(1);
+    setCardsPlayedThisLevel(0);
     resetGame();
     initGame();
   };
@@ -1129,6 +1198,8 @@ export default function HigherLowerGame() {
     setShowCashOut(false);
     setHasCashedOut(false);
     setHasLostBet(false);
+    setCurrentLevel(1);
+    setCardsPlayedThisLevel(0);
 
     resetGame(); // Clears utils state
     initGame(); // Reshuffles and deals
@@ -1164,7 +1235,26 @@ export default function HigherLowerGame() {
       {showCashOut && (
         <div className="stake-display">
           <span>Current Stake: ${gamblingStake.toFixed(2)}</span>
-          <button className="cash-out-btn" onClick={handleCashOut}>
+          {cardsRequiredForCashout > 0 && (
+            <div className="level-progress-container">
+              <div className="level-progress-info">
+                Level {currentLevel} — {cardsPlayedThisLevel}/{cardsRequiredForCashout}
+              </div>
+              <div className="level-progress-bar">
+                <div
+                  className="level-progress-fill"
+                  style={{
+                    width: `${(cardsPlayedThisLevel / cardsRequiredForCashout) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          <button
+            className="cash-out-btn"
+            onClick={handleCashOut}
+            disabled={cardsRequiredForCashout > 0 && cardsPlayedThisLevel >= 1 && cardsPlayedThisLevel < cardsRequiredForCashout}
+          >
             CASH OUT
           </button>
         </div>
@@ -1336,20 +1426,24 @@ export default function HigherLowerGame() {
         </button>
       )}
 
-      {/* Dev Tools */}
-      <button
-        className="dev-tools-toggle"
-        onClick={() => setShowDevPanel(!showDevPanel)}
-      >
-        🛠️ DEV
-      </button>
-
-      {showDevPanel && (
-        <div className="dev-tools-panel">
-          <button className="dev-btn" onClick={handleResetWallet}>
-            💰 Reset Balance ($100)
+      {/* Dev Tools - Only visible for admins */}
+      {user?.isAdmin && (
+        <>
+          <button
+            className="dev-tools-toggle"
+            onClick={() => setShowDevPanel(!showDevPanel)}
+          >
+            🛠️ DEV
           </button>
-        </div>
+
+          {showDevPanel && (
+            <div className="dev-tools-panel">
+              <button className="dev-btn" onClick={handleResetWallet}>
+                💰 Reset Balance ($100)
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Betting Modal */}

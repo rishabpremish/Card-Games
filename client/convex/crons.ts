@@ -10,4 +10,15 @@ crons.interval(
   internal.leaderboard.updateLeaderboard,
 );
 
+// Weekly wallet reset - every Sunday at midnight (00:00)
+crons.weekly(
+  "weekly wallet reset",
+  {
+    dayOfWeek: "sunday",
+    hourUTC: 0,
+    minuteUTC: 0,
+  },
+  internal.leaderboard.weeklyWalletReset,
+);
+
 export default crons;

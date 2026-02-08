@@ -23,7 +23,7 @@ type MsgType = "win" | "bad" | "neutral";
 
 const SUITS = ["hearts", "diamonds", "clubs", "spades"];
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-const CHIP_VALUES = [1, 5, 10, 25, 100];
+const CHIP_VALUES = [1, 5, 10, 25, 100, 500, 1000];
 
 // ─── Pure Helpers ────────────────────────────────────────
 
@@ -536,35 +536,7 @@ export default function Blackjack() {
   const displayBet = gameState === "BETTING" ? stagedBet : totalBetInPlay;
   const availableForBet = (wallet ?? 0) - stagedBet;
 
-  // Viewport-based scaling for responsive layout
-  const [gameScale, setGameScale] = useState(1);
 
-  useEffect(() => {
-    const calculateScale = () => {
-      // Base dimensions the game was designed for
-      const baseWidth = 1000;
-      const baseHeight = 850;
-
-      // Available viewport space (accounting for padding)
-      const availableWidth = window.innerWidth - 40;
-      const availableHeight = window.innerHeight - 40;
-
-      // Calculate scale to fit in both dimensions
-      const scaleX = availableWidth / baseWidth;
-      const scaleY = availableHeight / baseHeight;
-
-      // Use the smaller scale to ensure everything fits
-      // Clamp between 0.5 (minimum readable) and 1.0 (maximum)
-      const optimalScale = Math.min(scaleX, scaleY, 1.0);
-      const clampedScale = Math.max(optimalScale, 0.5);
-
-      setGameScale(clampedScale);
-    };
-
-    calculateScale();
-    window.addEventListener("resize", calculateScale);
-    return () => window.removeEventListener("resize", calculateScale);
-  }, []);
 
   // ─── Render ───────────────────────────────────────────
 
@@ -579,34 +551,19 @@ export default function Blackjack() {
   }
 
   return (
-    <div className="game-container" style={{ height: "100vh", display: "flex", flexDirection: "column", padding: "10px", overflow: "hidden" }}>
-      {/* Home Button - Outside scaled area */}
-      <button className="home-btn" onClick={() => navigate("/")}>🏠 HOME</button>
+    <div className="game-container blackjack-game" style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "10px 20px" }}>
+      {/* Home Button */}
+      <button className="home-btn" onClick={() => navigate("/")} style={{ position: "absolute", top: "10px", left: "20px" }}>🏠 HOME</button>
       <div className="bg-decoration" />
 
-      {/* Scaled Game Content */}
-      <div
-        className="scaled-game-wrapper"
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          transform: `scale(${gameScale})`,
-          transformOrigin: "top center",
-          width: "1000px",
-          margin: "0 auto",
-          minHeight: "850px",
-        }}
-      >
-
       {/* Header */}
-      <header className="game-header" style={{ marginBottom: "10px", flexShrink: 0 }}>
+      <header className="game-header bj-header" style={{ marginTop: "45px" }}>
         <h1>BLACKJACK</h1>
         <p className="subtitle">Pixel Casino</p>
       </header>
 
       {/* Stats */}
-      <div className="game-stats" style={{ marginBottom: "10px", flexShrink: 0 }}>
+      <div className="game-stats bj-stats" style={{ marginBottom: "8px" }}>
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
           <span className="stat-value">${wallet ?? 0}</span>
@@ -690,7 +647,7 @@ export default function Blackjack() {
           <div className="hand-label">Player</div>
 
           {/* Controls */}
-          <div className="control-panel" style={{ marginTop: "10px" }}>
+          <div className="control-panel" style={{ marginTop: "8px" }}>
             {/* BETTING */}
             {gameState === "BETTING" && (
               <div className="betting-controls" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -722,7 +679,7 @@ export default function Blackjack() {
             {/* DEALER_TURN */}
             {gameState === "DEALER_TURN" && (
               <div className="action-controls">
-                <div style={{ fontFamily: "'Press Start 2P'", fontSize: "0.7rem", color: "var(--retro-yellow)", animation: "pulse 1s steps(2) infinite" }}>
+                <div style={{ fontFamily: "'Press Start 2P'", fontSize: "0.85rem", color: "var(--retro-yellow)", animation: "pulse 1s steps(2) infinite" }}>
                   Dealer playing...
                 </div>
               </div>
@@ -809,8 +766,6 @@ export default function Blackjack() {
           </div>
         </div>
       </div>
-      </div>
-
       {/* Blackjack Styles */}
       <style>{`
         .bj-game-area {
@@ -822,7 +777,7 @@ export default function Blackjack() {
           max-width: 1000px;
           margin: 0 auto;
           position: relative;
-          padding: 10px 0;
+          padding: 16px 0;
           overflow: hidden;
         }
 
@@ -831,7 +786,7 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: 150px;
+          min-height: 200px;
           flex-shrink: 0;
         }
 
@@ -840,7 +795,7 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: 180px;
+          min-height: 260px;
           flex-shrink: 0;
           justify-content: flex-end;
         }
@@ -851,16 +806,16 @@ export default function Blackjack() {
           align-items: center;
           justify-content: center;
           flex-grow: 1;
-          gap: 10px;
-          min-height: 100px;
+          gap: 16px;
+          min-height: 140px;
         }
 
         .hand-container {
           display: flex;
           justify-content: center;
-          margin: 5px 0;
-          min-width: 120px;
-          min-height: 120px;
+          margin: 10px 0;
+          min-width: 200px;
+          min-height: 180px;
           transition: all 0.3s;
         }
 
@@ -884,32 +839,32 @@ export default function Blackjack() {
 
         .hand-score {
           background: var(--bg-secondary);
-          border: 2px solid var(--retro-cyan);
+          border: 4px solid var(--retro-cyan);
           color: var(--retro-yellow);
           font-family: 'Press Start 2P';
-          font-size: 0.8rem;
-          padding: 3px 8px;
-          margin-top: 2px;
+          font-size: 1.2rem;
+          padding: 8px 16px;
+          margin-top: 6px;
           text-shadow: 2px 2px 0 #000;
-          box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+          box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
           z-index: 10;
         }
 
         .hand-label {
           font-family: 'Press Start 2P';
           color: var(--text-secondary);
-          font-size: 0.7rem;
-          margin-top: 10px;
-          margin-bottom: 2px;
+          font-size: 1rem;
+          margin-top: 14px;
+          margin-bottom: 6px;
           text-transform: uppercase;
         }
 
         .bj-card {
-          width: 90px;
-          height: 126px;
+          width: 140px;
+          height: 196px;
           position: relative;
           transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          margin-left: -40px;
+          margin-left: -56px;
           transform-origin: center bottom;
         }
 
@@ -920,7 +875,7 @@ export default function Blackjack() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding: 6px;
+          padding: 8px;
           position: absolute;
           backface-visibility: hidden;
           border: 4px solid var(--card-black);
@@ -977,24 +932,24 @@ export default function Blackjack() {
 
         .chip-rack {
           display: flex;
-          gap: 10px;
-          margin-bottom: 10px;
+          gap: 16px;
+          margin-bottom: 16px;
           perspective: 500px;
         }
 
         .chip {
-          width: 50px;
-          height: 50px;
+          width: 80px;
+          height: 80px;
           border-radius: 50%;
           border: 4px dashed rgba(255,255,255,0.4);
           display: flex;
           justify-content: center;
           align-items: center;
           font-family: 'Press Start 2P';
-          font-size: 0.45rem;
+          font-size: 0.6rem;
           color: white;
           cursor: pointer;
-          box-shadow: 0 5px 0 rgba(0,0,0,0.5);
+          box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s, margin-top 0.1s;
           user-select: none;
           text-shadow: 1px 1px 0 #000;
@@ -1006,6 +961,8 @@ export default function Blackjack() {
         .chip.c-10 { background: var(--retro-green); border-color: #88ff88; }
         .chip.c-25 { background: var(--retro-red); border-color: #ff8888; }
         .chip.c-100 { background: var(--retro-purple); border-color: #dcb3ff; }
+        .chip.c-500 { background: #cc6600; border-color: #ff9933; }
+        .chip.c-1000 { background: #cc0066; border-color: #ff3399; }
         .chip.c-max { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
 
         .chip::before {
@@ -1022,14 +979,14 @@ export default function Blackjack() {
 
         .action-controls {
           display: flex;
-          gap: 15px;
-          margin-top: 10px;
+          gap: 20px;
+          margin-top: 18px;
         }
 
         .action-btn {
           font-family: 'Press Start 2P';
-          font-size: 0.7rem;
-          padding: 12px 20px;
+          font-size: 0.95rem;
+          padding: 18px 30px;
           border: 4px solid;
           background: var(--bg-secondary);
           color: white;
@@ -1070,7 +1027,7 @@ export default function Blackjack() {
 
         .big-text {
           font-family: 'Press Start 2P';
-          font-size: 2.5rem;
+          font-size: 3.5rem;
           text-shadow: 4px 4px 0 #000, -2px -2px 0 var(--retro-magenta);
           white-space: nowrap;
           animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1083,8 +1040,8 @@ export default function Blackjack() {
         }
 
         .deck-shoe {
-          width: 90px;
-          height: 126px;
+          width: 140px;
+          height: 196px;
           background: var(--bg-card);
           border: 4px solid var(--retro-purple);
           position: relative;
@@ -1099,15 +1056,25 @@ export default function Blackjack() {
           opacity: 0.5;
         }
 
-        @media (max-height: 700px) {
-          .bj-card { width: 70px; height: 98px; }
-          .deck-shoe { width: 70px !important; height: 98px !important; }
-          .hand-container { min-height: 100px; }
-          .dealer-area { min-height: 120px; }
-          .player-area { min-height: 150px; }
-          .game-header h1 { font-size: 1.5rem; }
-          .action-btn { padding: 10px 15px; font-size: 0.6rem; }
+        @media (max-height: 600px) {
+          .bj-card { width: 90px; height: 126px; margin-left: -40px; }
+          .deck-shoe { width: 90px !important; height: 126px !important; }
+          .hand-container { min-height: 130px; }
+          .dealer-area { min-height: 140px; }
+          .player-area { min-height: 180px; }
+          .hand-label { font-size: 0.7rem; }
+          .hand-score { font-size: 0.85rem; padding: 5px 10px; }
+          .chip { width: 56px; height: 56px; font-size: 0.45rem; }
+          .chip-rack { gap: 10px; margin-bottom: 10px; }
+          .action-btn { padding: 12px 20px; font-size: 0.65rem; }
         }
+
+        /* Blackjack header & stats - larger within scaled design */
+        .bj-header h1 { font-size: 2.6rem !important; }
+        .bj-header .subtitle { font-size: 1.6rem !important; margin-top: 14px !important; }
+        .bj-stats .stat-item { padding: 18px 30px !important; }
+        .bj-stats .stat-label { font-size: 0.6rem !important; }
+        .bj-stats .stat-value { font-size: 1.9rem !important; }
 
         /* Scaled wrapper adjustments */
         .scaled-game-wrapper {
@@ -1117,10 +1084,10 @@ export default function Blackjack() {
           justify-content: flex-start;
         }
 
-        /* Ensure game container handles scaled content properly */
+        /* Ensure game container fills viewport with no scroll */
         .game-container {
           position: relative;
-          overflow: auto;
+          overflow: hidden;
         }
 
         /* Popup-style Modal (not full screen) */
@@ -1335,6 +1302,245 @@ export default function Blackjack() {
         @keyframes bounce {
           0% { transform: translateY(0); }
           100% { transform: translateY(-10px); }
+        }
+
+        /* Blackjack game - fit viewport without scrolling */
+        .blackjack-game {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 10px 20px;
+          height: 100vh;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .bj-header {
+          margin-bottom: 8px !important;
+          flex-shrink: 0;
+        }
+
+        .bj-header h1 {
+          font-size: 1.6rem !important;
+          margin: 0;
+        }
+
+        .bj-header .subtitle {
+          font-size: 0.9rem !important;
+          margin-top: 4px !important;
+        }
+
+        .bj-stats {
+          margin-bottom: 8px !important;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        .bj-stats .stat-item {
+          padding: 8px 16px !important;
+        }
+
+        .bj-stats .stat-label {
+          font-size: 0.45rem !important;
+          margin-bottom: 4px;
+        }
+
+        .bj-stats .stat-value {
+          font-size: 1.1rem !important;
+        }
+
+        /* Base sizes - cards visible but compact */
+        .bj-card {
+          width: 90px !important;
+          height: 126px !important;
+          margin-left: -36px !important;
+        }
+
+        .bj-card:first-child {
+          margin-left: 0 !important;
+        }
+
+        .deck-shoe {
+          width: 90px !important;
+          height: 126px !important;
+        }
+
+        .bj-game-area {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          min-height: 0;
+          padding: 8px 0;
+        }
+
+        .dealer-area {
+          min-height: auto !important;
+          flex-shrink: 0;
+        }
+
+        .player-area {
+          min-height: auto !important;
+          flex-shrink: 0;
+        }
+
+        .hand-container {
+          min-height: auto !important;
+          margin: 5px 0;
+        }
+
+        .hand-label {
+          font-size: 0.75rem !important;
+          margin: 4px 0;
+        }
+
+        .hand-score {
+          font-size: 0.9rem !important;
+          padding: 5px 10px !important;
+          margin: 4px 0;
+        }
+
+        .control-panel {
+          margin-top: 8px !important;
+          flex-shrink: 0;
+        }
+
+        .chip {
+          width: 52px !important;
+          height: 52px !important;
+          font-size: 0.5rem !important;
+        }
+
+        .chip-rack {
+          gap: 10px !important;
+          margin-bottom: 10px !important;
+        }
+
+        .action-btn {
+          padding: 12px 22px !important;
+          font-size: 0.75rem !important;
+        }
+
+        .action-controls {
+          gap: 15px !important;
+          margin-top: 10px !important;
+        }
+
+        .big-text {
+          font-size: 2rem !important;
+        }
+
+        .table-center {
+          min-height: 80px;
+          flex-shrink: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-height: 750px) {
+          .bj-card {
+            width: 80px !important;
+            height: 112px !important;
+            margin-left: -32px !important;
+          }
+
+          .deck-shoe {
+            width: 80px !important;
+            height: 112px !important;
+          }
+
+          .chip {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 0.45rem !important;
+          }
+
+          .action-btn {
+            padding: 10px 18px !important;
+            font-size: 0.7rem !important;
+          }
+
+          .hand-score {
+            font-size: 0.8rem !important;
+            padding: 4px 8px !important;
+          }
+
+          .hand-label {
+            font-size: 0.7rem !important;
+          }
+        }
+
+        @media (max-height: 650px) {
+          .bj-header h1 {
+            font-size: 1.4rem !important;
+          }
+
+          .bj-header .subtitle {
+            font-size: 0.8rem !important;
+          }
+
+          .bj-card {
+            width: 70px !important;
+            height: 98px !important;
+            margin-left: -28px !important;
+          }
+
+          .deck-shoe {
+            width: 70px !important;
+            height: 98px !important;
+          }
+
+          .chip {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 0.4rem !important;
+          }
+
+          .chip-rack {
+            gap: 8px !important;
+            margin-bottom: 8px !important;
+          }
+
+          .action-btn {
+            padding: 8px 16px !important;
+            font-size: 0.65rem !important;
+          }
+
+          .hand-score {
+            font-size: 0.75rem !important;
+          }
+
+          .big-text {
+            font-size: 1.6rem !important;
+          }
+        }
+
+        @media (max-height: 550px) {
+          .bj-card {
+            width: 60px !important;
+            height: 84px !important;
+            margin-left: -24px !important;
+          }
+
+          .deck-shoe {
+            width: 60px !important;
+            height: 84px !important;
+          }
+
+          .chip {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 0.38rem !important;
+          }
+
+          .action-btn {
+            padding: 8px 14px !important;
+            font-size: 0.6rem !important;
+          }
+        }
+
+        /* Scaled wrapper removal cleanup */
+        .scaled-game-wrapper {
+          display: contents;
         }
       `}</style>
     </div>

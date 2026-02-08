@@ -297,3 +297,50 @@ export const triggerLeaderboardUpdate = mutation({
     return { success: true };
   },
 });
+
+// Weekly wallet reset - resets all wallets to $500 every Sunday
+export const weeklyWalletReset = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const currentWeekStart = getWeekStart(new Date(now));
+    
+    // Get all users
+    const users = await ctx.db.query("users").collect();
+    
+    let resetCount = 0;
+    
+    for (const user of users) {
+      // Check if wallet needs reset (if it hasn't been reset this week)
+      const lastReset = user.lastWalletReset || 0;
+      const lastResetWeek = getWeekStart(new Date(lastReset));
+      
+      // Only reset if it hasn't been done for the current week
+      if (lastResetWeek < currentWeekStart) {
+        await ctx.db.patch(user._id, {
+          wallet: 500,
+          lastWalletReset: now,
+        });
+        
+        // Log the reset transaction
+        await ctx.db.insert("transactions", {
+          userId: user._id,
+          type: "admin_adjustment",
+          amount: 500 - user.wallet, // Difference
+          balanceBefore: user.wallet,
+          balanceAfter: 500,
+          description: "Weekly wallet reset to $500",
+          timestamp: now,
+        });
+        
+        resetCount++;
+      }
+    }
+    
+    return { 
+      success: true, 
+      resetCount, 
+      weekStart: currentWeekStart,
+      message: `Reset ${resetCount} wallets to $500 for week starting ${new Date(currentWeekStart).toLocaleDateString()}`
+    };
+  },
+});

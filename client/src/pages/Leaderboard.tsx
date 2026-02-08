@@ -57,7 +57,11 @@ export default function Leaderboard() {
           value={selectedWeek}
           onChange={(e) => setSelectedWeek(e.target.value)}
         >
-          <option value="current">Current Week</option>
+          {currentLeaderboard && (
+            <option value="current">
+              {formatDate(currentLeaderboard.weekStart)} - {formatDate(currentLeaderboard.weekEnd)}
+            </option>
+          )}
           {historicalLeaderboards?.map((lb) => (
             <option key={lb.weekStart} value={String(lb.weekStart)}>
               {formatDate(lb.weekStart)} - {formatDate(lb.weekEnd)}

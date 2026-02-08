@@ -42,7 +42,11 @@ export const placeBet = mutation({
       throw new Error("Insufficient funds");
     }
 
-    const newWallet = Math.round((user.wallet - args.amount) * 100) / 100;
+    let newWallet = Math.round((user.wallet - args.amount) * 100) / 100;
+    // Ensure we don't have floating point precision errors showing as tiny values
+    if (Math.abs(newWallet) < 0.01) {
+      newWallet = 0;
+    }
 
     // Update wallet
     await ctx.db.patch(args.userId, {

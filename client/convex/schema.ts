@@ -9,6 +9,8 @@ export default defineSchema({
     wallet: v.number(),
     createdAt: v.number(),
     lastLogin: v.number(),
+    // Track when wallet was last reset to $500
+    lastWalletReset: v.optional(v.number()),
     // User settings synced across devices
     settings: v.object({
       theme: v.optional(v.string()),
@@ -63,7 +65,7 @@ export default defineSchema({
     amount: v.number(),
     balanceBefore: v.number(),
     balanceAfter: v.number(),
-    game: v.optional(v.string()), // "higher-lower" | "blackjack"
+    game: v.optional(v.string()),
     description: v.optional(v.string()),
     timestamp: v.number(),
   })

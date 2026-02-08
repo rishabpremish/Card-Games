@@ -10,6 +10,60 @@ async function hashPassword(password: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Helper: Get start of week (Sunday 00:00:00)
+function getWeekStart(date: Date): number {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sunday
+  const diff = d.getDate() - day;
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// Read-only: effective wallet for display (use in queries; no DB writes)
+function getEffectiveWallet(user: any): number {
+  const now = Date.now();
+  const currentWeekStart = getWeekStart(new Date(now));
+  const lastReset = user.lastWalletReset || 0;
+  const lastResetWeek = getWeekStart(new Date(lastReset));
+  if (lastResetWeek < currentWeekStart) {
+    return 500;
+  }
+  return user.wallet;
+}
+
+// Helper: Check and reset wallet if needed (mutations only; performs DB writes)
+async function checkAndResetWallet(ctx: any, user: any): Promise<number> {
+  const now = Date.now();
+  const currentWeekStart = getWeekStart(new Date(now));
+  const lastReset = user.lastWalletReset || 0;
+  const lastResetWeek = getWeekStart(new Date(lastReset));
+
+  // Only reset if it hasn't been done for the current week
+  if (lastResetWeek < currentWeekStart) {
+    const oldWallet = user.wallet;
+    await ctx.db.patch(user._id, {
+      wallet: 500,
+      lastWalletReset: now,
+    });
+
+    // Log the reset transaction
+    await ctx.db.insert("transactions", {
+      userId: user._id,
+      type: "admin_adjustment",
+      amount: 500 - oldWallet,
+      balanceBefore: oldWallet,
+      balanceAfter: 500,
+      description: "Weekly wallet reset to $500",
+      timestamp: now,
+    });
+
+    return 500;
+  }
+
+  return user.wallet;
+}
+
 // Register new user
 export const register = mutation({
   args: {
@@ -51,12 +105,14 @@ export const register = mutation({
     const passwordHash = await hashPassword(args.password);
 
     // Create user with default settings
+    const now = Date.now();
     const userId = await ctx.db.insert("users", {
       username: args.username.toLowerCase(),
       passwordHash,
-      wallet: 100, // Starting balance
-      createdAt: Date.now(),
-      lastLogin: Date.now(),
+      wallet: 500, // Starting balance
+      createdAt: now,
+      lastLogin: now,
+      lastWalletReset: now, // Set to now so they don't get reset immediately
       settings: {
         theme: "default",
         cardSpeed: "normal",
@@ -105,6 +161,9 @@ export const login = mutation({
       throw new Error("Invalid username or password");
     }
 
+    // Check and reset wallet if needed
+    const currentWallet = await checkAndResetWallet(ctx, user);
+
     // Update last login
     await ctx.db.patch(user._id, {
       lastLogin: Date.now(),
@@ -113,7 +172,7 @@ export const login = mutation({
     return {
       userId: user._id,
       username: user.username,
-      wallet: user.wallet,
+      wallet: currentWallet,
       settings: user.settings,
       isAdmin: user.isAdmin || false,
     };
@@ -132,10 +191,13 @@ export const getCurrentUser = query({
       return null;
     }
 
+    // Use read-only effective wallet (queries cannot write; reset happens on next login)
+    const currentWallet = getEffectiveWallet(user);
+
     return {
       userId: user._id,
       username: user.username,
-      wallet: user.wallet,
+      wallet: currentWallet,
       settings: user.settings,
       isAdmin: user.isAdmin || false,
     };

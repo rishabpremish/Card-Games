@@ -26,6 +26,16 @@ const MIME = {
 // ── Serve built client files ──
 const CLIENT_DIST = join(__dirname, "..", "client", "dist");
 
+// Cache index.html in memory once at startup so SPA fallback is instant
+let indexHtml = null;
+const indexPath = join(CLIENT_DIST, "index.html");
+if (existsSync(indexPath)) {
+  indexHtml = readFileSync(indexPath);
+  console.log("✓ Loaded index.html from", indexPath);
+} else {
+  console.warn("⚠ index.html not found at", indexPath);
+}
+
 const httpServer = createServer((req, res) => {
   // Health check endpoint for Render
   if (req.url === "/health") {
@@ -34,8 +44,23 @@ const httpServer = createServer((req, res) => {
     return;
   }
 
+  // Parse the URL to strip query strings and decode percent-encoding
+  let pathname;
+  try {
+    pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
+  } catch {
+    pathname = req.url;
+  }
+
   // Try to serve static file from client/dist
-  let filePath = join(CLIENT_DIST, req.url === "/" ? "index.html" : req.url);
+  const filePath = join(CLIENT_DIST, pathname === "/" ? "index.html" : pathname);
+
+  // Security: prevent directory traversal
+  if (!filePath.startsWith(CLIENT_DIST)) {
+    res.writeHead(403, { "Content-Type": "text/plain" });
+    res.end("Forbidden");
+    return;
+  }
 
   if (existsSync(filePath) && statSync(filePath).isFile()) {
     const ext = extname(filePath);
@@ -43,14 +68,13 @@ const httpServer = createServer((req, res) => {
     res.writeHead(200, { "Content-Type": contentType });
     res.end(readFileSync(filePath));
   } else {
-    // SPA fallback — serve index.html for client-side routes
-    const indexPath = join(CLIENT_DIST, "index.html");
-    if (existsSync(indexPath)) {
+    // SPA fallback — serve index.html for all client-side routes
+    if (indexHtml) {
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(readFileSync(indexPath));
+      res.end(indexHtml);
     } else {
       res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("Not found");
+      res.end("Not found — index.html missing from build output");
     }
   }
 });
