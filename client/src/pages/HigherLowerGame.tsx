@@ -1010,12 +1010,12 @@ export default function HigherLowerGame() {
       });
       setCardsPlaced((prev) => prev + 1);
       // Track cards played for level progression and auto-advance if threshold reached
-      setCardsPlayedThisLevel((prev) => {
+      setCardsPlayedThisLevel((prev: number) => {
         const newCount = prev + 1;
         const required = currentLevel === 1 ? 4 : currentLevel === 2 ? 3 : currentLevel === 3 ? 2 : 0;
         if (required > 0 && newCount >= required) {
           // Auto-advance to next level silently
-          setCurrentLevel((level) => level + 1);
+          setCurrentLevel((level: number) => level + 1);
           return 0;
         }
         return newCount;
@@ -1128,7 +1128,7 @@ export default function HigherLowerGame() {
         setHasCashedOut(true);
         setShowBettingModal(false);
         // Advance to next level and reset cards played
-        setCurrentLevel((prev) => prev + 1);
+        setCurrentLevel((prev: number) => prev + 1);
         setCardsPlayedThisLevel(0);
       } catch (error) {
         console.error("Failed to cash out:", error);

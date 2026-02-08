@@ -116,7 +116,7 @@ export default function Baccarat() {
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("betting");
   const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(null);
-  const [winnings, setWinnings] = useState<number>(0);
+  const [, setWinnings] = useState<number>(0);
   const [message, setMessage] = useState<string>("");
   const [isDealing, setIsDealing] = useState(false);
   const [showDevPanel, setShowDevPanel] = useState(false);
