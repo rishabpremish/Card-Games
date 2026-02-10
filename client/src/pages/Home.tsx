@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useWallet } from "../hooks/useWallet";
 import Settings from "../components/Settings";
+import AchievementsPanel from "../components/AchievementsPanel";
+import DailyBonus from "../components/DailyBonus";
+import SessionStatsPanel from "../components/SessionStatsPanel";
 
 export default function Home() {
   const { user, logout } = useAuth();
@@ -102,6 +105,11 @@ export default function Home() {
 
       {/* Settings modal accessible from home */}
       <Settings />
+      
+      {/* New features */}
+      <DailyBonus />
+      <AchievementsPanel />
+      <SessionStatsPanel />
     </div>
   );
 }

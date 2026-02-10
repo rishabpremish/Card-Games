@@ -10,6 +10,11 @@ import {
 } from "../utils/gamblingLogic";
 import { useWallet } from "../hooks/useWallet";
 import { useAuth } from "../hooks/useAuth";
+import { useSound } from "../hooks/useSound";
+import { useConfetti } from "../hooks/useConfetti";
+import { useScreenShake } from "../hooks/useScreenShake";
+import { useAchievements } from "../hooks/useAchievements";
+import { useSessionStats } from "../hooks/useSessionStats";
 
 // Types
 interface Card {
@@ -604,6 +609,13 @@ export default function HigherLowerGame() {
     updateWallet,
   } = useWallet();
   const { user } = useAuth();
+  
+  // New hooks for fun features
+  const { playSound } = useSound();
+  const { triggerConfetti } = useConfetti();
+  const { triggerShake } = useScreenShake();
+  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementSessionWins } = useAchievements();
+  const { recordBet } = useSessionStats();
   const [currentBet, setCurrentBet] = useState(restored?.currentBet ?? 0);
 
   // Gambling state
@@ -748,6 +760,12 @@ export default function HigherLowerGame() {
           setGamblingStake(0);
           setShowCashOut(false);
           resetGame();
+          
+          // Fun features on loss
+          playSound("lose");
+          triggerShake("medium");
+          recordBet("higherLower", currentBet, "loss");
+          resetWinStreak();
         }
         setShowGameOverModal(true);
         return;
@@ -766,6 +784,14 @@ export default function HigherLowerGame() {
           });
           setGamblingStake(0);
           setShowCashOut(false);
+          
+          // Fun features on big win
+          playSound("win");
+          triggerConfetti({ intensity: "high" });
+          unlockAchievement("clear_the_deck");
+          recordBet("higherLower", currentBet, "win");
+          incrementWinStreak();
+          incrementSessionWins();
         }
         setShowGameOverModal(true);
         return;
@@ -863,6 +889,9 @@ export default function HigherLowerGame() {
 
       lastDrawTimeRef.current = now;
       setIsProcessing(true);
+      
+      // Play card deal sound
+      playSound("deal");
 
       const currentCard =
         grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
@@ -1103,6 +1132,12 @@ export default function HigherLowerGame() {
         setCardsPlayedThisLevel(0);
 
         initGame();
+        
+        // Sound and achievement for high roller
+        playSound("chip");
+        if (amount >= 100) {
+          unlockAchievement("high_roller");
+        }
       } catch (error) {
         console.error("Failed to place bet:", error);
       }
@@ -1130,6 +1165,10 @@ export default function HigherLowerGame() {
         // Advance to next level and reset cards played
         setCurrentLevel((prev: number) => prev + 1);
         setCardsPlayedThisLevel(0);
+        
+        // Sound effect for cash out
+        playSound("cashout");
+        triggerConfetti({ intensity: "low" });
       } catch (error) {
         console.error("Failed to cash out:", error);
       }

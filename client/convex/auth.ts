@@ -131,7 +131,7 @@ export const register = mutation({
     return {
       userId,
       username: args.username.toLowerCase(),
-      wallet: 100,
+      wallet: 500,
     };
   },
 });
@@ -219,6 +219,7 @@ export const updateSettings = mutation({
       bgAnimation: v.optional(v.boolean()),
       highContrast: v.optional(v.boolean()),
       reduceMotion: v.optional(v.boolean()),
+      soundEnabled: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {
@@ -233,5 +234,121 @@ export const updateSettings = mutation({
     });
 
     return { success: true };
+  },
+});
+
+// Unlock achievement
+export const unlockAchievement = mutation({
+  args: {
+    userId: v.id("users"),
+    achievementId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const currentAchievements = (user.achievements as string[]) || [];
+    
+    if (!currentAchievements.includes(args.achievementId)) {
+      await ctx.db.patch(args.userId, {
+        achievements: [...currentAchievements, args.achievementId],
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+// Claim daily bonus
+export const claimDailyBonus = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const now = Date.now();
+    const today = new Date(now).setHours(0, 0, 0, 0);
+    const lastBonus = user.lastDailyBonusDate || 0;
+    const lastBonusDay = new Date(lastBonus).setHours(0, 0, 0, 0);
+
+    // Check if already claimed today
+    if (lastBonusDay === today) {
+      throw new Error("Daily bonus already claimed today");
+    }
+
+    // Calculate streak
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayTime = yesterday.getTime();
+
+    let newStreak = 1;
+    if (lastBonusDay === yesterdayTime) {
+      newStreak = (user.dailyLoginStreak || 0) + 1;
+    }
+
+    // Calculate bonus amount (increases with streak, max at 7 days)
+    const baseBonus = 10;
+    const streakBonus = Math.min(newStreak * 2, 14); // Max 14 extra
+    const totalBonus = baseBonus + streakBonus;
+
+    const newWallet = user.wallet + totalBonus;
+
+    await ctx.db.patch(args.userId, {
+      wallet: newWallet,
+      lastDailyBonusDate: now,
+      dailyLoginStreak: newStreak,
+    });
+
+    // Log transaction
+    await ctx.db.insert("transactions", {
+      userId: args.userId,
+      type: "deposit",
+      amount: totalBonus,
+      balanceBefore: user.wallet,
+      balanceAfter: newWallet,
+      description: `Daily bonus (Day ${newStreak})`,
+      timestamp: now,
+    });
+
+    return {
+      amount: totalBonus,
+      streak: newStreak,
+      newBalance: newWallet,
+    };
+  },
+});
+
+// Check if daily bonus is available
+export const checkDailyBonus = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+
+    if (!user) {
+      return { available: false, streak: 0 };
+    }
+
+    const now = Date.now();
+    const today = new Date(now).setHours(0, 0, 0, 0);
+    const lastBonus = user.lastDailyBonusDate || 0;
+    const lastBonusDay = new Date(lastBonus).setHours(0, 0, 0, 0);
+
+    // Check if already claimed today
+    const available = lastBonusDay !== today;
+
+    return {
+      available,
+      streak: user.dailyLoginStreak || 0,
+    };
   },
 });

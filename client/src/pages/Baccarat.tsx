@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
 import { useAuth } from "../hooks/useAuth";
+import { useSound } from "../hooks/useSound";
+import { useConfetti } from "../hooks/useConfetti";
+import { useAchievements } from "../hooks/useAchievements";
+import { useSessionStats } from "../hooks/useSessionStats";
 
 // Instructions component
 function Instructions() {
@@ -107,6 +111,12 @@ export default function Baccarat() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
   const { user } = useAuth();
+  
+  // Fun feature hooks
+  const { playSound } = useSound();
+  const { triggerConfetti } = useConfetti();
+  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementBankerWins, incrementTieWins, incrementSessionWins } = useAchievements();
+  const { recordBet } = useSessionStats();
 
   // Game state
   const [shoe, setShoe] = useState<Card[]>([]);
@@ -148,11 +158,20 @@ export default function Baccarat() {
       setIsDealing(true);
       setMessage("");
       
+      // Play sound and check achievement
+      playSound("chip");
+      if (betAmount >= 100) {
+        unlockAchievement("high_roller");
+      }
+      
       // Check for reshuffle
       let currentShoe = checkReshuffle(shoe);
       
       // Deal initial cards with animation delay
-      setTimeout(() => dealInitialCards(currentShoe), 500);
+      setTimeout(() => {
+        playSound("deal");
+        dealInitialCards(currentShoe);
+      }, 500);
     } catch (error) {
       setMessage("Failed to place bet");
     }
@@ -284,13 +303,23 @@ export default function Baccarat() {
         const commission = betAmount * 0.05;
         winAmount = betAmount * 2 - commission; // Original bet + winnings minus commission
         setMessage(`Banker wins! You won $${(betAmount - commission).toFixed(2)} (5% commission)`);
+        incrementBankerWins();
       } else {
         // Tie pays 8:1
         winAmount = betAmount * 9; // Original bet + 8x winnings
         setMessage(`Tie! You won $${(betAmount * 8).toFixed(2)} (8:1 payout)`);
+        incrementTieWins();
       }
       
       setWinnings(winAmount);
+      
+      // Fun features on win
+      playSound("win");
+      const intensity = gameWinner === "tie" ? "high" : "medium";
+      triggerConfetti({ intensity });
+      incrementWinStreak();
+      incrementSessionWins();
+      recordBet("baccarat", betAmount, "win");
       
       try {
         await addWinnings(winAmount, "Baccarat");
@@ -300,6 +329,11 @@ export default function Baccarat() {
     } else {
       setMessage(`${gameWinner.charAt(0).toUpperCase() + gameWinner.slice(1)} wins. You lost $${betAmount.toFixed(2)}`);
       setWinnings(0);
+      
+      // Fun features on loss
+      playSound("lose");
+      resetWinStreak();
+      recordBet("baccarat", betAmount, "loss");
     }
     
     setIsDealing(false);

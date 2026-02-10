@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { AuthProvider } from "./hooks/AuthContext";
+import { AchievementsProvider } from "./hooks/useAchievements";
+import { SessionStatsProvider } from "./hooks/useSessionStats";
 import "./index.css";
 import App from "./App";
 
@@ -37,7 +39,11 @@ if (!convexUrl) {
     <StrictMode>
       <ConvexProvider client={convex}>
         <AuthProvider>
-          <App />
+          <AchievementsProvider>
+            <SessionStatsProvider>
+              <App />
+            </SessionStatsProvider>
+          </AchievementsProvider>
         </AuthProvider>
       </ConvexProvider>
     </StrictMode>,

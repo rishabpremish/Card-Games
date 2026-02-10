@@ -23,7 +23,15 @@ export default defineSchema({
       bgAnimation: v.optional(v.boolean()),
       highContrast: v.optional(v.boolean()),
       reduceMotion: v.optional(v.boolean()),
+      soundEnabled: v.optional(v.boolean()),
     }),
+    // Daily bonus tracking
+    lastDailyBonusDate: v.optional(v.number()),
+    dailyLoginStreak: v.optional(v.number()),
+    // Achievements tracking
+    achievements: v.optional(v.array(v.string())),
+    bestStreak: v.optional(v.number()),
+    lastStreakUpdate: v.optional(v.number()),
     isAdmin: v.optional(v.boolean()),
   }).index("by_username", ["username"]),
 

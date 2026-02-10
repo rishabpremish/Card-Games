@@ -15,6 +15,8 @@ interface User {
   wallet: number;
   settings: any;
   isAdmin: boolean;
+  achievements?: string[];
+  bestStreak?: number;
 }
 
 interface AuthContextType {

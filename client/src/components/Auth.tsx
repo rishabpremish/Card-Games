@@ -126,7 +126,7 @@ export default function Auth() {
         </form>
 
         <div className="auth-footer">
-          <p>Start with $100 • Weekly Leaderboards • Real Prizes</p>
+          <p>Start with $500 • Weekly Leaderboards • Real Prizes</p>
         </div>
       </div>
     </div>

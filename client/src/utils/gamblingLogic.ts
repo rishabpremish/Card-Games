@@ -186,8 +186,9 @@ export function processResult(
     // Partial loss scaled by risk: risky guesses lose less, safe guesses lose more.
     // The multiplier encodes the win probability: winProb ≈ (1 - HOUSE_EDGE) / multiplier
     const winProbability = Math.min(1, (1 - HOUSE_EDGE) / Math.max(multiplier, 1));
-    // Keep rate: 15% (floor for very safe bets) up to 70% (for very risky bets)
-    const keepRate = 0.15 + 0.55 * (1 - winProbability);
+    // Keep rate: 35% (floor for very safe bets) up to 85% (for very risky bets)
+    // This is more forgiving than before (was 15%-70%)
+    const keepRate = 0.35 + 0.50 * (1 - winProbability);
     currentStake = Math.floor(currentStake * keepRate * 100) / 100;
     if (currentStake < 0.01) {
       currentStake = 0;
