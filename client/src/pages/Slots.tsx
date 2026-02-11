@@ -39,12 +39,7 @@ for (const [sym, weight] of Object.entries(SYMBOL_WEIGHTS)) {
 }
 
 function getRandomSymbol(): string {
-<<<<<<< HEAD
-  const symbols = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "💎", "7️⃣"];
-  return symbols[Math.floor(Math.random() * symbols.length)];
-=======
   return WEIGHTED_REEL[Math.floor(Math.random() * WEIGHTED_REEL.length)];
->>>>>>> 20ed62b8ef7fe778824429311a7184d449e4c3b0
 }
 
 export default function Slots() {
