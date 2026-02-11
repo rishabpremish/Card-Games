@@ -478,6 +478,8 @@ export const getFriends = query({
 // ═══════════════════════════════════
 
 // Internal mutation: deduct 10% of account balance for each overdue loan daily
+const OVERDUE_LOAN_PENALTY_RATE = 0.1;
+
 export const processOverdueLoans = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
@@ -490,7 +492,7 @@ export const processOverdueLoans = internalMutation({
       const user = await ctx.db.get(loan.userId);
       if (!user || user.wallet <= 0) continue;
 
-      const penalty = Math.round(user.wallet * 0.1);
+      const penalty = Math.round(user.wallet * OVERDUE_LOAN_PENALTY_RATE);
       if (penalty <= 0) continue;
 
       const newWallet = Math.max(0, user.wallet - penalty);

@@ -23,7 +23,7 @@ const PAYOUTS: Record<string, number[]> = {
 
 // Weighted virtual reel – casino-style symbol weighting.
 // Low-value symbols appear far more often than high-value ones,
-// giving an approximate RTP of ~91% over millions of spins.
+// producing a house edge similar to real casino slot machines.
 const WEIGHTED_REEL: string[] = [];
 const SYMBOL_WEIGHTS: Record<string, number> = {
   "🍒": 30, // most common
