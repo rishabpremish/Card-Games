@@ -416,21 +416,24 @@ export default function War() {
           flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
           gap: clamp(5px,1vh,10px); padding: clamp(6px,1.2vh,12px) 0;
         }
-        .war-chips { display: flex; gap: clamp(4px,0.8vw,8px); flex-wrap: wrap; justify-content: center; }
+        .war-chips { display: flex; gap: clamp(8px,1.6vw,16px); flex-wrap: wrap; justify-content: center; }
         .wch {
-          width: clamp(50px,8.5vw,72px); height: clamp(50px,8.5vw,72px);
-          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          width: clamp(44px,7vw,76px); height: clamp(44px,7vw,76px);
+          border-radius: 50%; border: 4px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.44rem,1.1vw,0.62rem);
-          color: white; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.5);
+          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.4vw,0.6rem);
+          color: white; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
+          position: relative;
         }
-        .wch:hover { transform: translateY(-3px); }
+        .wch::before { content:''; position:absolute; top:5px;left:5px;right:5px;bottom:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .wch:hover { transform: translateY(-5px); }
+        .wch:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .wch.off { filter: grayscale(1) brightness(0.5); pointer-events: none; }
-        .wch.v1 { background: #666; } .wch.v5 { background: var(--retro-blue); }
-        .wch.v10 { background: var(--retro-green); } .wch.v25 { background: var(--retro-red); }
-        .wch.v100 { background: var(--retro-purple); } .wch.v500 { background: #cc6600; }
-        .wch.vmax { background: var(--retro-yellow); color: black; text-shadow: none; }
+        .wch.v1 { background: #666; border-color: #999; } .wch.v5 { background: var(--retro-blue); border-color: #88ccff; }
+        .wch.v10 { background: var(--retro-green); border-color: #88ff88; } .wch.v25 { background: var(--retro-red); border-color: #ff8888; }
+        .wch.v100 { background: var(--retro-purple); border-color: #dcb3ff; } .wch.v500 { background: #cc6600; border-color: #ff9933; }
+        .wch.vmax { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
 
         .war-bet-row { display: flex; align-items: center; gap: 10px; }
         .war-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(1.05rem,2.8vw,1.5rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }

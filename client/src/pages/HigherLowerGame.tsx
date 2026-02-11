@@ -537,20 +537,20 @@ function BettingModal({
 
       <style>{`
         .hl-chip-rack {
-          display: flex; gap: clamp(6px,1.4vw,12px); flex-wrap: wrap;
+          display: flex; gap: clamp(8px,1.6vw,16px); flex-wrap: wrap;
           justify-content: center; margin: 16px 0 12px;
         }
         .hl-chip {
-          width: clamp(44px,7vw,64px); height: clamp(44px,7vw,64px);
-          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          width: clamp(44px,7vw,76px); height: clamp(44px,7vw,76px);
+          border-radius: 50%; border: 4px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P', cursive; font-size: clamp(0.3rem,0.9vw,0.5rem);
-          color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+          font-family: 'Press Start 2P', cursive; font-size: clamp(0.45rem,1.4vw,0.6rem);
+          color: white; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
           position: relative;
         }
-        .hl-chip::before { content:''; position:absolute; top:3px;left:3px;right:3px;bottom:3px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
-        .hl-chip:hover { transform: translateY(-4px); }
+        .hl-chip::before { content:''; position:absolute; top:5px;left:5px;right:5px;bottom:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .hl-chip:hover { transform: translateY(-5px); }
         .hl-chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .hl-chip.disabled { filter: grayscale(1) brightness(0.5); cursor: not-allowed; pointer-events: none; }
         .hl-c-1 { background: #666; border-color: #999; }

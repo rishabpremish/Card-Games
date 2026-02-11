@@ -492,18 +492,18 @@ export default function Baccarat() {
         .bac-bname { font-family: 'Press Start 2P'; font-size: clamp(0.52rem,1.3vw,0.72rem); }
         .bac-bodds { font-family: 'VT323', monospace; font-size: clamp(0.78rem,1.7vw,1.02rem); opacity: 0.8; margin-top: 2px; }
 
-        .bac-chips { display: flex; gap: clamp(5px,1vw,10px); flex-wrap: wrap; justify-content: center; }
+        .bac-chips { display: flex; gap: clamp(8px,1.6vw,16px); flex-wrap: wrap; justify-content: center; }
         .bac-chip {
-          width: clamp(50px,8.5vw,74px); height: clamp(50px,8.5vw,74px);
-          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          width: clamp(44px,7vw,76px); height: clamp(44px,7vw,76px);
+          border-radius: 50%; border: 4px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.44rem,1.1vw,0.62rem);
-          color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.4vw,0.6rem);
+          color: white; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
           position: relative;
         }
-        .bac-chip::before { content:''; position:absolute; top:3px;left:3px;right:3px;bottom:3px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
-        .bac-chip:hover { transform: translateY(-3px); }
+        .bac-chip::before { content:''; position:absolute; top:5px;left:5px;right:5px;bottom:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .bac-chip:hover { transform: translateY(-5px); }
         .bac-chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .bac-chip.off { filter: grayscale(1) brightness(0.5); cursor: not-allowed; pointer-events: none; }
         .bac-chip.v5 { background: var(--retro-blue); border-color: #88ccff; }
@@ -698,7 +698,7 @@ export default function Baccarat() {
           <button
             className="dev-tools-toggle"
             onClick={() => setShowDevPanel(!showDevPanel)}
-            style={{ position: "fixed", bottom: 20, right: 20, zIndex: 100 }}
+            style={{ position: "fixed", bottom: 20, right: 20, top: "auto", left: "auto", zIndex: 100 }}
           >
             DEV
           </button>
@@ -709,6 +709,8 @@ export default function Baccarat() {
                 position: "fixed",
                 bottom: 60,
                 right: 20,
+                top: "auto",
+                left: "auto",
                 zIndex: 100,
                 background: "var(--bg-secondary)",
                 border: "2px solid var(--retro-cyan)",

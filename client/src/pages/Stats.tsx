@@ -43,71 +43,75 @@ export default function Stats() {
           padding: 44px 20px 20px;
           font-family: 'Press Start 2P', cursive;
           color: #fff;
+          max-width: 1250px;
+          margin: 0 auto;
         }
         .stats-back {
           position: absolute; top: 44px; left: 20px;
           background: none;
           border: 2px solid var(--retro-yellow, #ffd700);
           color: var(--retro-yellow, #ffd700);
-          padding: 8px 18px;
+          padding: 10px 22px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 0.58rem;
+          font-size: 0.7rem;
           cursor: pointer;
         }
         .stats-title {
           text-align: center;
           color: var(--retro-yellow, #ffd700);
-          font-size: 1.4rem;
-          margin: 20px 0 24px;
+          font-size: clamp(1.4rem, 3.5vw, 2rem);
+          text-shadow: 3px 3px 0 var(--retro-magenta, #ff00ff);
+          margin: 20px 0 28px;
         }
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 16px;
-          max-width: 900px;
+          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+          gap: 20px;
+          max-width: 1250px;
           margin: 0 auto;
         }
         .stats-card {
           background: rgba(255,255,255,0.04);
-          border: 2px solid rgba(255,255,255,0.12);
-          border-radius: 8px;
-          padding: 18px;
+          border: 3px solid rgba(255,255,255,0.12);
+          border-radius: 0;
+          padding: 24px;
         }
         .stats-card h3 {
-          font-size: 0.72rem;
+          font-size: 0.9rem;
           color: var(--retro-yellow, #ffd700);
-          margin: 0 0 16px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.1);
-          padding-bottom: 10px;
+          margin: 0 0 20px 0;
+          border-bottom: 2px solid rgba(255,255,255,0.1);
+          padding-bottom: 12px;
         }
         .stats-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
         }
         .stats-label {
           color: rgba(255,255,255,0.5);
-          font-size: 0.52rem;
+          font-size: 0.7rem;
         }
         .stats-value {
           color: #fff;
-          font-size: 0.6rem;
+          font-size: 0.8rem;
         }
         .stats-value.green { color: #00ff88; }
         .stats-value.red { color: #ff4444; }
         .stats-value.gold { color: #ffd700; }
         .stats-xp-bar-track {
-          width: 100%; height: 12px;
+          width: 100%; height: 16px;
           background: rgba(255,255,255,0.08);
-          border-radius: 6px;
+          border-radius: 0;
           overflow: hidden;
-          margin-top: 8px;
+          margin-top: 10px;
+          border: 2px solid rgba(255,255,255,0.18);
         }
         .stats-xp-bar-fill {
           height: 100%;
           background: linear-gradient(90deg, #ffd700, #ff8c00);
-          border-radius: 6px;
+          border-radius: 0;
           transition: width 0.5s;
         }
       `}</style>
@@ -171,7 +175,7 @@ export default function Stats() {
               </span>
             </div>
             <div style={{ marginTop: "8px" }}>
-              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.3rem" }}>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.5rem" }}>
                 Next: Silver $5k • Gold $25k • Platinum $100k • Diamond $500k
               </p>
             </div>
@@ -225,14 +229,14 @@ export default function Stats() {
               }}
             >
               {achievements.slice(0, 12).map((a: any) => (
-                <span
+                  <span
                   key={a}
                   style={{
                     background: "rgba(255,215,0,0.1)",
                     border: "1px solid rgba(255,215,0,0.3)",
-                    borderRadius: "3px",
-                    padding: "2px 6px",
-                    fontSize: "0.3rem",
+                    borderRadius: "0",
+                    padding: "4px 10px",
+                    fontSize: "0.5rem",
                     color: "#ffd700",
                   }}
                 >
@@ -241,7 +245,7 @@ export default function Stats() {
               ))}
               {achievements.length > 12 && (
                 <span
-                  style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.3rem" }}
+                  style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.5rem" }}
                 >
                   +{achievements.length - 12} more
                 </span>
