@@ -164,6 +164,7 @@ export default function Roulette() {
     setSpinning(true);
     setMessage("");
     setResult(null);
+    setHistory([]);
     playSound("chip");
 
     const finalResult = Math.floor(Math.random() * 37);
@@ -506,6 +507,32 @@ export default function Roulette() {
             {spinning ? "SPINNING…" : "SPIN"}
           </button>
         </div>
+      </div>
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Select a chip value, then click the board to place bets</li>
+          <li>Bet on numbers (0–36), colors (Red/Black), ranges, or dozens</li>
+          <li>Press <strong>SPIN</strong> to spin the wheel</li>
+          <li><strong>Number bet:</strong> Pays 36x</li>
+          <li><strong>Color/Odd/Even:</strong> Pays 2x • <strong>Dozens:</strong> Pays 3x</li>
+        </ol>
+        <p className="note">
+          You can place multiple bets before spinning. Green (0) pays 36x!
+        </p>
       </div>
     </div>
   );

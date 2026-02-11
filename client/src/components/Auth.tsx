@@ -38,10 +38,18 @@ export default function Auth() {
         : await register(username, password);
 
       if (!result.success) {
-        setError(result.error || "An error occurred");
+        if (isLogin) {
+          setError("Invalid Username or Password");
+        } else {
+          setError(result.error || "An error occurred");
+        }
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch {
+      if (isLogin) {
+        setError("Invalid Username or Password");
+      } else {
+        setError("An error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

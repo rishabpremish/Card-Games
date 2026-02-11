@@ -220,6 +220,7 @@ export default function Craps() {
     setDie1(0);
     setDie2(0);
     setPoint(null);
+    setHistory([]);
   };
 
   const availBet = (wallet ?? 0) - stagedBet;
@@ -502,6 +503,32 @@ export default function Craps() {
           ))}
         </div>
       )}
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Choose a bet type: <strong>Pass</strong>, <strong>Don't Pass</strong>, or <strong>Field</strong></li>
+          <li>Place your chips and press <strong>ROLL</strong></li>
+          <li><strong>Pass:</strong> Win on 7/11 come-out, lose on 2/3/12. Otherwise a point is set</li>
+          <li><strong>Point phase:</strong> Roll the point again to win, 7 to lose</li>
+          <li><strong>Field:</strong> Win on 2/3/4/9/10/11/12; 2 and 12 pay triple</li>
+        </ol>
+        <p className="note">
+          Don't Pass is the opposite of Pass — you win when the shooter loses!
+        </p>
+      </div>
     </div>
   );
 }

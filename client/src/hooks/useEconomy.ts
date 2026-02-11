@@ -27,11 +27,6 @@ export function useEconomy() {
     user ? { userId: user.userId } : "skip",
   );
 
-  const shopData = useQuery(
-    api.economy.getShopItems,
-    user ? { userId: user.userId } : "skip",
-  );
-
   // ── Mutations ──
   const addXPMutation = useMutation(api.economy.addXP);
   const addWageredMutation = useMutation(api.economy.addWagered);
@@ -43,8 +38,6 @@ export function useEconomy() {
     api.economy.updateChallengeProgress,
   );
   const claimRewardMutation = useMutation(api.economy.claimChallengeReward);
-  const buyItemMutation = useMutation(api.economy.buyShopItem);
-  const equipItemMutation = useMutation(api.economy.equipItem);
   const takeLoanMutation = useMutation(api.economy.takeLoan);
   const repayLoanMutation = useMutation(api.economy.repayLoan);
   const sendFriendReqMutation = useMutation(api.economy.sendFriendRequest);
@@ -67,11 +60,6 @@ export function useEconomy() {
     updateProgressMutation({ userId: uid(), challengeType, amount });
   const claimChallengeReward = (challengeId: Id<"challenges">) =>
     claimRewardMutation({ userId: uid(), challengeId });
-
-  const buyShopItem = (itemId: string) =>
-    buyItemMutation({ userId: uid(), itemId });
-  const equipItem = (itemId: string) =>
-    equipItemMutation({ userId: uid(), itemId });
 
   const takeLoan = (amount: number) =>
     takeLoanMutation({ userId: uid(), amount });
@@ -114,8 +102,6 @@ export function useEconomy() {
     activeLoans: activeLoans ?? [],
     friends: friends?.friends ?? [],
     friendRequests: friends?.requests ?? [],
-    shopItems: shopData?.items ?? [],
-    ownedItems: shopData?.owned ?? [],
 
     // xp / vip
     addXP,
@@ -126,10 +112,6 @@ export function useEconomy() {
     generateDailyChallenges,
     updateChallengeProgress,
     claimChallengeReward,
-
-    // shop
-    buyShopItem,
-    equipItem,
 
     // loans
     takeLoan,
