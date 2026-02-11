@@ -64,6 +64,36 @@ export const placeBet = mutation({
       timestamp: Date.now(),
     });
 
+    // ── Economy auto-tracking ──
+    // Track total wagered for VIP tiers
+    const newWagered = (user.totalWagered ?? 0) + args.amount;
+    const vipPatch: Record<string, any> = { totalWagered: newWagered };
+    // Auto-update VIP tier
+    const tiers = [
+      { tier: "diamond", min: 500000 }, { tier: "platinum", min: 100000 },
+      { tier: "gold", min: 25000 }, { tier: "silver", min: 5000 },
+    ];
+    let newTier = "bronze";
+    for (const t of tiers) { if (newWagered >= t.min) { newTier = t.tier; break; } }
+    if (newTier !== (user.vipTier ?? "bronze")) vipPatch.vipTier = newTier;
+    await ctx.db.patch(args.userId, vipPatch);
+
+    // Update challenge progress (wager + play)
+    const now = Date.now();
+    const challenges = await ctx.db.query("challenges")
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .collect();
+    for (const ch of challenges) {
+      if (ch.completed || ch.expiresAt <= now) continue;
+      let inc = 0;
+      if (ch.challengeId.includes("wager")) inc = args.amount;
+      else if (ch.challengeId.includes("play")) inc = 1;
+      if (inc > 0) {
+        const p = Math.min(ch.progress + inc, ch.target);
+        await ctx.db.patch(ch._id, { progress: p, completed: p >= ch.target });
+      }
+    }
+
     return {
       wallet: newWallet,
       success: true,
@@ -108,6 +138,32 @@ export const addWinnings = mutation({
       description: args.description,
       timestamp: Date.now(),
     });
+
+    // ── Economy auto-tracking on win ──
+    if (args.amount > 0) {
+      // Award XP (roughly 1 XP per $10 won, minimum 5)
+      const xpGain = Math.max(5, Math.round(args.amount / 10));
+      const newXP = (user.xp ?? 0) + xpGain;
+      let level = 1, remaining = newXP;
+      while (remaining >= level * 100) { remaining -= level * 100; level++; }
+      await ctx.db.patch(args.userId, { xp: newXP, level });
+
+      // Update win challenges
+      const now = Date.now();
+      const challenges = await ctx.db.query("challenges")
+        .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+        .collect();
+      for (const ch of challenges) {
+        if (ch.completed || ch.expiresAt <= now) continue;
+        let inc = 0;
+        if (ch.challengeId.includes("win") && !ch.challengeId.includes("big")) inc = 1;
+        if (ch.challengeId.includes("big_win") && args.amount >= 200) inc = args.amount;
+        if (inc > 0) {
+          const p = Math.min(ch.progress + inc, ch.target);
+          await ctx.db.patch(ch._id, { progress: p, completed: p >= ch.target });
+        }
+      }
+    }
 
     return {
       wallet: newWallet,

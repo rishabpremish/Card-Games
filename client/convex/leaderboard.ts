@@ -39,6 +39,8 @@ export const getCurrentLeaderboard = query({
       username: user.username,
       balance: user.wallet,
       rank: i + 1,
+      level: user.level ?? 1,
+      vipTier: user.vipTier ?? "bronze",
       weekStart,
       weekEnd: getWeekEnd(weekStart),
       isCurrent: true,

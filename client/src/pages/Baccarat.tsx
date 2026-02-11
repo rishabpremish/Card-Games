@@ -7,39 +7,6 @@ import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
 
-// Instructions component
-function Instructions() {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <div className="instructions">
-      <button
-        className="instructions-toggle"
-        onClick={() => setVisible(!visible)}
-      >
-        How to Play
-      </button>
-      <div className={`instructions-content ${visible ? "visible" : ""}`}>
-        <h3>Rules</h3>
-        <ol>
-          <li>
-            Bet on <strong>Player</strong> (1:1), <strong>Banker</strong> (1:1 -
-            5% commission), or <strong>Tie</strong> (8:1)
-          </li>
-          <li>Two cards dealt to Player and Banker hands</li>
-          <li>Closest to 9 wins - only last digit counts (15 = 5)</li>
-          <li>8 or 9 on first two cards = Natural (game ends immediately)</li>
-          <li>Third cards may be drawn based on specific rules</li>
-        </ol>
-        <p className="note">
-          Note: 10s, J, Q, K = 0 | A = 1 | Others = face value. Banker wins
-          slightly more often!
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // Types
 interface Card {
   suit: string;
@@ -57,561 +24,481 @@ type GamePhase =
   | "settling"
   | "complete";
 
-// Card suits and values
 const SUITS = ["♠", "♥", "♦", "♣"];
-const VALUES = [
-  "A",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "J",
-  "Q",
-  "K",
-];
+const VALUES = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const CHIP_VALUES = [5, 10, 25, 50, 100, 500];
 
-// Create a shoe with 6 decks (standard for Baccarat)
 function createShoe(): Card[] {
   const shoe: Card[] = [];
-  // 6 decks
   for (let deck = 0; deck < 6; deck++) {
     for (const suit of SUITS) {
       for (const value of VALUES) {
         let numericValue: number;
-        if (value === "A") {
-          numericValue = 1;
-        } else if (["10", "J", "Q", "K"].includes(value)) {
-          numericValue = 0;
-        } else {
-          numericValue = parseInt(value);
-        }
-
-        shoe.push({
-          suit,
-          value,
-          numericValue,
-          isRed: suit === "♥" || suit === "♦",
-        });
+        if (value === "A") numericValue = 1;
+        else if (["10", "J", "Q", "K"].includes(value)) numericValue = 0;
+        else numericValue = parseInt(value);
+        shoe.push({ suit, value, numericValue, isRed: suit === "♥" || suit === "♦" });
       }
     }
   }
   return shuffleShoe(shoe);
 }
 
-// Fisher-Yates shuffle
 function shuffleShoe(shoe: Card[]): Card[] {
-  const shuffled = [...shoe];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  const s = [...shoe];
+  for (let i = s.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [s[i], s[j]] = [s[j], s[i]];
   }
-  return shuffled;
+  return s;
 }
 
-// Calculate Baccarat score (last digit of sum)
-function calculateScore(hand: Card[]): number {
-  const sum = hand.reduce((acc, card) => acc + card.numericValue, 0);
-  return sum % 10;
+function calcScore(hand: Card[]): number {
+  return hand.reduce((a, c) => a + c.numericValue, 0) % 10;
 }
 
-// Deal a card from the shoe
 function dealCard(shoe: Card[]): { card: Card; newShoe: Card[] } {
-  const card = shoe[0];
-  const newShoe = shoe.slice(1);
-  return { card, newShoe };
+  return { card: shoe[0], newShoe: shoe.slice(1) };
 }
 
-// Check if shoe needs reshuffling (75% empty)
 function shouldReshuffle(shoe: Card[]): boolean {
-  return shoe.length < 78; // 6 decks * 52 cards = 312, 25% = 78
+  return shoe.length < 78;
+}
+
+// Card sub-component
+function BacCard({ card }: { card: Card }) {
+  return (
+    <div className={`bac-card ${card.isRed ? "red" : "black"}`}>
+      <div className="bac-card-corner top">
+        <span className="bac-rank">{card.value}</span>
+        <span className="bac-suit-sm">{card.suit}</span>
+      </div>
+      <div className="bac-center-suit">{card.suit}</div>
+      <div className="bac-card-corner bottom">
+        <span className="bac-rank">{card.value}</span>
+        <span className="bac-suit-sm">{card.suit}</span>
+      </div>
+    </div>
+  );
+}
+
+function CardSlot() {
+  return <div className="bac-card-slot" />;
 }
 
 export default function Baccarat() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
   const { user } = useAuth();
-
-  // Fun feature hooks
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const {
-    unlockAchievement,
-    incrementWinStreak,
-    resetWinStreak,
-    incrementBankerWins,
-    incrementTieWins,
-    incrementSessionWins,
+    unlockAchievement, incrementWinStreak, resetWinStreak,
+    incrementBankerWins, incrementTieWins, incrementSessionWins,
   } = useAchievements();
   const { recordBet } = useSessionStats();
 
-  // Game state
   const [shoe, setShoe] = useState<Card[]>([]);
   const [playerHand, setPlayerHand] = useState<Card[]>([]);
   const [bankerHand, setBankerHand] = useState<Card[]>([]);
-  const [betAmount, setBetAmount] = useState<number>(10);
+  const [stagedBet, setStagedBet] = useState(0);
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("betting");
-  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(
-    null,
-  );
-  const [, setWinnings] = useState<number>(0);
-  const [message, setMessage] = useState<string>("");
+  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(null);
+  const [message, setMessage] = useState("");
+  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">("neutral");
   const [isDealing, setIsDealing] = useState(false);
+  const [history, setHistory] = useState<("P" | "B" | "T")[]>([]);
   const [showDevPanel, setShowDevPanel] = useState(false);
 
-  // Initialize shoe on mount
-  useEffect(() => {
-    setShoe(createShoe());
-  }, []);
+  useEffect(() => { setShoe(createShoe()); }, []);
 
-  // Handle reshuffle if needed
-  const checkReshuffle = useCallback((currentShoe: Card[]) => {
-    if (shouldReshuffle(currentShoe)) {
-      setMessage("Reshuffling shoe...");
-      return createShoe();
-    }
-    return currentShoe;
-  }, []);
+  const checkReshuffle = useCallback((s: Card[]) => shouldReshuffle(s) ? createShoe() : s, []);
 
-  // Place bet and start game
+  const addChip = (val: number) => {
+    if (gamePhase !== "betting") return;
+    const avail = (wallet ?? 0) - stagedBet;
+    if (avail >= val) setStagedBet(p => p + val);
+  };
+  const clearBet = () => { if (gamePhase === "betting") setStagedBet(0); };
+
   const handlePlaceBet = async () => {
-    if (!selectedBet || betAmount <= 0 || betAmount > (wallet ?? 0)) {
-      setMessage("Please select a bet type and valid amount");
-      return;
-    }
-
+    if (!selectedBet || stagedBet <= 0 || stagedBet > (wallet ?? 0)) return;
     try {
-      await placeBetMutation(betAmount, "Baccarat");
-      setGamePhase("dealing");
-      setIsDealing(true);
-      setMessage("");
-
-      // Play sound and check achievement
+      await placeBetMutation(stagedBet, "Baccarat");
+      setGamePhase("dealing"); setIsDealing(true); setMessage(""); setWinner(null);
       playSound("chip");
-      if (betAmount >= 100) {
-        unlockAchievement("high_roller");
-      }
-
-      // Check for reshuffle
-      let currentShoe = checkReshuffle(shoe);
-
-      // Deal initial cards with animation delay
-      setTimeout(() => {
-        playSound("deal");
-        dealInitialCards(currentShoe);
-      }, 500);
-    } catch (error) {
-      setMessage("Failed to place bet");
-    }
+      if (stagedBet >= 100) unlockAchievement("high_roller");
+      const currentShoe = checkReshuffle(shoe);
+      setTimeout(() => { playSound("deal"); dealInitialCards(currentShoe); }, 500);
+    } catch { setMessage("Failed to place bet"); }
   };
 
-  // Deal initial 2 cards to each hand
-  const dealInitialCards = (currentShoe: Card[]) => {
-    let newShoe = [...currentShoe];
-
-    // Deal alternately: Player, Banker, Player, Banker
-    const { card: p1, newShoe: s1 } = dealCard(newShoe);
+  const dealInitialCards = (cs: Card[]) => {
+    const { card: p1, newShoe: s1 } = dealCard(cs);
     const { card: b1, newShoe: s2 } = dealCard(s1);
     const { card: p2, newShoe: s3 } = dealCard(s2);
     const { card: b2, newShoe: s4 } = dealCard(s3);
-
-    setPlayerHand([p1, p2]);
-    setBankerHand([b1, b2]);
-    setShoe(s4);
-
-    // Check for naturals after a delay
+    setPlayerHand([p1, p2]); setBankerHand([b1, b2]); setShoe(s4);
     setTimeout(() => checkNaturals([p1, p2], [b1, b2], s4), 1000);
   };
 
-  // Check for naturals (8 or 9)
-  const checkNaturals = (pHand: Card[], bHand: Card[], currentShoe: Card[]) => {
-    const playerScore = calculateScore(pHand);
-    const bankerScore = calculateScore(bHand);
-
-    if (playerScore >= 8 || bankerScore >= 8) {
-      // Natural - game ends
-      setMessage("Natural!");
-      setTimeout(() => determineWinner(pHand, bHand, currentShoe), 1000);
+  const checkNaturals = (pH: Card[], bH: Card[], s: Card[]) => {
+    if (calcScore(pH) >= 8 || calcScore(bH) >= 8) {
+      setTimeout(() => determineWinner(pH, bH, s), 1000);
     } else {
-      // No natural - proceed to third card rules
       setGamePhase("playerThird");
-      setTimeout(() => handlePlayerThirdCard(pHand, bHand, currentShoe), 1000);
+      setTimeout(() => handlePlayerThird(pH, bH, s), 1000);
     }
   };
 
-  // Player third card rule
-  const handlePlayerThirdCard = (
-    pHand: Card[],
-    bHand: Card[],
-    currentShoe: Card[],
-  ) => {
-    const playerScore = calculateScore(pHand);
-
-    if (playerScore <= 5) {
-      // Player draws
-      const { card: newCard, newShoe } = dealCard(currentShoe);
-      const newPlayerHand = [...pHand, newCard];
-      setPlayerHand(newPlayerHand);
-      setShoe(newShoe);
-
-      // Now handle banker third card
+  const handlePlayerThird = (pH: Card[], bH: Card[], s: Card[]) => {
+    if (calcScore(pH) <= 5) {
+      const { card, newShoe } = dealCard(s);
+      const newPH = [...pH, card];
+      setPlayerHand(newPH); setShoe(newShoe);
       setGamePhase("bankerThird");
-      setTimeout(
-        () =>
-          handleBankerThirdCard(
-            newPlayerHand,
-            bHand,
-            newShoe,
-            newCard.numericValue,
-          ),
-        1000,
-      );
+      setTimeout(() => handleBankerThird(newPH, bH, newShoe, card.numericValue), 1000);
     } else {
-      // Player stands (6 or 7)
-      // Banker draws if 5 or less
       setGamePhase("bankerThird");
-      setTimeout(
-        () => handleBankerThirdCard(pHand, bHand, currentShoe, null),
-        1000,
-      );
+      setTimeout(() => handleBankerThird(pH, bH, s, null), 1000);
     }
   };
 
-  // Banker third card rule (complex)
-  const handleBankerThirdCard = (
-    pHand: Card[],
-    bHand: Card[],
-    currentShoe: Card[],
-    playerThirdCard: number | null,
-  ) => {
-    const bankerScore = calculateScore(bHand);
-    let shouldDraw = false;
-
-    if (playerThirdCard === null) {
-      // Player stood - Banker draws on 0-5, stands on 6-7
-      shouldDraw = bankerScore <= 5;
+  const handleBankerThird = (pH: Card[], bH: Card[], s: Card[], p3: number | null) => {
+    const bs = calcScore(bH);
+    let draw = false;
+    if (p3 === null) draw = bs <= 5;
+    else if (bs <= 2) draw = true;
+    else if (bs === 3) draw = p3 !== 8;
+    else if (bs === 4) draw = p3 >= 2 && p3 <= 7;
+    else if (bs === 5) draw = p3 >= 4 && p3 <= 7;
+    else if (bs === 6) draw = p3 === 6 || p3 === 7;
+    if (draw) {
+      const { card, newShoe } = dealCard(s);
+      setBankerHand([...bH, card]); setShoe(newShoe);
+      setTimeout(() => determineWinner(pH, [...bH, card], newShoe), 1000);
     } else {
-      // Player drew - complex rules based on player's third card
-      if (bankerScore <= 2) {
-        shouldDraw = true;
-      } else if (bankerScore === 3) {
-        shouldDraw = playerThirdCard !== 8;
-      } else if (bankerScore === 4) {
-        shouldDraw = playerThirdCard >= 2 && playerThirdCard <= 7;
-      } else if (bankerScore === 5) {
-        shouldDraw = playerThirdCard >= 4 && playerThirdCard <= 7;
-      } else if (bankerScore === 6) {
-        shouldDraw = playerThirdCard === 6 || playerThirdCard === 7;
-      }
-      // Banker score 7 always stands
-    }
-
-    if (shouldDraw) {
-      const { card: newCard, newShoe } = dealCard(currentShoe);
-      const newBankerHand = [...bHand, newCard];
-      setBankerHand(newBankerHand);
-      setShoe(newShoe);
-      setTimeout(() => determineWinner(pHand, newBankerHand, newShoe), 1000);
-    } else {
-      setTimeout(() => determineWinner(pHand, bHand, currentShoe), 1000);
+      setTimeout(() => determineWinner(pH, bH, s), 1000);
     }
   };
 
-  // Determine winner and handle payouts
-  const determineWinner = async (
-    pHand: Card[],
-    bHand: Card[],
-    currentShoe: Card[],
-  ) => {
-    const playerScore = calculateScore(pHand);
-    const bankerScore = calculateScore(bHand);
+  const determineWinner = async (pH: Card[], bH: Card[], cs: Card[]) => {
+    const ps = calcScore(pH), bs = calcScore(bH);
+    let gw: "player" | "banker" | "tie";
+    if (ps > bs) gw = "player"; else if (bs > ps) gw = "banker"; else gw = "tie";
+    setWinner(gw); setGamePhase("complete");
+    setHistory(h => [...h, gw === "player" ? "P" : gw === "banker" ? "B" : "T"]);
 
-    let gameWinner: "player" | "banker" | "tie";
-    let winAmount = 0;
-
-    if (playerScore > bankerScore) {
-      gameWinner = "player";
-    } else if (bankerScore > playerScore) {
-      gameWinner = "banker";
+    if (selectedBet === gw) {
+      let winAmount = 0;
+      if (gw === "player") { winAmount = stagedBet * 2; setMessage(`Player wins! +$${stagedBet}`); }
+      else if (gw === "banker") { const c = stagedBet * 0.05; winAmount = stagedBet * 2 - c; setMessage(`Banker wins! +$${(stagedBet - c).toFixed(2)}`); incrementBankerWins(); }
+      else { winAmount = stagedBet * 9; setMessage(`Tie! +$${(stagedBet * 8).toFixed(2)} (8:1)`); incrementTieWins(); }
+      setResultType("win"); playSound("win");
+      triggerConfetti({ intensity: gw === "tie" ? "high" : "medium" });
+      incrementWinStreak(); incrementSessionWins(); recordBet("baccarat", stagedBet, "win");
+      try { await addWinnings(winAmount, "Baccarat"); } catch {}
     } else {
-      gameWinner = "tie";
+      setMessage(`${gw.charAt(0).toUpperCase() + gw.slice(1)} wins. -$${stagedBet}`);
+      setResultType("lose"); playSound("lose"); resetWinStreak(); recordBet("baccarat", stagedBet, "loss");
     }
-
-    setWinner(gameWinner);
-    setGamePhase("complete");
-
-    // Calculate payout
-    if (selectedBet === gameWinner) {
-      if (gameWinner === "player") {
-        // Player bet pays 1:1
-        winAmount = betAmount * 2; // Original bet + winnings
-        setMessage(`Player wins! You won $${betAmount.toFixed(2)}`);
-      } else if (gameWinner === "banker") {
-        // Banker bet pays 1:1 minus 5% commission
-        const commission = betAmount * 0.05;
-        winAmount = betAmount * 2 - commission; // Original bet + winnings minus commission
-        setMessage(
-          `Banker wins! You won $${(betAmount - commission).toFixed(2)} (5% commission)`,
-        );
-        incrementBankerWins();
-      } else {
-        // Tie pays 8:1
-        winAmount = betAmount * 9; // Original bet + 8x winnings
-        setMessage(`Tie! You won $${(betAmount * 8).toFixed(2)} (8:1 payout)`);
-        incrementTieWins();
-      }
-
-      setWinnings(winAmount);
-
-      // Fun features on win
-      playSound("win");
-      const intensity = gameWinner === "tie" ? "high" : "medium";
-      triggerConfetti({ intensity });
-      incrementWinStreak();
-      incrementSessionWins();
-      recordBet("baccarat", betAmount, "win");
-
-      try {
-        await addWinnings(winAmount, "Baccarat");
-      } catch (error) {
-        console.error("Failed to add winnings:", error);
-      }
-    } else {
-      setMessage(
-        `${gameWinner.charAt(0).toUpperCase() + gameWinner.slice(1)} wins. You lost $${betAmount.toFixed(2)}`,
-      );
-      setWinnings(0);
-
-      // Fun features on loss
-      playSound("lose");
-      resetWinStreak();
-      recordBet("baccarat", betAmount, "loss");
-    }
-
     setIsDealing(false);
-
-    // Check if reshuffle needed
-    if (shouldReshuffle(currentShoe)) {
-      setTimeout(() => {
-        setShoe(createShoe());
-        setMessage("Shoe reshuffled");
-      }, 2000);
-    }
+    if (shouldReshuffle(cs)) setTimeout(() => setShoe(createShoe()), 2000);
   };
 
-  // Reset game for next round
-  const handleNextRound = () => {
-    setPlayerHand([]);
-    setBankerHand([]);
-    setSelectedBet(null);
-    setGamePhase("betting");
-    setWinner(null);
-    setWinnings(0);
-    setMessage("");
+  const nextRound = () => {
+    setPlayerHand([]); setBankerHand([]); setSelectedBet(null);
+    setGamePhase("betting"); setWinner(null); setMessage(""); setStagedBet(0);
   };
 
-  // Format card for display
-  const formatCard = (card: Card) => {
-    return (
-      <div className={`baccarat-card ${card.isRed ? "red" : "black"}`}>
-        <div className="card-corner top">
-          <span className="card-value">{card.value}</span>
-          <span className="card-suit-small">{card.suit}</span>
-        </div>
-        <span className="card-center">{card.suit}</span>
-        <div className="card-corner bottom">
-          <span className="card-value">{card.value}</span>
-          <span className="card-suit-small">{card.suit}</span>
-        </div>
-      </div>
-    );
-  };
-
-  const playerScore = calculateScore(playerHand);
-  const bankerScore = calculateScore(bankerHand);
+  const ps = calcScore(playerHand), bs = calcScore(bankerHand);
+  const availBet = (wallet ?? 0) - stagedBet;
 
   return (
-    <div className="game-container baccarat-game">
+    <div className="bac-page">
       <div className="bg-decoration" />
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
-      </button>
+      <button className="home-btn" onClick={() => navigate("/")}>🏠 HOME</button>
 
-      {/* Header */}
-      <header className="game-header">
-        <h1>Baccarat</h1>
-        <p className="subtitle">Bet on Player, Banker, or Tie</p>
-      </header>
+      <style>{`
+        /* ═══════════════════════════════════
+           BACCARAT — FULL RETRO REDESIGN
+           ═══════════════════════════════════ */
+        .bac-page {
+          height: 100vh; height: 100dvh;
+          display: flex; flex-direction: column;
+          max-width: 1250px; margin: 0 auto;
+          padding: clamp(10px,2vh,18px) 20px;
+          position: relative; overflow: hidden;
+        }
+        .bac-page .home-btn { position: fixed; top: 20px; left: 20px; z-index: 50; }
 
-      {/* Stats */}
-      <div className="game-stats">
-        <div className="stat-item wallet-stat">
-          <span className="stat-label">Wallet</span>
-          <span className="stat-value">
-            $
-            {(wallet ?? 0).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-            })}
-          </span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Shoe</span>
-          <span className="stat-value">{shoe.length}</span>
-        </div>
+        /* Glow overlay */
+        .bac-page::after {
+          content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+          background: radial-gradient(60% 40% at 50% 30%, rgba(0,255,247,0.06), transparent 60%),
+                      radial-gradient(50% 35% at 50% 70%, rgba(255,0,255,0.05), transparent 60%);
+        }
+
+        .bac-top { flex-shrink: 0; text-align: center; position: relative; z-index: 1; }
+        .bac-top h1 {
+          font-family: 'Press Start 2P', cursive;
+          font-size: clamp(1rem,3.5vw,2rem);
+          color: var(--retro-yellow);
+          text-shadow: 3px 3px 0 var(--retro-magenta); margin: 0;
+        }
+        .bac-sub { font-family: 'VT323', monospace; font-size: clamp(0.8rem,2.5vw,1.2rem); color: var(--text-secondary); margin-top: 2px; }
+
+        /* Stats */
+        .bac-stats {
+          display: flex; justify-content: center; gap: clamp(8px,2vw,20px);
+          margin: clamp(4px,1vh,10px) 0; flex-shrink: 0; position: relative; z-index: 1;
+        }
+        .bac-stat {
+          background: var(--bg-secondary); border: 3px solid var(--retro-cyan);
+          padding: clamp(5px,1vh,10px) clamp(10px,2vw,18px); text-align: center;
+          box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+        }
+        .bac-stat-lbl { font-family: 'Press Start 2P'; font-size: clamp(0.3rem,0.9vw,0.45rem); color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 1px; }
+        .bac-stat-val { font-family: 'Press Start 2P'; font-size: clamp(0.7rem,2.2vw,1.3rem); color: var(--retro-green); }
+
+        /* Table middle */
+        .bac-table {
+          flex: 1; display: flex; flex-direction: column;
+          justify-content: center; align-items: center;
+          gap: clamp(6px,1.2vh,14px); min-height: 0; position: relative; z-index: 1;
+        }
+
+        /* Hands */
+        .bac-hands {
+          display: flex; justify-content: center; align-items: flex-start;
+          gap: clamp(14px,3.5vw,50px); width: 100%; max-width: 860px;
+          padding: clamp(10px,2vh,18px) clamp(12px,2.5vw,26px);
+          background: linear-gradient(180deg, rgba(16,28,52,0.88), rgba(10,18,36,0.92));
+          border: 3px solid var(--retro-cyan);
+          box-shadow: 8px 8px 0 rgba(0,255,247,0.12), inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .bac-hand-col { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: clamp(120px,26vw,200px); }
+        .bac-hand-col.w { filter: drop-shadow(0 0 12px rgba(0,255,0,0.4)); }
+        .bac-htitle { font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.3vw,0.75rem); color: var(--retro-cyan); text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+        .bac-htitle.wt { color: var(--retro-green); }
+        .bac-cards { display: flex; gap: 6px; justify-content: center; min-height: clamp(72px,15vh,120px); align-items: center; }
+        .bac-score {
+          font-family: 'Press Start 2P'; font-size: clamp(0.65rem,1.8vw,1rem);
+          color: var(--retro-yellow); background: rgba(0,0,0,0.6);
+          border: 3px solid var(--retro-yellow); padding: 3px 10px;
+          box-shadow: 3px 3px 0 rgba(255,255,0,0.2);
+        }
+        .bac-score.ws { border-color: var(--retro-green); color: var(--retro-green); }
+        .bac-vs { font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.3vw,0.8rem); color: var(--retro-magenta); align-self: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+
+        /* Cards */
+        .bac-card {
+          width: clamp(52px,11vw,90px); height: clamp(74px,15.5vw,126px);
+          background: var(--card-white); border: 3px solid var(--text-secondary);
+          display: flex; flex-direction: column; justify-content: space-between;
+          padding: 3px; position: relative; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+          animation: bacSlide 0.3s ease-out;
+        }
+        @keyframes bacSlide { from { opacity:0; transform:translateY(-16px) scale(0.92); } to { opacity:1; transform:translateY(0) scale(1); } }
+        .bac-card.red { color: var(--card-red); border-color: var(--retro-red); }
+        .bac-card.black { color: var(--card-black); }
+        .bac-card-corner { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+        .bac-card-corner.bottom { transform: rotate(180deg); }
+        .bac-rank { font-family: 'Press Start 2P'; font-size: clamp(0.35rem,1vw,0.55rem); }
+        .bac-suit-sm { font-size: clamp(0.35rem,0.9vw,0.5rem); }
+        .bac-center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(1rem,3vw,1.8rem); }
+        .bac-card-slot {
+          width: clamp(52px,11vw,90px); height: clamp(74px,15.5vw,126px);
+          border: 3px dashed var(--retro-purple); opacity: 0.35;
+          background: repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(153,102,255,0.06) 6px,rgba(153,102,255,0.06) 12px);
+          box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        }
+
+        /* Message */
+        .bac-msg {
+          font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.4vw,0.8rem);
+          text-align: center; padding: 6px 18px; background: rgba(10,16,32,0.85);
+          border: 3px solid; box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+          animation: msgPop 0.3s ease-out;
+        }
+        .bac-msg.win { color: var(--retro-green); border-color: var(--retro-green); }
+        .bac-msg.lose { color: var(--retro-red); border-color: var(--retro-red); }
+        .bac-msg.neutral { color: var(--retro-yellow); border-color: var(--retro-yellow); }
+        @keyframes msgPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .bac-dealing { font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.2vw,0.65rem); color: var(--retro-cyan); animation: dblink 0.6s ease-in-out infinite; }
+        @keyframes dblink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .bac-next {
+          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.3vw,0.7rem);
+          background: var(--retro-cyan); color: var(--bg-primary);
+          border: 3px solid var(--retro-cyan); padding: 8px 24px; cursor: pointer;
+          box-shadow: 4px 4px 0 rgba(0,255,247,0.3); transition: transform 0.1s;
+        }
+        .bac-next:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,255,247,0.4); }
+
+        /* Betting */
+        .bac-betting {
+          flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+          gap: clamp(5px,1vh,10px); padding: clamp(8px,1.5vh,14px) 0; position: relative; z-index: 1;
+        }
+        .bac-bet-types { display: flex; gap: clamp(6px,1.5vw,14px); }
+        .bac-betbtn {
+          display: flex; flex-direction: column; align-items: center;
+          padding: clamp(7px,1.3vh,12px) clamp(12px,2.2vw,20px);
+          background: var(--bg-secondary); border: 3px solid; cursor: pointer;
+          transition: transform 0.1s; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+          min-width: clamp(65px,13vw,100px);
+        }
+        .bac-betbtn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
+        .bac-betbtn.pb { border-color: var(--retro-blue); color: var(--retro-blue); }
+        .bac-betbtn.pb.on { background: var(--retro-blue); color: var(--bg-primary); }
+        .bac-betbtn.bb { border-color: var(--retro-red); color: var(--retro-red); }
+        .bac-betbtn.bb.on { background: var(--retro-red); color: var(--bg-primary); }
+        .bac-betbtn.tb { border-color: var(--retro-green); color: var(--retro-green); }
+        .bac-betbtn.tb.on { background: var(--retro-green); color: var(--bg-primary); }
+        .bac-bname { font-family: 'Press Start 2P'; font-size: clamp(0.35rem,1vw,0.5rem); }
+        .bac-bodds { font-family: 'VT323', monospace; font-size: clamp(0.55rem,1.4vw,0.8rem); opacity: 0.8; margin-top: 2px; }
+
+        .bac-chips { display: flex; gap: clamp(5px,1vw,10px); flex-wrap: wrap; justify-content: center; }
+        .bac-chip {
+          width: clamp(38px,6.5vw,58px); height: clamp(38px,6.5vw,58px);
+          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Press Start 2P'; font-size: clamp(0.3rem,0.9vw,0.45rem);
+          color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+          transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
+          position: relative;
+        }
+        .bac-chip::before { content:''; position:absolute; top:3px;left:3px;right:3px;bottom:3px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .bac-chip:hover { transform: translateY(-3px); }
+        .bac-chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+        .bac-chip.off { filter: grayscale(1) brightness(0.5); cursor: not-allowed; pointer-events: none; }
+        .bac-chip.v5 { background: var(--retro-blue); border-color: #88ccff; }
+        .bac-chip.v10 { background: var(--retro-green); border-color: #88ff88; }
+        .bac-chip.v25 { background: var(--retro-red); border-color: #ff8888; }
+        .bac-chip.v50 { background: var(--retro-purple); border-color: #dcb3ff; }
+        .bac-chip.v100 { background: #cc6600; border-color: #ff9933; }
+        .bac-chip.v500 { background: #cc0066; border-color: #ff3399; }
+        .bac-chip.vmax { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
+
+        .bac-bet-row { display: flex; align-items: center; gap: 10px; }
+        .bac-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(0.75rem,2.2vw,1.2rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }
+        .bac-btn-sm {
+          font-family: 'Press Start 2P'; border: 3px solid; background: var(--bg-secondary);
+          cursor: pointer; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); transition: transform 0.1s;
+          padding: clamp(5px,0.9vh,8px) clamp(10px,1.8vw,16px); font-size: clamp(0.4rem,1vw,0.55rem);
+        }
+        .bac-btn-sm.clr { border-color: #888; color: #aaa; }
+        .bac-btn-sm.go { border-color: var(--retro-green); color: var(--retro-green); }
+        .bac-btn-sm.go:hover:not(:disabled) { background: var(--retro-green); color: black; }
+        .bac-btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* History */
+        .bac-hist { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; flex-shrink: 0; padding: 3px 0; position: relative; z-index: 1; }
+        .bac-hdot {
+          width: clamp(12px,2vw,18px); height: clamp(12px,2vw,18px); border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Press Start 2P'; font-size: clamp(0.2rem,0.6vw,0.3rem);
+          color: white; text-shadow: 1px 1px 0 #000;
+        }
+        .bac-hdot.P { background: var(--retro-blue); }
+        .bac-hdot.B { background: var(--retro-red); }
+        .bac-hdot.T { background: var(--retro-green); }
+
+        @media (max-width: 600px) {
+          .bac-hands { flex-direction: column; align-items: center; gap: 8px; }
+          .bac-vs { display: none; }
+        }
+      `}</style>
+
+      <div className="bac-top">
+        <h1>BACCARAT</h1>
+        <div className="bac-sub">Bet on Player, Banker, or Tie</div>
       </div>
 
-      {/* Hands side by side */}
-      <div className="baccarat-hands-row">
-        <section
-          className={`baccarat-hand ${winner === "banker" ? "winner" : ""}`}
-        >
-          <h2 className="baccarat-hand-label">Banker</h2>
-          <div className="baccarat-cards-row">
-            {bankerHand.length === 0 ? (
-              <>
-                <div className="baccarat-card-placeholder" />
-                <div className="baccarat-card-placeholder" />
-              </>
-            ) : (
-              bankerHand.map((card, i) => (
-                <div key={`banker-${i}`} className="baccarat-card-wrap">
-                  {formatCard(card)}
-                </div>
-              ))
-            )}
+      <div className="bac-stats">
+        <div className="bac-stat">
+          <span className="bac-stat-lbl">Wallet</span>
+          <span className="bac-stat-val">${(wallet ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div className="bac-stat">
+          <span className="bac-stat-lbl">Shoe</span>
+          <span className="bac-stat-val">{shoe.length}</span>
+        </div>
+        {stagedBet > 0 && gamePhase === "betting" && (
+          <div className="bac-stat">
+            <span className="bac-stat-lbl">Bet</span>
+            <span className="bac-stat-val">${stagedBet}</span>
           </div>
-          {bankerHand.length > 0 && (
-            <div className="baccarat-score">{bankerScore}</div>
-          )}
-        </section>
-
-        <div className="baccarat-vs">VS</div>
-
-        <section
-          className={`baccarat-hand ${winner === "player" ? "winner" : ""}`}
-        >
-          <h2 className="baccarat-hand-label">Player</h2>
-          <div className="baccarat-cards-row">
-            {playerHand.length === 0 ? (
-              <>
-                <div className="baccarat-card-placeholder" />
-                <div className="baccarat-card-placeholder" />
-              </>
-            ) : (
-              playerHand.map((card, i) => (
-                <div key={`player-${i}`} className="baccarat-card-wrap">
-                  {formatCard(card)}
-                </div>
-              ))
-            )}
-          </div>
-          {playerHand.length > 0 && (
-            <div className="baccarat-score">{playerScore}</div>
-          )}
-        </section>
+        )}
       </div>
 
-      {/* Center message / dealing / next round */}
-      {message && <div className="baccarat-message">{message}</div>}
-      {isDealing && <div className="baccarat-dealing">Dealing…</div>}
-      {gamePhase === "complete" && (
-        <button
-          type="button"
-          className="baccarat-next-btn"
-          onClick={handleNextRound}
-        >
-          Next Round
-        </button>
-      )}
+      <div className="bac-table">
+        <div className="bac-hands">
+          <div className={`bac-hand-col ${winner === "banker" ? "w" : ""}`}>
+            <div className={`bac-htitle ${winner === "banker" ? "wt" : ""}`}>BANKER</div>
+            <div className="bac-cards">
+              {bankerHand.length === 0 ? <><CardSlot /><CardSlot /></> : bankerHand.map((c, i) => <BacCard key={`b${i}`} card={c} />)}
+            </div>
+            {bankerHand.length > 0 && <div className={`bac-score ${winner === "banker" ? "ws" : ""}`}>{bs}</div>}
+          </div>
+          <div className="bac-vs">VS</div>
+          <div className={`bac-hand-col ${winner === "player" ? "w" : ""}`}>
+            <div className={`bac-htitle ${winner === "player" ? "wt" : ""}`}>PLAYER</div>
+            <div className="bac-cards">
+              {playerHand.length === 0 ? <><CardSlot /><CardSlot /></> : playerHand.map((c, i) => <BacCard key={`p${i}`} card={c} />)}
+            </div>
+            {playerHand.length > 0 && <div className={`bac-score ${winner === "player" ? "ws" : ""}`}>{ps}</div>}
+          </div>
+        </div>
 
-      {/* Betting controls */}
+        {message && <div className={`bac-msg ${resultType}`}>{message}</div>}
+        {isDealing && !message && <div className="bac-dealing">Dealing…</div>}
+        {gamePhase === "complete" && <button className="bac-next" onClick={nextRound}>NEXT ROUND</button>}
+      </div>
+
       {gamePhase === "betting" && (
-        <div className="baccarat-bet-controls">
-          <div className="baccarat-bet-types">
-            <button
-              className={`baccarat-bet-btn player ${selectedBet === "player" ? "selected" : ""}`}
-              onClick={() => setSelectedBet("player")}
-            >
-              <span className="baccarat-bet-name">Player</span>
-              <span className="baccarat-bet-odds">1:1</span>
+        <div className="bac-betting">
+          <div className="bac-bet-types">
+            <button className={`bac-betbtn pb ${selectedBet === "player" ? "on" : ""}`} onClick={() => setSelectedBet("player")}>
+              <span className="bac-bname">Player</span><span className="bac-bodds">1:1</span>
             </button>
-            <button
-              className={`baccarat-bet-btn tie ${selectedBet === "tie" ? "selected" : ""}`}
-              onClick={() => setSelectedBet("tie")}
-            >
-              <span className="baccarat-bet-name">Tie</span>
-              <span className="baccarat-bet-odds">8:1</span>
+            <button className={`bac-betbtn tb ${selectedBet === "tie" ? "on" : ""}`} onClick={() => setSelectedBet("tie")}>
+              <span className="bac-bname">Tie</span><span className="bac-bodds">8:1</span>
             </button>
-            <button
-              className={`baccarat-bet-btn banker ${selectedBet === "banker" ? "selected" : ""}`}
-              onClick={() => setSelectedBet("banker")}
-            >
-              <span className="baccarat-bet-name">Banker</span>
-              <span className="baccarat-bet-odds">1:1 (-5%)</span>
+            <button className={`bac-betbtn bb ${selectedBet === "banker" ? "on" : ""}`} onClick={() => setSelectedBet("banker")}>
+              <span className="bac-bname">Banker</span><span className="bac-bodds">1:1 -5%</span>
             </button>
           </div>
-          <div className="baccarat-amount-row">
-            <input
-              type="range"
-              min="1"
-              max={Math.max(1, wallet ?? 100)}
-              value={betAmount}
-              onChange={(e) => setBetAmount(parseInt(e.target.value) || 1)}
-              className="baccarat-slider"
-            />
-            <span className="baccarat-amount-display">${betAmount}</span>
+          <div className="bac-chips">
+            {CHIP_VALUES.map(v => (
+              <div key={v} className={`bac-chip v${v} ${availBet < v ? "off" : ""}`} onClick={() => addChip(v)}>${v}</div>
+            ))}
+            <div className={`bac-chip vmax ${availBet <= 0 ? "off" : ""}`} onClick={() => addChip(availBet)}>ALL</div>
           </div>
-          <div className="baccarat-quick-bets">
-            <button type="button" onClick={() => setBetAmount(10)}>
-              $10
-            </button>
-            <button type="button" onClick={() => setBetAmount(50)}>
-              $50
-            </button>
-            <button type="button" onClick={() => setBetAmount(100)}>
-              $100
-            </button>
-            <button type="button" onClick={() => setBetAmount(wallet ?? 0)}>
-              MAX
-            </button>
+          <div className="bac-bet-row">
+            <span className="bac-bet-amt">${stagedBet}</span>
+            <button className="bac-btn-sm clr" onClick={clearBet}>CLEAR</button>
+            <button className="bac-btn-sm go" onClick={handlePlaceBet} disabled={!selectedBet || stagedBet <= 0}>DEAL</button>
           </div>
-          <button
-            className="baccarat-deal-btn"
-            onClick={handlePlaceBet}
-            disabled={
-              !selectedBet || betAmount <= 0 || betAmount > (wallet ?? 0)
-            }
-          >
-            DEAL
-          </button>
         </div>
       )}
 
-      <Instructions />
+      {history.length > 0 && (
+        <div className="bac-hist">
+          {history.slice(-30).map((r, i) => <div key={i} className={`bac-hdot ${r}`}>{r}</div>)}
+        </div>
+      )}
 
-      {/* Dev Tools - Only visible for admins */}
       {user?.isAdmin && (
         <>
-          <button
-            className="dev-tools-toggle"
-            onClick={() => setShowDevPanel(!showDevPanel)}
-          >
-            DEV
-          </button>
-
+          <button className="dev-tools-toggle" onClick={() => setShowDevPanel(!showDevPanel)} style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 100 }}>DEV</button>
           {showDevPanel && (
-            <div className="dev-tools-panel">
-              <div className="dev-info">
-                <p>Player Score: {playerScore}</p>
-                <p>Banker Score: {bankerScore}</p>
-                <p>Cards in Shoe: {shoe.length}</p>
-                <p>Game Phase: {gamePhase}</p>
-              </div>
+            <div className="dev-tools-panel" style={{ position: 'fixed', bottom: 60, right: 20, zIndex: 100, background: 'var(--bg-secondary)', border: '2px solid var(--retro-cyan)', padding: 10, fontFamily: "'VT323', monospace", fontSize: '0.9rem', color: 'var(--retro-cyan)' }}>
+              <p>Player: {ps} | Banker: {bs}</p>
+              <p>Shoe: {shoe.length} | Phase: {gamePhase}</p>
             </div>
           )}
         </>

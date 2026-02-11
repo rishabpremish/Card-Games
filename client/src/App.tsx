@@ -5,8 +5,18 @@ import Home from "./pages/Home";
 import HigherLowerGame from "./pages/HigherLowerGame";
 import Blackjack from "./pages/Blackjack";
 import Baccarat from "./pages/Baccarat";
+import Slots from "./pages/Slots";
+import Roulette from "./pages/Roulette";
+import Craps from "./pages/Craps";
+import War from "./pages/War";
+import Shop from "./pages/Shop";
+import Stats from "./pages/Stats";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
+import XPBar from "./components/XPBar";
+import ChallengesPanel from "./components/ChallengesPanel";
+import LoanPanel from "./components/LoanPanel";
+import FriendsPanel from "./components/FriendsPanel";
 import "./styles.css";
 import "./auth.css";
 
@@ -37,11 +47,21 @@ function App() {
 
   return (
     <BrowserRouter>
+      <XPBar />
+      <ChallengesPanel />
+      <LoanPanel />
+      <FriendsPanel />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/higher-lower" element={<HigherLowerGame />} />
         <Route path="/blackjack" element={<Blackjack />} />
         <Route path="/baccarat" element={<Baccarat />} />
+        <Route path="/slots" element={<Slots />} />
+        <Route path="/roulette" element={<Roulette />} />
+        <Route path="/craps" element={<Craps />} />
+        <Route path="/war" element={<War />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/stats" element={<Stats />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>

@@ -10,7 +10,12 @@ export type AchievementId =
   | "lucky_day"
   | "daily_player"
   | "week_streak"
-  | "session_winner";
+  | "session_winner"
+  | "jackpot_winner"
+  | "green_zero"
+  | "craps_natural"
+  | "war_survivor"
+  | "slots_master";
 
 export interface Achievement {
   id: AchievementId;
@@ -104,6 +109,41 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: "End a session with positive profit",
     icon: "👑",
     rarity: "common",
+  },
+  {
+    id: "jackpot_winner",
+    name: "Jackpot!",
+    description: "Hit a 200x+ multiplier on Slots",
+    icon: "🎰",
+    rarity: "legendary",
+  },
+  {
+    id: "green_zero",
+    name: "Green Zero",
+    description: "Win on 0 in Roulette",
+    icon: "🟢",
+    rarity: "epic",
+  },
+  {
+    id: "craps_natural",
+    name: "Natural Winner",
+    description: "Roll a natural 7 or 11 on come-out",
+    icon: "🎲",
+    rarity: "common",
+  },
+  {
+    id: "war_survivor",
+    name: "War Survivor",
+    description: "Win a War (tie) battle",
+    icon: "⚔️",
+    rarity: "rare",
+  },
+  {
+    id: "slots_master",
+    name: "Slots Master",
+    description: "Win 10 spins in a row",
+    icon: "🍒",
+    rarity: "epic",
   },
 ];
 

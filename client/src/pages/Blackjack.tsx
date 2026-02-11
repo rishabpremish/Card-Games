@@ -708,7 +708,12 @@ export default function Blackjack() {
       <div className="game-stats bj-stats">
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
-          <span className="stat-value">${wallet ?? 0}</span>
+          <span className="stat-value">
+            $
+            {(wallet ?? 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Current Bet</span>
@@ -812,11 +817,14 @@ export default function Blackjack() {
           <div className="hand-label">Player</div>
 
           {/* Controls */}
-          <div className="control-panel" style={{ marginTop: "8px" }}>
+          <div
+            className="control-panel bj-control-panel"
+            style={{ marginTop: "8px" }}
+          >
             {/* BETTING */}
             {gameState === "BETTING" && (
               <div
-                className="betting-controls"
+                className="bj-betting-controls"
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -840,14 +848,14 @@ export default function Blackjack() {
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button
-                    className="action-btn"
+                    className="bj-action-btn"
                     onClick={clearBet}
                     style={{ borderColor: "#888", color: "#aaa" }}
                   >
                     Clear
                   </button>
                   <button
-                    className="action-btn btn-hit"
+                    className="bj-action-btn btn-hit"
                     onClick={deal}
                     disabled={stagedBet === 0 || busy}
                   >
@@ -859,23 +867,23 @@ export default function Blackjack() {
 
             {/* PLAYING */}
             {gameState === "PLAYING" && (
-              <div className="action-controls">
+              <div className="bj-action-controls">
                 <button
-                  className="action-btn btn-hit"
+                  className="bj-action-btn btn-hit"
                   onClick={hit}
                   disabled={busy}
                 >
                   HIT
                 </button>
                 <button
-                  className="action-btn btn-stand"
+                  className="bj-action-btn btn-stand"
                   onClick={stand}
                   disabled={busy}
                 >
                   STAND
                 </button>
                 <button
-                  className="action-btn btn-double"
+                  className="bj-action-btn btn-double"
                   onClick={doubleDown}
                   disabled={!canDoubleCheck}
                 >
@@ -883,7 +891,7 @@ export default function Blackjack() {
                 </button>
                 {canSplitCheck && (
                   <button
-                    className="action-btn btn-split"
+                    className="bj-action-btn btn-split"
                     onClick={split}
                     disabled={busy}
                   >
@@ -895,7 +903,7 @@ export default function Blackjack() {
 
             {/* DEALER_TURN */}
             {gameState === "DEALER_TURN" && (
-              <div className="action-controls">
+              <div className="bj-action-controls">
                 <div
                   style={{
                     fontFamily: "'Press Start 2P'",
@@ -911,8 +919,8 @@ export default function Blackjack() {
 
             {/* GAME_OVER */}
             {gameState === "GAME_OVER" && (
-              <div className="action-controls">
-                <button className="action-btn btn-hit" onClick={resetHand}>
+              <div className="bj-action-controls">
+                <button className="bj-action-btn btn-hit" onClick={resetHand}>
                   NEW HAND
                 </button>
               </div>
@@ -997,31 +1005,34 @@ export default function Blackjack() {
       {/* Blackjack Styles */}
       <style>{`
         .blackjack-game {
-          --bj-card-w: clamp(86px, 14vw, 160px);
-          --bj-card-h: clamp(120px, 20vw, 224px);
-          --bj-card-overlap: clamp(-60px, -7vw, -32px);
-          --bj-chip: clamp(52px, 8vw, 92px);
-          max-width: 1300px;
+          --bj-card-w: clamp(68px, 11vw, 130px);
+          --bj-card-h: clamp(96px, 15.5vw, 182px);
+          --bj-card-overlap: clamp(-48px, -6vw, -26px);
+          --bj-chip: clamp(44px, 7vw, 76px);
+          max-width: 1250px;
           margin: 0 auto;
-          padding: clamp(10px, 1.8vw, 18px) clamp(14px, 2.4vw, 22px);
-          height: 100svh;
+          padding: clamp(8px, 1.5vh, 16px) 20px;
+          height: 100vh;
+          height: 100dvh;
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          position: relative;
         }
 
         .bj-game-area {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          flex-grow: 1;
+          flex: 1;
           width: 100%;
           max-width: 1100px;
           margin: 0 auto;
           position: relative;
-          padding: clamp(8px, 2vh, 16px) 0;
-          gap: clamp(6px, 2vh, 14px);
+          padding: clamp(4px, 1vh, 10px) 0;
+          gap: clamp(4px, 1vh, 8px);
           min-height: 0;
+          overflow: hidden;
         }
 
         .dealer-area {
@@ -1029,8 +1040,8 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: clamp(140px, 24vh, 220px);
-          flex-shrink: 0;
+          flex-shrink: 1;
+          min-height: 0;
         }
 
         .player-area {
@@ -1038,8 +1049,8 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: clamp(200px, 30vh, 320px);
-          flex-shrink: 0;
+          flex-shrink: 1;
+          min-height: 0;
           justify-content: flex-end;
         }
 
@@ -1048,17 +1059,16 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          flex-grow: 1;
-          gap: clamp(10px, 2.2vh, 16px);
-          min-height: clamp(90px, 18vh, 160px);
+          flex: 1;
+          gap: clamp(6px, 1.4vh, 12px);
+          min-height: 0;
         }
 
         .hand-container {
           display: flex;
           justify-content: center;
-          margin: clamp(4px, 1.4vh, 10px) 0;
+          margin: clamp(2px, 0.6vh, 6px) 0;
           min-width: min(200px, 80vw);
-          min-height: clamp(120px, 22vh, 200px);
           transition: all 0.3s;
         }
 
@@ -1223,7 +1233,7 @@ export default function Blackjack() {
         .chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .chip.disabled { filter: grayscale(1) brightness(0.5); cursor: not-allowed; pointer-events: none; }
 
-        .action-controls {
+        .bj-action-controls {
           display: flex;
           gap: clamp(10px, 2.2vw, 20px);
           margin-top: clamp(10px, 2vh, 18px);
@@ -1231,7 +1241,7 @@ export default function Blackjack() {
           justify-content: center;
         }
 
-        .action-btn {
+        .bj-action-btn {
           font-family: 'Press Start 2P';
           font-size: clamp(0.6rem, 1.6vw, 0.95rem);
           padding: clamp(10px, 1.8vw, 18px) clamp(16px, 3vw, 30px);
@@ -1244,21 +1254,21 @@ export default function Blackjack() {
           transition: transform 0.1s;
         }
 
-        .action-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
-        .action-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
-        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.5); }
+        .bj-action-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
+        .bj-action-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+        .bj-action-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.5); }
 
-        .btn-hit { border-color: var(--retro-green); color: var(--retro-green); }
-        .btn-hit:hover:not(:disabled) { background: var(--retro-green); color: black; }
+        .bj-action-btn.btn-hit { border-color: var(--retro-green); color: var(--retro-green); }
+        .bj-action-btn.btn-hit:hover:not(:disabled) { background: var(--retro-green); color: black; }
 
-        .btn-stand { border-color: var(--retro-red); color: var(--retro-red); }
-        .btn-stand:hover:not(:disabled) { background: var(--retro-red); color: white; }
+        .bj-action-btn.btn-stand { border-color: var(--retro-red); color: var(--retro-red); }
+        .bj-action-btn.btn-stand:hover:not(:disabled) { background: var(--retro-red); color: white; }
 
-        .btn-double { border-color: var(--retro-yellow); color: var(--retro-yellow); }
-        .btn-double:hover:not(:disabled) { background: var(--retro-yellow); color: black; }
+        .bj-action-btn.btn-double { border-color: var(--retro-yellow); color: var(--retro-yellow); }
+        .bj-action-btn.btn-double:hover:not(:disabled) { background: var(--retro-yellow); color: black; }
 
-        .btn-split { border-color: var(--retro-cyan); color: var(--retro-cyan); }
-        .btn-split:hover:not(:disabled) { background: var(--retro-cyan); color: black; }
+        .bj-action-btn.btn-split { border-color: var(--retro-cyan); color: var(--retro-cyan); }
+        .bj-action-btn.btn-split:hover:not(:disabled) { background: var(--retro-cyan); color: black; }
 
         .message-overlay {
           position: absolute;
@@ -1323,19 +1333,11 @@ export default function Blackjack() {
           justify-content: flex-start;
         }
 
-        .game-container {
-          position: relative;
-          height: 100svh;
-          overflow: hidden;
-        }
-
         .bj-home-btn {
-          position: absolute;
-          top: clamp(10px, 2vh, 16px);
-          left: clamp(10px, 2vw, 20px);
-          padding: clamp(10px, 1.6vw, 16px) clamp(16px, 2.2vw, 22px);
-          font-size: clamp(0.55rem, 1.6vw, 0.85rem);
-          z-index: 5;
+          position: fixed;
+          top: 20px;
+          left: 20px;
+          z-index: 50;
         }
 
         /* Popup-style Modal (not full screen) */
@@ -1589,6 +1591,11 @@ export default function Blackjack() {
         .control-panel {
           margin-top: clamp(6px, 1.6vh, 12px) !important;
           flex-shrink: 0;
+        }
+
+        .bj-control-panel {
+          position: relative;
+          z-index: 2;
         }
 
         .scaled-game-wrapper {

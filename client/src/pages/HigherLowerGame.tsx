@@ -448,7 +448,9 @@ function ForfeitConfirmModal({
   );
 }
 
-// Betting Modal component
+// Betting Modal component — retro chip-based
+const HL_CHIP_VALUES = [1, 5, 10, 25, 100, 500];
+
 function BettingModal({
   wallet,
   onPlaceBet,
@@ -461,47 +463,19 @@ function BettingModal({
   visible: boolean;
 }) {
   const safeWallet = wallet ?? 0;
-  const [betAmount, setBetAmount] = useState(Math.min(10, safeWallet));
-  const [inputDisplay, setInputDisplay] = useState(
-    String(Math.min(10, safeWallet)),
-  );
+  const [betAmount, setBetAmount] = useState(0);
 
   useEffect(() => {
-    if (visible) {
-      const initial = Math.min(10, safeWallet);
-      setBetAmount(initial);
-      setInputDisplay(String(initial));
-    }
-  }, [visible, safeWallet]);
+    if (visible) setBetAmount(0);
+  }, [visible]);
 
-  const handleBetChange = (value: number) => {
-    const clamped = Math.max(1, Math.min(safeWallet, value));
-    setBetAmount(clamped);
-    setInputDisplay(String(clamped));
+  const addChip = (val: number) => {
+    const avail = safeWallet - betAmount;
+    if (avail >= val) setBetAmount(prev => prev + val);
   };
-
-  const handleInputChange = (raw: string) => {
-    // Allow the field to be empty while typing
-    if (raw === "" || raw === "0") {
-      setInputDisplay(raw);
-      setBetAmount(0);
-      return;
-    }
-    const parsed = parseInt(raw);
-    if (!isNaN(parsed)) {
-      const clamped = Math.min(safeWallet, parsed);
-      setInputDisplay(String(clamped));
-      setBetAmount(clamped);
-    }
-  };
-
-  const handleInputBlur = () => {
-    // On blur, enforce minimum of 1
-    if (betAmount < 1) {
-      setBetAmount(1);
-      setInputDisplay("1");
-    }
-  };
+  const clearBet = () => setBetAmount(0);
+  const allIn = () => setBetAmount(safeWallet);
+  const availBet = safeWallet - betAmount;
 
   return (
     <div
@@ -519,39 +493,27 @@ function BettingModal({
             Balance: <span>${safeWallet}</span>
           </div>
 
-          <div className="bet-input-wrapper">
-            <div className="bet-input-container">
-              <span className="currency-symbol">$</span>
-              <input
-                type="number"
-                className="bet-input"
-                min="1"
-                max={safeWallet}
-                value={inputDisplay}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onBlur={handleInputBlur}
-              />
-            </div>
-            <div className="bet-slider-container">
-              <input
-                type="range"
-                className="bet-slider"
-                min="1"
-                max={safeWallet}
-                value={betAmount}
-                onChange={(e) => handleBetChange(parseInt(e.target.value))}
-              />
-            </div>
+          <div className="hl-chip-rack">
+            {HL_CHIP_VALUES.map(v => (
+              <div
+                key={v}
+                className={`hl-chip hl-c-${v} ${availBet < v ? "disabled" : ""}`}
+                onClick={() => addChip(v)}
+              >
+                ${v}
+              </div>
+            ))}
+          </div>
+
+          <div className="hl-bet-display">
+            <span className="hl-bet-amount">${betAmount}</span>
+            <button className="hl-clear-btn" onClick={clearBet} type="button">CLEAR</button>
           </div>
         </div>
         <div className="modal-buttons">
           <button
             className="bet-btn"
-            onClick={() => {
-              setBetAmount(safeWallet);
-              setInputDisplay(String(safeWallet));
-              onPlaceBet(safeWallet);
-            }}
+            onClick={() => { allIn(); onPlaceBet(safeWallet); }}
             type="button"
             disabled={safeWallet < 1}
           >
@@ -567,6 +529,46 @@ function BettingModal({
           </button>
         </div>
       </div>
+
+      <style>{`
+        .hl-chip-rack {
+          display: flex; gap: clamp(6px,1.4vw,12px); flex-wrap: wrap;
+          justify-content: center; margin: 16px 0 12px;
+        }
+        .hl-chip {
+          width: clamp(44px,7vw,64px); height: clamp(44px,7vw,64px);
+          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Press Start 2P', cursive; font-size: clamp(0.3rem,0.9vw,0.5rem);
+          color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+          transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
+          position: relative;
+        }
+        .hl-chip::before { content:''; position:absolute; top:3px;left:3px;right:3px;bottom:3px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .hl-chip:hover { transform: translateY(-4px); }
+        .hl-chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+        .hl-chip.disabled { filter: grayscale(1) brightness(0.5); cursor: not-allowed; pointer-events: none; }
+        .hl-c-1 { background: #666; border-color: #999; }
+        .hl-c-5 { background: var(--retro-blue); border-color: #88ccff; }
+        .hl-c-10 { background: var(--retro-green); border-color: #88ff88; }
+        .hl-c-25 { background: var(--retro-red); border-color: #ff8888; }
+        .hl-c-100 { background: var(--retro-purple); border-color: #dcb3ff; }
+        .hl-c-500 { background: #cc6600; border-color: #ff9933; }
+        .hl-bet-display {
+          display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0;
+        }
+        .hl-bet-amount {
+          font-family: 'Press Start 2P', cursive; font-size: clamp(1rem,3vw,1.6rem);
+          color: var(--retro-yellow); text-shadow: 2px 2px 0 #000;
+        }
+        .hl-clear-btn {
+          font-family: 'Press Start 2P', cursive; font-size: clamp(0.4rem,1vw,0.55rem);
+          background: var(--bg-secondary); border: 3px solid #888; color: #aaa;
+          padding: 6px 14px; cursor: pointer; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+          transition: transform 0.1s;
+        }
+        .hl-clear-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
+      `}</style>
     </div>
   );
 }
@@ -1351,7 +1353,12 @@ export default function HigherLowerGame() {
       <div className="game-stats">
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
-          <span className="stat-value">${wallet ?? 0}</span>
+          <span className="stat-value">
+            $
+            {(wallet ?? 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Cards Remaining</span>

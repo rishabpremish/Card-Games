@@ -4437,14 +4437,9 @@ body.theme-gameboy .bg-decoration::before {
    ============================================ */
 
 .baccarat-game {
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 28px);
+  min-height: 100vh;
+  padding: 20px;
   position: relative;
-  gap: clamp(8px, 1.5vh, 16px);
   isolation: isolate;
 }
 

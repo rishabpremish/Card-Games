@@ -11,6 +11,12 @@ export default defineSchema({
     lastLogin: v.number(),
     // Track when wallet was last reset to $500
     lastWalletReset: v.optional(v.number()),
+    // XP & Leveling
+    xp: v.optional(v.number()),
+    level: v.optional(v.number()),
+    // VIP tier: "bronze" | "silver" | "gold" | "platinum" | "diamond"
+    vipTier: v.optional(v.string()),
+    totalWagered: v.optional(v.number()),
     // User settings synced across devices
     settings: v.object({
       theme: v.optional(v.string()),
@@ -33,6 +39,14 @@ export default defineSchema({
     bestStreak: v.optional(v.number()),
     lastStreakUpdate: v.optional(v.number()),
     isAdmin: v.optional(v.boolean()),
+    // Friends
+    friends: v.optional(v.array(v.id("users"))),
+    friendRequests: v.optional(v.array(v.id("users"))),
+    // Shop: owned items (item IDs)
+    ownedItems: v.optional(v.array(v.string())),
+    equippedTheme: v.optional(v.string()),
+    equippedCardBack: v.optional(v.string()),
+    equippedEmoji: v.optional(v.string()),
   }).index("by_username", ["username"]),
 
   // Weekly leaderboards (Sunday to Saturday)
@@ -79,4 +93,37 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_timestamp", ["timestamp"]),
+
+  // Daily / Weekly challenges
+  challenges: defineTable({
+    userId: v.id("users"),
+    challengeId: v.string(), // e.g. "daily_win_3", "weekly_wager_1000"
+    type: v.union(v.literal("daily"), v.literal("weekly")),
+    title: v.string(),
+    description: v.string(),
+    target: v.number(),
+    progress: v.number(),
+    reward: v.number(), // XP or money reward
+    rewardType: v.union(v.literal("xp"), v.literal("money")),
+    completed: v.boolean(),
+    claimed: v.boolean(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_type", ["userId", "type"]),
+
+  // Loans
+  loans: defineTable({
+    userId: v.id("users"),
+    amount: v.number(),
+    interestRate: v.number(), // e.g. 0.10 = 10%
+    totalOwed: v.number(),
+    repaid: v.number(),
+    isActive: v.boolean(),
+    takenAt: v.number(),
+    dueAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_active", ["userId", "isActive"]),
 });

@@ -190,6 +190,11 @@ export default function Leaderboard() {
                     <div className="player-info">
                       <span className="username">
                         {entry.username}
+                        {entry.level > 1 && (
+                          <span style={{ color: "var(--retro-cyan)", fontSize: "0.4rem", marginLeft: "6px" }}>
+                            Lv{entry.level}
+                          </span>
+                        )}
                         {isCurrentUser && (
                           <span className="you-badge">YOU</span>
                         )}

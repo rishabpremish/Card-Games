@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
+import type * as economy from "../economy.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as wallet from "../wallet.js";
 
@@ -22,6 +23,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
+  economy: typeof economy;
   leaderboard: typeof leaderboard;
   wallet: typeof wallet;
 }>;

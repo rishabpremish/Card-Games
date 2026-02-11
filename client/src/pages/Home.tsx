@@ -70,7 +70,7 @@ export default function Home() {
         </button>
       </div>
 
-      <header className="game-header" style={{ marginTop: "60px" }}>
+      <header className="game-header" style={{ marginTop: "80px" }}>
         <h1>UgroundBetZ </h1>
         <p className="subtitle">Select a Game</p>
       </header>
@@ -85,6 +85,24 @@ export default function Home() {
           </Link>
           <Link to="/baccarat" className="game-link">
             Baccarat
+          </Link>
+          <Link to="/slots" className="game-link">
+            🎰 Slots
+          </Link>
+          <Link to="/roulette" className="game-link">
+            🎡 Roulette
+          </Link>
+          <Link to="/craps" className="game-link">
+            🎲 Craps
+          </Link>
+          <Link to="/war" className="game-link">
+            ⚔️ War
+          </Link>
+          <Link to="/shop" className="game-link" style={{ borderColor: "#00ff88", color: "#00ff88" }}>
+            🛒 Shop
+          </Link>
+          <Link to="/stats" className="game-link" style={{ borderColor: "var(--retro-cyan)", color: "var(--retro-cyan)" }}>
+            📊 Stats
           </Link>
           <Link to="/leaderboard" className="game-link">
             🏆 Leaderboard
