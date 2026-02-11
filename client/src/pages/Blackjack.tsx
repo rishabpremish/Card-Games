@@ -1602,6 +1602,32 @@ export default function Blackjack() {
           display: contents;
         }
       `}</style>
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Place your bet, then cards are dealt — 2 to you, 2 to the dealer</li>
+          <li><strong>Hit</strong> to draw another card, <strong>Stand</strong> to keep your hand</li>
+          <li><strong>Double Down:</strong> Double your bet and receive exactly one more card</li>
+          <li>Get as close to 21 as possible without going over (bust)</li>
+          <li>Dealer must hit until 17. Closest to 21 wins!</li>
+        </ol>
+        <p className="note">
+          Blackjack (Ace + 10/J/Q/K) pays 3:2. Aces count as 1 or 11.
+        </p>
+      </div>
     </div>
   );
 }

@@ -451,6 +451,32 @@ export default function Slots() {
           </button>
         </div>
       </div>
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Select chips to set your bet amount</li>
+          <li>Press <strong>SPIN</strong> to spin the 5 reels</li>
+          <li>Match 2 or more symbols across the reels to win</li>
+          <li>Higher-value symbols (7️⃣, 💎, ⭐) pay more</li>
+          <li>More matching symbols = bigger multiplier</li>
+        </ol>
+        <p className="note">
+          Tip: Use AUTO to spin automatically. Check the Payouts table for exact multipliers!
+        </p>
+      </div>
     </div>
   );
 }

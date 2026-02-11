@@ -594,6 +594,32 @@ export default function War() {
           ))}
         </div>
       )}
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Place your bet and press <strong>DEAL</strong></li>
+          <li>You and the dealer each get one card</li>
+          <li>Higher card wins! You get 2x your bet</li>
+          <li>On a <strong>tie</strong>, you can <strong>Go to War</strong> (double your bet) or <strong>Surrender</strong> (lose half)</li>
+          <li>In War, three cards are burned, then another card each — higher wins 3x</li>
+        </ol>
+        <p className="note">
+          Card ranks: 2 (low) through Ace (high). Suit doesn't matter.
+        </p>
+      </div>
     </div>
   );
 }

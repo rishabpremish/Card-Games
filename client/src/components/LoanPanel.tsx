@@ -62,9 +62,25 @@ export default function LoanPanel() {
           boxShadow: "3px 3px 0px rgba(255,215,0,0.3)",
           width: "100%",
           textAlign: "center" as const,
+          position: "relative" as const,
         }}
       >
         🏦 {hasLoan ? "Loan" : "Bank"}
+        {hasLoan && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "-6px",
+              width: "14px",
+              height: "14px",
+              borderRadius: "50%",
+              background: "#ff0000",
+              border: "2px solid #ff4444",
+              boxShadow: "0 0 6px rgba(255,0,0,0.6)",
+            }}
+          />
+        )}
       </button>
     );
   }
@@ -263,6 +279,22 @@ export default function LoanPanel() {
                 {new Date(currentLoan.dueAt).toLocaleDateString()}
               </span>
             </div>
+            {currentLoan.dueAt < Date.now() && (
+              <div
+                style={{
+                  background: "rgba(255,0,0,0.15)",
+                  border: "2px solid #ff4444",
+                  borderRadius: "4px",
+                  padding: "8px",
+                  marginBottom: "12px",
+                  textAlign: "center",
+                }}
+              >
+                <span style={{ color: "#ff4444", fontSize: "0.45rem" }}>
+                  ⚠️ OVERDUE! 10% of your balance is deducted daily until repaid.
+                </span>
+              </div>
+            )}
             <div style={{ display: "flex", gap: "8px" }}>
               <button
                 onClick={() =>
