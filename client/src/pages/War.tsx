@@ -71,7 +71,11 @@ function WarCard({ card }: { card: Card }) {
 }
 
 function CardSlot() {
-  return <div className="war-card-slot"><div className="card-back" /></div>;
+  return (
+    <div className="war-card-slot">
+      <div className="card-back" />
+    </div>
+  );
 }
 
 export default function War() {

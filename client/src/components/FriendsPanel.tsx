@@ -49,18 +49,16 @@ export default function FriendsPanel() {
       <button
         onClick={() => setIsOpen(true)}
         style={{
-          position: "fixed",
-          bottom: "30px",
-          right: "20px",
           background: "var(--bg-secondary, #1a1a3e)",
           border: `3px solid ${pendingCount > 0 ? "#ff8c00" : "var(--retro-yellow, #ffd700)"}`,
           color: pendingCount > 0 ? "#ff8c00" : "var(--retro-yellow, #ffd700)",
-          padding: "14px 24px",
+          padding: "12px 20px",
           fontFamily: "'Press Start 2P', cursive",
-          fontSize: "0.72rem",
+          fontSize: "0.6rem",
           cursor: "pointer",
-          zIndex: 100,
           boxShadow: "3px 3px 0px rgba(255,215,0,0.3)",
+          width: "100%",
+          textAlign: "center" as const,
         }}
       >
         👥 {pendingCount > 0 ? `${pendingCount}!` : `${friends.length}`}

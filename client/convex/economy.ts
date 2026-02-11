@@ -138,7 +138,7 @@ const DAILY_CHALLENGES = [
 ];
 
 // Weekly challenge templates (for future use)
-const _WEEKLY_CHALLENGES = [
+export const WEEKLY_CHALLENGES = [
   {
     id: "weekly_win_20",
     title: "20 Wins",

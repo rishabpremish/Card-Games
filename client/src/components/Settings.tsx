@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 
-export default function Settings() {
+interface SettingsProps {
+  onLogout?: () => void;
+}
+
+export default function Settings({ onLogout }: SettingsProps) {
   const { user, updateSettings } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [theme, setTheme] = useState("default");
@@ -322,6 +326,39 @@ export default function Settings() {
                 ✕
               </button>
             </div>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  width: "100%",
+                  background: "rgba(255, 0, 0, 0.1)",
+                  border: "2px solid var(--retro-red)",
+                  color: "var(--retro-red)",
+                  padding: "12px 16px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.55rem",
+                  cursor: "pointer",
+                  transition: "0.15s",
+                  marginBottom: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--retro-red)";
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 0, 0, 0.1)";
+                  e.currentTarget.style.color = "var(--retro-red)";
+                }}
+              >
+                🚪 LOG OUT
+              </button>
+            )}
+
             <div className="settings-content">
               <div className="settings-section">
                 <h3>THEME</h3>

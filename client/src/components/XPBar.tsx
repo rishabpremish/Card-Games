@@ -236,7 +236,7 @@ export default function XPBar() {
             <div className="xp-panel-row">
               <span className="xp-panel-label">Total XP</span>
               <span className="xp-panel-value">
-                {(playerStats.totalXp ?? 0).toLocaleString()}
+                {(playerStats.xp ?? 0).toLocaleString()}
               </span>
             </div>
 

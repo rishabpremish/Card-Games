@@ -14,9 +14,6 @@ export default function SessionStatsPanel() {
       <button
         onClick={() => setIsOpen(true)}
         style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
           background: netProfit >= 0 ? "rgba(0, 255, 0, 0.2)" : "rgba(255, 0, 0, 0.2)",
           border: `3px solid ${netProfit >= 0 ? "var(--retro-green)" : "var(--retro-red)"}`,
           color: netProfit >= 0 ? "var(--retro-green)" : "var(--retro-red)",
@@ -24,7 +21,8 @@ export default function SessionStatsPanel() {
           fontFamily: "'Press Start 2P', cursive",
           fontSize: "0.5rem",
           cursor: "pointer",
-          zIndex: 100,
+          width: "100%",
+          textAlign: "center",
         }}
       >
         📊 Session: {netProfit >= 0 ? "+" : ""}${netProfit.toFixed(0)}

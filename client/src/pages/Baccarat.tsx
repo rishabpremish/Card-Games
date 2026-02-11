@@ -105,7 +105,11 @@ function BacCard({ card }: { card: Card }) {
 }
 
 function CardSlot() {
-  return <div className="bac-card-slot"><div className="card-back" /></div>;
+  return (
+    <div className="bac-card-slot">
+      <div className="card-back" />
+    </div>
+  );
 }
 
 export default function Baccarat() {

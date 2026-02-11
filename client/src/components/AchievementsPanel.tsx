@@ -16,9 +16,6 @@ export default function AchievementsPanel() {
         className="achievements-toggle"
         onClick={() => setIsOpen(true)}
         style={{
-          position: "fixed",
-          bottom: "150px",
-          left: "20px",
           background: "var(--bg-secondary)",
           border: "3px solid var(--retro-yellow)",
           color: "var(--retro-yellow)",
@@ -26,8 +23,9 @@ export default function AchievementsPanel() {
           fontFamily: "'Press Start 2P', cursive",
           fontSize: "0.5rem",
           cursor: "pointer",
-          zIndex: 100,
           boxShadow: "3px 3px 0px rgba(255, 215, 0, 0.3)",
+          width: "100%",
+          textAlign: "center",
         }}
       >
         🏆 {unlockedCount}/{totalCount}

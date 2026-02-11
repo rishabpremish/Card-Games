@@ -39,22 +39,20 @@ export default function ChallengesPanel() {
       <button
         onClick={() => setIsOpen(true)}
         style={{
-          position: "fixed",
-          bottom: "110px",
-          right: "20px",
           background: "var(--bg-secondary, #1a1a3e)",
           border: `3px solid ${claimable > 0 ? "#00ff88" : "var(--retro-yellow, #ffd700)"}`,
           color: claimable > 0 ? "#00ff88" : "var(--retro-yellow, #ffd700)",
-          padding: "14px 24px",
+          padding: "12px 20px",
           fontFamily: "'Press Start 2P', cursive",
-          fontSize: "0.72rem",
+          fontSize: "0.6rem",
           cursor: "pointer",
-          zIndex: 100,
           boxShadow:
             claimable > 0
               ? "0 0 12px rgba(0,255,136,0.5)"
               : "3px 3px 0px rgba(255,215,0,0.3)",
           animation: claimable > 0 ? "pulse 1.5s infinite" : "none",
+          width: "100%",
+          textAlign: "center" as const,
         }}
       >
         📋 {claimable > 0 ? `${claimable}!` : "Tasks"}
