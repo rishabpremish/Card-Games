@@ -106,7 +106,7 @@ export default function Home() {
 
       {/* Settings modal accessible from home */}
       <Settings />
-      
+
       {/* New features */}
       <QueryErrorBoundary>
         <DailyBonus />

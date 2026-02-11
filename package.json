@@ -1,6 +1,9 @@
 {
   "name": "card-game",
   "private": true,
+  "dependencies": {
+    "convex": "^1.31.7"
+  },
   "scripts": {
     "install:all": "cd client && npm install && cd ../server && npm install",
     "build": "cd client && npm install && npm run build && cd ../server && npm install",
