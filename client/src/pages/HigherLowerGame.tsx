@@ -471,7 +471,7 @@ function BettingModal({
 
   const addChip = (val: number) => {
     const avail = safeWallet - betAmount;
-    if (avail >= val) setBetAmount(prev => prev + val);
+    if (avail >= val) setBetAmount((prev) => prev + val);
   };
   const clearBet = () => setBetAmount(0);
   const allIn = () => setBetAmount(safeWallet);
@@ -494,7 +494,7 @@ function BettingModal({
           </div>
 
           <div className="hl-chip-rack">
-            {HL_CHIP_VALUES.map(v => (
+            {HL_CHIP_VALUES.map((v) => (
               <div
                 key={v}
                 className={`hl-chip hl-c-${v} ${availBet < v ? "disabled" : ""}`}
@@ -507,13 +507,18 @@ function BettingModal({
 
           <div className="hl-bet-display">
             <span className="hl-bet-amount">${betAmount}</span>
-            <button className="hl-clear-btn" onClick={clearBet} type="button">CLEAR</button>
+            <button className="hl-clear-btn" onClick={clearBet} type="button">
+              CLEAR
+            </button>
           </div>
         </div>
         <div className="modal-buttons">
           <button
             className="bet-btn"
-            onClick={() => { allIn(); onPlaceBet(safeWallet); }}
+            onClick={() => {
+              allIn();
+              onPlaceBet(safeWallet);
+            }}
             type="button"
             disabled={safeWallet < 1}
           >

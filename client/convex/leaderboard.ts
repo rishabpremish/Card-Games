@@ -30,9 +30,7 @@ export const getCurrentLeaderboard = query({
     // cached leaderboards table (which only updates via hourly cron).
     const users = await ctx.db.query("users").collect();
 
-    const sortedUsers = users
-      .sort((a, b) => b.wallet - a.wallet)
-      .slice(0, 10);
+    const sortedUsers = users.sort((a, b) => b.wallet - a.wallet).slice(0, 10);
 
     const entries = sortedUsers.map((user, i) => ({
       userId: user._id,
@@ -304,24 +302,24 @@ export const weeklyWalletReset = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     const currentWeekStart = getWeekStart(new Date(now));
-    
+
     // Get all users
     const users = await ctx.db.query("users").collect();
-    
+
     let resetCount = 0;
-    
+
     for (const user of users) {
       // Check if wallet needs reset (if it hasn't been reset this week)
       const lastReset = user.lastWalletReset || 0;
       const lastResetWeek = getWeekStart(new Date(lastReset));
-      
+
       // Only reset if it hasn't been done for the current week
       if (lastResetWeek < currentWeekStart) {
         await ctx.db.patch(user._id, {
           wallet: 500,
           lastWalletReset: now,
         });
-        
+
         // Log the reset transaction
         await ctx.db.insert("transactions", {
           userId: user._id,
@@ -332,16 +330,16 @@ export const weeklyWalletReset = internalMutation({
           description: "Weekly wallet reset to $500",
           timestamp: now,
         });
-        
+
         resetCount++;
       }
     }
-    
-    return { 
-      success: true, 
-      resetCount, 
+
+    return {
+      success: true,
+      resetCount,
       weekStart: currentWeekStart,
-      message: `Reset ${resetCount} wallets to $500 for week starting ${new Date(currentWeekStart).toLocaleDateString()}`
+      message: `Reset ${resetCount} wallets to $500 for week starting ${new Date(currentWeekStart).toLocaleDateString()}`,
     };
   },
 });

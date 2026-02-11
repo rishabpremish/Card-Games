@@ -98,10 +98,21 @@ export default function Home() {
           <Link to="/war" className="game-link">
             ⚔️ War
           </Link>
-          <Link to="/shop" className="game-link" style={{ borderColor: "#00ff88", color: "#00ff88" }}>
+          <Link
+            to="/shop"
+            className="game-link"
+            style={{ borderColor: "#00ff88", color: "#00ff88" }}
+          >
             🛒 Shop
           </Link>
-          <Link to="/stats" className="game-link" style={{ borderColor: "var(--retro-cyan)", color: "var(--retro-cyan)" }}>
+          <Link
+            to="/stats"
+            className="game-link"
+            style={{
+              borderColor: "var(--retro-cyan)",
+              color: "var(--retro-cyan)",
+            }}
+          >
             📊 Stats
           </Link>
           <Link to="/leaderboard" className="game-link">

@@ -3,13 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useEconomy } from "../hooks/useEconomy";
 import { useWallet } from "../hooks/useWallet";
 
-const CAT_LABELS: Record<string, string> = { theme: "🎨 Themes", cardback: "🃏 Card Backs", emoji: "😎 Emojis" };
+const CAT_LABELS: Record<string, string> = {
+  theme: "🎨 Themes",
+  cardback: "🃏 Card Backs",
+  emoji: "😎 Emojis",
+};
 const CATEGORIES = ["theme", "cardback", "emoji"];
 
 export default function Shop() {
   const navigate = useNavigate();
   const { wallet: balance } = useWallet();
-  const { shopItems, ownedItems, buyShopItem, equipItem, playerStats } = useEconomy();
+  const { shopItems, ownedItems, buyShopItem, equipItem, playerStats } =
+    useEconomy();
   const [selectedCat, setSelectedCat] = useState("theme");
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -41,7 +46,8 @@ export default function Shop() {
   const isEquipped = (item: any) => {
     if (!playerStats) return false;
     if (item.category === "theme") return playerStats.equippedTheme === item.id;
-    if (item.category === "cardback") return playerStats.equippedCardBack === item.id;
+    if (item.category === "cardback")
+      return playerStats.equippedCardBack === item.id;
     if (item.category === "emoji") return playerStats.equippedEmoji === item.id;
     return false;
   };
@@ -62,12 +68,12 @@ export default function Shop() {
         }
         .shop-header h1 {
           color: var(--retro-yellow, #ffd700);
-          font-size: 1rem;
-          margin: 0 0 8px 0;
+          font-size: 1.4rem;
+          margin: 0 0 10px 0;
         }
         .shop-balance {
           color: #00ff88;
-          font-size: 0.55rem;
+          font-size: 0.78rem;
         }
         .shop-back {
           position: absolute;
@@ -76,9 +82,9 @@ export default function Shop() {
           background: none;
           border: 2px solid var(--retro-yellow, #ffd700);
           color: var(--retro-yellow, #ffd700);
-          padding: 6px 14px;
+          padding: 8px 18px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 0.4rem;
+          font-size: 0.58rem;
           cursor: pointer;
         }
         .shop-tabs {
@@ -92,9 +98,9 @@ export default function Shop() {
           background: rgba(255,255,255,0.05);
           border: 2px solid rgba(255,255,255,0.2);
           color: rgba(255,255,255,0.6);
-          padding: 8px 16px;
+          padding: 10px 20px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 0.4rem;
+          font-size: 0.58rem;
           cursor: pointer;
           border-radius: 4px;
           transition: all 0.2s;
@@ -120,13 +126,13 @@ export default function Shop() {
           transition: border-color 0.2s;
         }
         .shop-card:hover { border-color: var(--retro-yellow, #ffd700); }
-        .shop-card h3 { font-size: 0.45rem; color: #fff; margin: 0 0 6px 0; }
-        .shop-card p { font-size: 0.35rem; color: rgba(255,255,255,0.5); margin: 0 0 10px 0; }
-        .shop-price { color: #00ff88; font-size: 0.45rem; margin-bottom: 10px; }
+        .shop-card h3 { font-size: 0.65rem; color: #fff; margin: 0 0 8px 0; }
+        .shop-card p { font-size: 0.5rem; color: rgba(255,255,255,0.5); margin: 0 0 12px 0; }
+        .shop-price { color: #00ff88; font-size: 0.65rem; margin-bottom: 12px; }
         .shop-btn {
-          padding: 6px 14px;
+          padding: 8px 18px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 0.35rem;
+          font-size: 0.5rem;
           cursor: pointer;
           border-radius: 4px;
           border: none;
@@ -144,10 +150,14 @@ export default function Shop() {
         }
       `}</style>
       <div className="shop-page">
-        <button className="shop-back" onClick={() => navigate("/")}>← Back</button>
+        <button className="shop-back" onClick={() => navigate("/")}>
+          ← Back
+        </button>
         <div className="shop-header">
           <h1>🛒 Shop</h1>
-          <span className="shop-balance">Balance: ${balance.toLocaleString()}</span>
+          <span className="shop-balance">
+            Balance: ${balance.toLocaleString()}
+          </span>
         </div>
 
         <div className="shop-tabs">
@@ -169,7 +179,11 @@ export default function Shop() {
               const owned = ownedItems.includes(item.id);
               const equipped = isEquipped(item);
               return (
-                <div key={item.id} className="shop-card" style={equipped ? { borderColor: "#00ff88" } : {}}>
+                <div
+                  key={item.id}
+                  className="shop-card"
+                  style={equipped ? { borderColor: "#00ff88" } : {}}
+                >
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   {!owned && <div className="shop-price">${item.price}</div>}
@@ -179,7 +193,11 @@ export default function Shop() {
                       disabled={busy === item.id || balance < item.price}
                       onClick={() => handleBuy(item.id)}
                     >
-                      {busy === item.id ? "..." : balance < item.price ? "Can't Afford" : "BUY"}
+                      {busy === item.id
+                        ? "..."
+                        : balance < item.price
+                          ? "Can't Afford"
+                          : "BUY"}
                     </button>
                   )}
                   {owned && !equipped && (
@@ -192,7 +210,9 @@ export default function Shop() {
                     </button>
                   )}
                   {equipped && (
-                    <button className="shop-btn shop-btn-equipped" disabled>✓ Equipped</button>
+                    <button className="shop-btn shop-btn-equipped" disabled>
+                      ✓ Equipped
+                    </button>
                   )}
                 </div>
               );

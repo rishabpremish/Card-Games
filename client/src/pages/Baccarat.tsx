@@ -25,7 +25,21 @@ type GamePhase =
   | "complete";
 
 const SUITS = ["♠", "♥", "♦", "♣"];
-const VALUES = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const VALUES = [
+  "A",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+];
 const CHIP_VALUES = [5, 10, 25, 50, 100, 500];
 
 function createShoe(): Card[] {
@@ -37,7 +51,12 @@ function createShoe(): Card[] {
         if (value === "A") numericValue = 1;
         else if (["10", "J", "Q", "K"].includes(value)) numericValue = 0;
         else numericValue = parseInt(value);
-        shoe.push({ suit, value, numericValue, isRed: suit === "♥" || suit === "♦" });
+        shoe.push({
+          suit,
+          value,
+          numericValue,
+          isRed: suit === "♥" || suit === "♦",
+        });
       }
     }
   }
@@ -93,8 +112,12 @@ export default function Baccarat() {
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const {
-    unlockAchievement, incrementWinStreak, resetWinStreak,
-    incrementBankerWins, incrementTieWins, incrementSessionWins,
+    unlockAchievement,
+    incrementWinStreak,
+    resetWinStreak,
+    incrementBankerWins,
+    incrementTieWins,
+    incrementSessionWins,
   } = useAchievements();
   const { recordBet } = useSessionStats();
 
@@ -104,34 +127,53 @@ export default function Baccarat() {
   const [stagedBet, setStagedBet] = useState(0);
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("betting");
-  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(null);
+  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
-  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">("neutral");
+  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">(
+    "neutral",
+  );
   const [isDealing, setIsDealing] = useState(false);
   const [history, setHistory] = useState<("P" | "B" | "T")[]>([]);
   const [showDevPanel, setShowDevPanel] = useState(false);
 
-  useEffect(() => { setShoe(createShoe()); }, []);
+  useEffect(() => {
+    setShoe(createShoe());
+  }, []);
 
-  const checkReshuffle = useCallback((s: Card[]) => shouldReshuffle(s) ? createShoe() : s, []);
+  const checkReshuffle = useCallback(
+    (s: Card[]) => (shouldReshuffle(s) ? createShoe() : s),
+    [],
+  );
 
   const addChip = (val: number) => {
     if (gamePhase !== "betting") return;
     const avail = (wallet ?? 0) - stagedBet;
-    if (avail >= val) setStagedBet(p => p + val);
+    if (avail >= val) setStagedBet((p) => p + val);
   };
-  const clearBet = () => { if (gamePhase === "betting") setStagedBet(0); };
+  const clearBet = () => {
+    if (gamePhase === "betting") setStagedBet(0);
+  };
 
   const handlePlaceBet = async () => {
     if (!selectedBet || stagedBet <= 0 || stagedBet > (wallet ?? 0)) return;
     try {
       await placeBetMutation(stagedBet, "Baccarat");
-      setGamePhase("dealing"); setIsDealing(true); setMessage(""); setWinner(null);
+      setGamePhase("dealing");
+      setIsDealing(true);
+      setMessage("");
+      setWinner(null);
       playSound("chip");
       if (stagedBet >= 100) unlockAchievement("high_roller");
       const currentShoe = checkReshuffle(shoe);
-      setTimeout(() => { playSound("deal"); dealInitialCards(currentShoe); }, 500);
-    } catch { setMessage("Failed to place bet"); }
+      setTimeout(() => {
+        playSound("deal");
+        dealInitialCards(currentShoe);
+      }, 500);
+    } catch {
+      setMessage("Failed to place bet");
+    }
   };
 
   const dealInitialCards = (cs: Card[]) => {
@@ -139,7 +181,9 @@ export default function Baccarat() {
     const { card: b1, newShoe: s2 } = dealCard(s1);
     const { card: p2, newShoe: s3 } = dealCard(s2);
     const { card: b2, newShoe: s4 } = dealCard(s3);
-    setPlayerHand([p1, p2]); setBankerHand([b1, b2]); setShoe(s4);
+    setPlayerHand([p1, p2]);
+    setBankerHand([b1, b2]);
+    setShoe(s4);
     setTimeout(() => checkNaturals([p1, p2], [b1, b2], s4), 1000);
   };
 
@@ -156,16 +200,25 @@ export default function Baccarat() {
     if (calcScore(pH) <= 5) {
       const { card, newShoe } = dealCard(s);
       const newPH = [...pH, card];
-      setPlayerHand(newPH); setShoe(newShoe);
+      setPlayerHand(newPH);
+      setShoe(newShoe);
       setGamePhase("bankerThird");
-      setTimeout(() => handleBankerThird(newPH, bH, newShoe, card.numericValue), 1000);
+      setTimeout(
+        () => handleBankerThird(newPH, bH, newShoe, card.numericValue),
+        1000,
+      );
     } else {
       setGamePhase("bankerThird");
       setTimeout(() => handleBankerThird(pH, bH, s, null), 1000);
     }
   };
 
-  const handleBankerThird = (pH: Card[], bH: Card[], s: Card[], p3: number | null) => {
+  const handleBankerThird = (
+    pH: Card[],
+    bH: Card[],
+    s: Card[],
+    p3: number | null,
+  ) => {
     const bs = calcScore(bH);
     let draw = false;
     if (p3 === null) draw = bs <= 5;
@@ -176,7 +229,8 @@ export default function Baccarat() {
     else if (bs === 6) draw = p3 === 6 || p3 === 7;
     if (draw) {
       const { card, newShoe } = dealCard(s);
-      setBankerHand([...bH, card]); setShoe(newShoe);
+      setBankerHand([...bH, card]);
+      setShoe(newShoe);
       setTimeout(() => determineWinner(pH, [...bH, card], newShoe), 1000);
     } else {
       setTimeout(() => determineWinner(pH, bH, s), 1000);
@@ -184,41 +238,76 @@ export default function Baccarat() {
   };
 
   const determineWinner = async (pH: Card[], bH: Card[], cs: Card[]) => {
-    const ps = calcScore(pH), bs = calcScore(bH);
+    const ps = calcScore(pH),
+      bs = calcScore(bH);
     let gw: "player" | "banker" | "tie";
-    if (ps > bs) gw = "player"; else if (bs > ps) gw = "banker"; else gw = "tie";
-    setWinner(gw); setGamePhase("complete");
-    setHistory(h => [...h, gw === "player" ? "P" : gw === "banker" ? "B" : "T"]);
+    if (ps > bs) gw = "player";
+    else if (bs > ps) gw = "banker";
+    else gw = "tie";
+    setWinner(gw);
+    setGamePhase("complete");
+    setHistory((h) => [
+      ...h,
+      gw === "player" ? "P" : gw === "banker" ? "B" : "T",
+    ]);
 
     if (selectedBet === gw) {
       let winAmount = 0;
-      if (gw === "player") { winAmount = stagedBet * 2; setMessage(`Player wins! +$${stagedBet}`); }
-      else if (gw === "banker") { const c = stagedBet * 0.05; winAmount = stagedBet * 2 - c; setMessage(`Banker wins! +$${(stagedBet - c).toFixed(2)}`); incrementBankerWins(); }
-      else { winAmount = stagedBet * 9; setMessage(`Tie! +$${(stagedBet * 8).toFixed(2)} (8:1)`); incrementTieWins(); }
-      setResultType("win"); playSound("win");
+      if (gw === "player") {
+        winAmount = stagedBet * 2;
+        setMessage(`Player wins! +$${stagedBet}`);
+      } else if (gw === "banker") {
+        const c = stagedBet * 0.05;
+        winAmount = stagedBet * 2 - c;
+        setMessage(`Banker wins! +$${(stagedBet - c).toFixed(2)}`);
+        incrementBankerWins();
+      } else {
+        winAmount = stagedBet * 9;
+        setMessage(`Tie! +$${(stagedBet * 8).toFixed(2)} (8:1)`);
+        incrementTieWins();
+      }
+      setResultType("win");
+      playSound("win");
       triggerConfetti({ intensity: gw === "tie" ? "high" : "medium" });
-      incrementWinStreak(); incrementSessionWins(); recordBet("baccarat", stagedBet, "win");
-      try { await addWinnings(winAmount, "Baccarat"); } catch {}
+      incrementWinStreak();
+      incrementSessionWins();
+      recordBet("baccarat", stagedBet, "win");
+      try {
+        await addWinnings(winAmount, "Baccarat");
+      } catch {}
     } else {
-      setMessage(`${gw.charAt(0).toUpperCase() + gw.slice(1)} wins. -$${stagedBet}`);
-      setResultType("lose"); playSound("lose"); resetWinStreak(); recordBet("baccarat", stagedBet, "loss");
+      setMessage(
+        `${gw.charAt(0).toUpperCase() + gw.slice(1)} wins. -$${stagedBet}`,
+      );
+      setResultType("lose");
+      playSound("lose");
+      resetWinStreak();
+      recordBet("baccarat", stagedBet, "loss");
     }
     setIsDealing(false);
     if (shouldReshuffle(cs)) setTimeout(() => setShoe(createShoe()), 2000);
   };
 
   const nextRound = () => {
-    setPlayerHand([]); setBankerHand([]); setSelectedBet(null);
-    setGamePhase("betting"); setWinner(null); setMessage(""); setStagedBet(0);
+    setPlayerHand([]);
+    setBankerHand([]);
+    setSelectedBet(null);
+    setGamePhase("betting");
+    setWinner(null);
+    setMessage("");
+    setStagedBet(0);
   };
 
-  const ps = calcScore(playerHand), bs = calcScore(bankerHand);
+  const ps = calcScore(playerHand),
+    bs = calcScore(bankerHand);
   const availBet = (wallet ?? 0) - stagedBet;
 
   return (
     <div className="bac-page">
       <div className="bg-decoration" />
-      <button className="home-btn" onClick={() => navigate("/")}>🏠 HOME</button>
+      <button className="home-btn" onClick={() => navigate("/")}>
+        🏠 HOME
+      </button>
 
       <style>{`
         /* ═══════════════════════════════════
@@ -259,8 +348,8 @@ export default function Baccarat() {
           padding: clamp(5px,1vh,10px) clamp(10px,2vw,18px); text-align: center;
           box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
         }
-        .bac-stat-lbl { font-family: 'Press Start 2P'; font-size: clamp(0.3rem,0.9vw,0.45rem); color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 1px; }
-        .bac-stat-val { font-family: 'Press Start 2P'; font-size: clamp(0.7rem,2.2vw,1.3rem); color: var(--retro-green); }
+        .bac-stat-lbl { font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.2vw,0.65rem); color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .bac-stat-val { font-family: 'Press Start 2P'; font-size: clamp(1.05rem,2.8vw,1.5rem); color: var(--retro-green); }
 
         /* Table middle */
         .bac-table {
@@ -280,21 +369,21 @@ export default function Baccarat() {
         }
         .bac-hand-col { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: clamp(120px,26vw,200px); }
         .bac-hand-col.w { filter: drop-shadow(0 0 12px rgba(0,255,0,0.4)); }
-        .bac-htitle { font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.3vw,0.75rem); color: var(--retro-cyan); text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+        .bac-htitle { font-family: 'Press Start 2P'; font-size: clamp(0.65rem,1.6vw,0.95rem); color: var(--retro-cyan); text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
         .bac-htitle.wt { color: var(--retro-green); }
         .bac-cards { display: flex; gap: 6px; justify-content: center; min-height: clamp(72px,15vh,120px); align-items: center; }
         .bac-score {
-          font-family: 'Press Start 2P'; font-size: clamp(0.65rem,1.8vw,1rem);
+          font-family: 'Press Start 2P'; font-size: clamp(0.92rem,2.3vw,1.3rem);
           color: var(--retro-yellow); background: rgba(0,0,0,0.6);
           border: 3px solid var(--retro-yellow); padding: 3px 10px;
           box-shadow: 3px 3px 0 rgba(255,255,0,0.2);
         }
         .bac-score.ws { border-color: var(--retro-green); color: var(--retro-green); }
-        .bac-vs { font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.3vw,0.8rem); color: var(--retro-magenta); align-self: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+        .bac-vs { font-family: 'Press Start 2P'; font-size: clamp(0.78rem,1.8vw,1.1rem); color: var(--retro-magenta); align-self: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 
         /* Cards */
         .bac-card {
-          width: clamp(52px,11vw,90px); height: clamp(74px,15.5vw,126px);
+          width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
           background: var(--card-white); border: 3px solid var(--text-secondary);
           display: flex; flex-direction: column; justify-content: space-between;
           padding: 3px; position: relative; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
@@ -305,11 +394,11 @@ export default function Baccarat() {
         .bac-card.black { color: var(--card-black); }
         .bac-card-corner { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
         .bac-card-corner.bottom { transform: rotate(180deg); }
-        .bac-rank { font-family: 'Press Start 2P'; font-size: clamp(0.35rem,1vw,0.55rem); }
-        .bac-suit-sm { font-size: clamp(0.35rem,0.9vw,0.5rem); }
-        .bac-center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(1rem,3vw,1.8rem); }
+        .bac-rank { font-family: 'Press Start 2P'; font-size: clamp(0.48rem,1.2vw,0.72rem); }
+        .bac-suit-sm { font-size: clamp(0.48rem,1.1vw,0.68rem); }
+        .bac-center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(1.3rem,3.5vw,2.2rem); }
         .bac-card-slot {
-          width: clamp(52px,11vw,90px); height: clamp(74px,15.5vw,126px);
+          width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
           border: 3px dashed var(--retro-purple); opacity: 0.35;
           background: repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(153,102,255,0.06) 6px,rgba(153,102,255,0.06) 12px);
           box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
@@ -317,8 +406,8 @@ export default function Baccarat() {
 
         /* Message */
         .bac-msg {
-          font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.4vw,0.8rem);
-          text-align: center; padding: 6px 18px; background: rgba(10,16,32,0.85);
+          font-family: 'Press Start 2P'; font-size: clamp(0.75rem,1.8vw,1.05rem);
+          text-align: center; padding: 12px 24px; background: rgba(10,16,32,0.85);
           border: 3px solid; box-shadow: 4px 4px 0 rgba(0,0,0,0.4);
           animation: msgPop 0.3s ease-out;
         }
@@ -327,11 +416,11 @@ export default function Baccarat() {
         .bac-msg.neutral { color: var(--retro-yellow); border-color: var(--retro-yellow); }
         @keyframes msgPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .bac-dealing { font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.2vw,0.65rem); color: var(--retro-cyan); animation: dblink 0.6s ease-in-out infinite; }
+        .bac-dealing { font-family: 'Press Start 2P'; font-size: clamp(0.65rem,1.6vw,0.9rem); color: var(--retro-cyan); animation: dblink 0.6s ease-in-out infinite; }
         @keyframes dblink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
         .bac-next {
-          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.3vw,0.7rem);
+          font-family: 'Press Start 2P'; font-size: clamp(0.68rem,1.6vw,0.95rem);
           background: var(--retro-cyan); color: var(--bg-primary);
           border: 3px solid var(--retro-cyan); padding: 8px 24px; cursor: pointer;
           box-shadow: 4px 4px 0 rgba(0,255,247,0.3); transition: transform 0.1s;
@@ -346,10 +435,10 @@ export default function Baccarat() {
         .bac-bet-types { display: flex; gap: clamp(6px,1.5vw,14px); }
         .bac-betbtn {
           display: flex; flex-direction: column; align-items: center;
-          padding: clamp(7px,1.3vh,12px) clamp(12px,2.2vw,20px);
+          padding: clamp(12px,1.8vh,18px) clamp(18px,3vw,28px);
           background: var(--bg-secondary); border: 3px solid; cursor: pointer;
           transition: transform 0.1s; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
-          min-width: clamp(65px,13vw,100px);
+          min-width: clamp(82px,16vw,120px);
         }
         .bac-betbtn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,0,0,0.5); }
         .bac-betbtn.pb { border-color: var(--retro-blue); color: var(--retro-blue); }
@@ -358,15 +447,15 @@ export default function Baccarat() {
         .bac-betbtn.bb.on { background: var(--retro-red); color: var(--bg-primary); }
         .bac-betbtn.tb { border-color: var(--retro-green); color: var(--retro-green); }
         .bac-betbtn.tb.on { background: var(--retro-green); color: var(--bg-primary); }
-        .bac-bname { font-family: 'Press Start 2P'; font-size: clamp(0.35rem,1vw,0.5rem); }
-        .bac-bodds { font-family: 'VT323', monospace; font-size: clamp(0.55rem,1.4vw,0.8rem); opacity: 0.8; margin-top: 2px; }
+        .bac-bname { font-family: 'Press Start 2P'; font-size: clamp(0.52rem,1.3vw,0.72rem); }
+        .bac-bodds { font-family: 'VT323', monospace; font-size: clamp(0.78rem,1.7vw,1.02rem); opacity: 0.8; margin-top: 2px; }
 
         .bac-chips { display: flex; gap: clamp(5px,1vw,10px); flex-wrap: wrap; justify-content: center; }
         .bac-chip {
-          width: clamp(38px,6.5vw,58px); height: clamp(38px,6.5vw,58px);
+          width: clamp(50px,8.5vw,74px); height: clamp(50px,8.5vw,74px);
           border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.3rem,0.9vw,0.45rem);
+          font-family: 'Press Start 2P'; font-size: clamp(0.44rem,1.1vw,0.62rem);
           color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
           position: relative;
@@ -384,11 +473,11 @@ export default function Baccarat() {
         .bac-chip.vmax { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
 
         .bac-bet-row { display: flex; align-items: center; gap: 10px; }
-        .bac-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(0.75rem,2.2vw,1.2rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }
+        .bac-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(1.05rem,2.8vw,1.6rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }
         .bac-btn-sm {
           font-family: 'Press Start 2P'; border: 3px solid; background: var(--bg-secondary);
           cursor: pointer; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); transition: transform 0.1s;
-          padding: clamp(5px,0.9vh,8px) clamp(10px,1.8vw,16px); font-size: clamp(0.4rem,1vw,0.55rem);
+          padding: clamp(8px,1.3vh,14px) clamp(16px,2.5vw,24px); font-size: clamp(0.6rem,1.3vw,0.82rem);
         }
         .bac-btn-sm.clr { border-color: #888; color: #aaa; }
         .bac-btn-sm.go { border-color: var(--retro-green); color: var(--retro-green); }
@@ -398,9 +487,9 @@ export default function Baccarat() {
         /* History */
         .bac-hist { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; flex-shrink: 0; padding: 3px 0; position: relative; z-index: 1; }
         .bac-hdot {
-          width: clamp(12px,2vw,18px); height: clamp(12px,2vw,18px); border-radius: 50%;
+          width: clamp(18px,2.8vw,26px); height: clamp(18px,2.8vw,26px); border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.2rem,0.6vw,0.3rem);
+          font-family: 'Press Start 2P'; font-size: clamp(0.34rem,0.85vw,0.46rem);
           color: white; text-shadow: 1px 1px 0 #000;
         }
         .bac-hdot.P { background: var(--retro-blue); }
@@ -421,7 +510,12 @@ export default function Baccarat() {
       <div className="bac-stats">
         <div className="bac-stat">
           <span className="bac-stat-lbl">Wallet</span>
-          <span className="bac-stat-val">${(wallet ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span className="bac-stat-val">
+            $
+            {(wallet ?? 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </span>
         </div>
         <div className="bac-stat">
           <span className="bac-stat-lbl">Shoe</span>
@@ -438,67 +532,156 @@ export default function Baccarat() {
       <div className="bac-table">
         <div className="bac-hands">
           <div className={`bac-hand-col ${winner === "banker" ? "w" : ""}`}>
-            <div className={`bac-htitle ${winner === "banker" ? "wt" : ""}`}>BANKER</div>
-            <div className="bac-cards">
-              {bankerHand.length === 0 ? <><CardSlot /><CardSlot /></> : bankerHand.map((c, i) => <BacCard key={`b${i}`} card={c} />)}
+            <div className={`bac-htitle ${winner === "banker" ? "wt" : ""}`}>
+              BANKER
             </div>
-            {bankerHand.length > 0 && <div className={`bac-score ${winner === "banker" ? "ws" : ""}`}>{bs}</div>}
+            <div className="bac-cards">
+              {bankerHand.length === 0 ? (
+                <>
+                  <CardSlot />
+                  <CardSlot />
+                </>
+              ) : (
+                bankerHand.map((c, i) => <BacCard key={`b${i}`} card={c} />)
+              )}
+            </div>
+            {bankerHand.length > 0 && (
+              <div className={`bac-score ${winner === "banker" ? "ws" : ""}`}>
+                {bs}
+              </div>
+            )}
           </div>
           <div className="bac-vs">VS</div>
           <div className={`bac-hand-col ${winner === "player" ? "w" : ""}`}>
-            <div className={`bac-htitle ${winner === "player" ? "wt" : ""}`}>PLAYER</div>
-            <div className="bac-cards">
-              {playerHand.length === 0 ? <><CardSlot /><CardSlot /></> : playerHand.map((c, i) => <BacCard key={`p${i}`} card={c} />)}
+            <div className={`bac-htitle ${winner === "player" ? "wt" : ""}`}>
+              PLAYER
             </div>
-            {playerHand.length > 0 && <div className={`bac-score ${winner === "player" ? "ws" : ""}`}>{ps}</div>}
+            <div className="bac-cards">
+              {playerHand.length === 0 ? (
+                <>
+                  <CardSlot />
+                  <CardSlot />
+                </>
+              ) : (
+                playerHand.map((c, i) => <BacCard key={`p${i}`} card={c} />)
+              )}
+            </div>
+            {playerHand.length > 0 && (
+              <div className={`bac-score ${winner === "player" ? "ws" : ""}`}>
+                {ps}
+              </div>
+            )}
           </div>
         </div>
 
         {message && <div className={`bac-msg ${resultType}`}>{message}</div>}
         {isDealing && !message && <div className="bac-dealing">Dealing…</div>}
-        {gamePhase === "complete" && <button className="bac-next" onClick={nextRound}>NEXT ROUND</button>}
+        {gamePhase === "complete" && (
+          <button className="bac-next" onClick={nextRound}>
+            NEXT ROUND
+          </button>
+        )}
       </div>
 
       {gamePhase === "betting" && (
         <div className="bac-betting">
           <div className="bac-bet-types">
-            <button className={`bac-betbtn pb ${selectedBet === "player" ? "on" : ""}`} onClick={() => setSelectedBet("player")}>
-              <span className="bac-bname">Player</span><span className="bac-bodds">1:1</span>
+            <button
+              className={`bac-betbtn pb ${selectedBet === "player" ? "on" : ""}`}
+              onClick={() => setSelectedBet("player")}
+            >
+              <span className="bac-bname">Player</span>
+              <span className="bac-bodds">1:1</span>
             </button>
-            <button className={`bac-betbtn tb ${selectedBet === "tie" ? "on" : ""}`} onClick={() => setSelectedBet("tie")}>
-              <span className="bac-bname">Tie</span><span className="bac-bodds">8:1</span>
+            <button
+              className={`bac-betbtn tb ${selectedBet === "tie" ? "on" : ""}`}
+              onClick={() => setSelectedBet("tie")}
+            >
+              <span className="bac-bname">Tie</span>
+              <span className="bac-bodds">8:1</span>
             </button>
-            <button className={`bac-betbtn bb ${selectedBet === "banker" ? "on" : ""}`} onClick={() => setSelectedBet("banker")}>
-              <span className="bac-bname">Banker</span><span className="bac-bodds">1:1 -5%</span>
+            <button
+              className={`bac-betbtn bb ${selectedBet === "banker" ? "on" : ""}`}
+              onClick={() => setSelectedBet("banker")}
+            >
+              <span className="bac-bname">Banker</span>
+              <span className="bac-bodds">1:1 -5%</span>
             </button>
           </div>
           <div className="bac-chips">
-            {CHIP_VALUES.map(v => (
-              <div key={v} className={`bac-chip v${v} ${availBet < v ? "off" : ""}`} onClick={() => addChip(v)}>${v}</div>
+            {CHIP_VALUES.map((v) => (
+              <div
+                key={v}
+                className={`bac-chip v${v} ${availBet < v ? "off" : ""}`}
+                onClick={() => addChip(v)}
+              >
+                ${v}
+              </div>
             ))}
-            <div className={`bac-chip vmax ${availBet <= 0 ? "off" : ""}`} onClick={() => addChip(availBet)}>ALL</div>
+            <div
+              className={`bac-chip vmax ${availBet <= 0 ? "off" : ""}`}
+              onClick={() => addChip(availBet)}
+            >
+              ALL
+            </div>
           </div>
           <div className="bac-bet-row">
             <span className="bac-bet-amt">${stagedBet}</span>
-            <button className="bac-btn-sm clr" onClick={clearBet}>CLEAR</button>
-            <button className="bac-btn-sm go" onClick={handlePlaceBet} disabled={!selectedBet || stagedBet <= 0}>DEAL</button>
+            <button className="bac-btn-sm clr" onClick={clearBet}>
+              CLEAR
+            </button>
+            <button
+              className="bac-btn-sm go"
+              onClick={handlePlaceBet}
+              disabled={!selectedBet || stagedBet <= 0}
+            >
+              DEAL
+            </button>
           </div>
         </div>
       )}
 
       {history.length > 0 && (
         <div className="bac-hist">
-          {history.slice(-30).map((r, i) => <div key={i} className={`bac-hdot ${r}`}>{r}</div>)}
+          {history.slice(-30).map((r, i) => (
+            <div key={i} className={`bac-hdot ${r}`}>
+              {r}
+            </div>
+          ))}
         </div>
       )}
 
       {user?.isAdmin && (
         <>
-          <button className="dev-tools-toggle" onClick={() => setShowDevPanel(!showDevPanel)} style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 100 }}>DEV</button>
+          <button
+            className="dev-tools-toggle"
+            onClick={() => setShowDevPanel(!showDevPanel)}
+            style={{ position: "fixed", bottom: 20, right: 20, zIndex: 100 }}
+          >
+            DEV
+          </button>
           {showDevPanel && (
-            <div className="dev-tools-panel" style={{ position: 'fixed', bottom: 60, right: 20, zIndex: 100, background: 'var(--bg-secondary)', border: '2px solid var(--retro-cyan)', padding: 10, fontFamily: "'VT323', monospace", fontSize: '0.9rem', color: 'var(--retro-cyan)' }}>
-              <p>Player: {ps} | Banker: {bs}</p>
-              <p>Shoe: {shoe.length} | Phase: {gamePhase}</p>
+            <div
+              className="dev-tools-panel"
+              style={{
+                position: "fixed",
+                bottom: 60,
+                right: 20,
+                zIndex: 100,
+                background: "var(--bg-secondary)",
+                border: "2px solid var(--retro-cyan)",
+                padding: 10,
+                fontFamily: "'VT323', monospace",
+                fontSize: "0.9rem",
+                color: "var(--retro-cyan)",
+              }}
+            >
+              <p>
+                Player: {ps} | Banker: {bs}
+              </p>
+              <p>
+                Shoe: {shoe.length} | Phase: {gamePhase}
+              </p>
             </div>
           )}
         </>

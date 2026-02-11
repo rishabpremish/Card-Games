@@ -17,7 +17,11 @@ function SafeSessionStats() {
 import { useAchievements } from "../hooks/useAchievements";
 
 const VIP_EMOJI: Record<string, string> = {
-  bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💠", diamond: "💎",
+  bronze: "🥉",
+  silver: "🥈",
+  gold: "🥇",
+  platinum: "💠",
+  diamond: "💎",
 };
 
 export default function Stats() {
@@ -45,15 +49,15 @@ export default function Stats() {
           background: none;
           border: 2px solid var(--retro-yellow, #ffd700);
           color: var(--retro-yellow, #ffd700);
-          padding: 6px 14px;
+          padding: 8px 18px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 0.4rem;
+          font-size: 0.58rem;
           cursor: pointer;
         }
         .stats-title {
           text-align: center;
           color: var(--retro-yellow, #ffd700);
-          font-size: 1rem;
+          font-size: 1.4rem;
           margin: 20px 0 24px;
         }
         .stats-grid {
@@ -70,25 +74,25 @@ export default function Stats() {
           padding: 18px;
         }
         .stats-card h3 {
-          font-size: 0.5rem;
+          font-size: 0.72rem;
           color: var(--retro-yellow, #ffd700);
-          margin: 0 0 14px 0;
+          margin: 0 0 16px 0;
           border-bottom: 1px solid rgba(255,255,255,0.1);
-          padding-bottom: 8px;
+          padding-bottom: 10px;
         }
         .stats-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
         }
         .stats-label {
           color: rgba(255,255,255,0.5);
-          font-size: 0.35rem;
+          font-size: 0.52rem;
         }
         .stats-value {
           color: #fff;
-          font-size: 0.4rem;
+          font-size: 0.6rem;
         }
         .stats-value.green { color: #00ff88; }
         .stats-value.red { color: #ff4444; }
@@ -108,7 +112,9 @@ export default function Stats() {
         }
       `}</style>
       <div className="stats-page">
-        <button className="stats-back" onClick={() => navigate("/")}>← Back</button>
+        <button className="stats-back" onClick={() => navigate("/")}>
+          ← Back
+        </button>
         <h1 className="stats-title">📊 Player Stats</h1>
 
         <div className="stats-grid">
@@ -121,7 +127,9 @@ export default function Stats() {
             </div>
             <div className="stats-row">
               <span className="stats-label">Balance</span>
-              <span className="stats-value green">${balance.toLocaleString()}</span>
+              <span className="stats-value green">
+                ${balance.toLocaleString()}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Level</span>
@@ -129,12 +137,17 @@ export default function Stats() {
             </div>
             <div className="stats-row">
               <span className="stats-label">XP</span>
-              <span className="stats-value">{stats?.xpInLevel ?? 0} / {stats?.xpNeeded ?? 100}</span>
+              <span className="stats-value">
+                {stats?.xpInLevel ?? 0} / {stats?.xpNeeded ?? 100}
+              </span>
             </div>
             <div className="stats-xp-bar-track">
-              <div className="stats-xp-bar-fill" style={{
-                width: `${stats && stats.xpNeeded > 0 ? Math.round((stats.xpInLevel / stats.xpNeeded) * 100) : 0}%`,
-              }} />
+              <div
+                className="stats-xp-bar-fill"
+                style={{
+                  width: `${stats && stats.xpNeeded > 0 ? Math.round((stats.xpInLevel / stats.xpNeeded) * 100) : 0}%`,
+                }}
+              />
             </div>
           </div>
 
@@ -143,13 +156,19 @@ export default function Stats() {
             <h3>⭐ VIP Status</h3>
             <div className="stats-row">
               <span className="stats-label">Tier</span>
-              <span className="stats-value gold" style={{ textTransform: "capitalize" }}>
-                {VIP_EMOJI[stats?.vipTier ?? "bronze"]} {stats?.vipTier ?? "bronze"}
+              <span
+                className="stats-value gold"
+                style={{ textTransform: "capitalize" }}
+              >
+                {VIP_EMOJI[stats?.vipTier ?? "bronze"]}{" "}
+                {stats?.vipTier ?? "bronze"}
               </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Total Wagered</span>
-              <span className="stats-value">${(stats?.totalWagered ?? 0).toLocaleString()}</span>
+              <span className="stats-value">
+                ${(stats?.totalWagered ?? 0).toLocaleString()}
+              </span>
             </div>
             <div style={{ marginTop: "8px" }}>
               <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.3rem" }}>
@@ -163,20 +182,29 @@ export default function Stats() {
             <h3>🎮 This Session</h3>
             <div className="stats-row">
               <span className="stats-label">Total Wagered</span>
-              <span className="stats-value">${(session?.totalWagered ?? 0).toLocaleString()}</span>
+              <span className="stats-value">
+                ${(session?.totalWagered ?? 0).toLocaleString()}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Won</span>
-              <span className="stats-value green">${(session?.totalWon ?? 0).toLocaleString()}</span>
+              <span className="stats-value green">
+                ${(session?.totalWon ?? 0).toLocaleString()}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Lost</span>
-              <span className="stats-value red">${(session?.totalLost ?? 0).toLocaleString()}</span>
+              <span className="stats-value red">
+                ${(session?.totalLost ?? 0).toLocaleString()}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Net Profit</span>
-              <span className={`stats-value ${(session?.netProfit ?? 0) >= 0 ? "green" : "red"}`}>
-                {(session?.netProfit ?? 0) >= 0 ? "+" : ""}${(session?.netProfit ?? 0).toLocaleString()}
+              <span
+                className={`stats-value ${(session?.netProfit ?? 0) >= 0 ? "green" : "red"}`}
+              >
+                {(session?.netProfit ?? 0) >= 0 ? "+" : ""}$
+                {(session?.netProfit ?? 0).toLocaleString()}
               </span>
             </div>
           </div>
@@ -188,19 +216,33 @@ export default function Stats() {
               <span className="stats-label">Unlocked</span>
               <span className="stats-value gold">{achievements.length}</span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "6px",
+                marginTop: "8px",
+              }}
+            >
               {achievements.slice(0, 12).map((a: any) => (
-                <span key={a} style={{
-                  background: "rgba(255,215,0,0.1)",
-                  border: "1px solid rgba(255,215,0,0.3)",
-                  borderRadius: "3px",
-                  padding: "2px 6px",
-                  fontSize: "0.3rem",
-                  color: "#ffd700",
-                }}>🏆 {typeof a === "string" ? a : a.id ?? "?"}</span>
+                <span
+                  key={a}
+                  style={{
+                    background: "rgba(255,215,0,0.1)",
+                    border: "1px solid rgba(255,215,0,0.3)",
+                    borderRadius: "3px",
+                    padding: "2px 6px",
+                    fontSize: "0.3rem",
+                    color: "#ffd700",
+                  }}
+                >
+                  🏆 {typeof a === "string" ? a : (a.id ?? "?")}
+                </span>
               ))}
               {achievements.length > 12 && (
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.3rem" }}>
+                <span
+                  style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.3rem" }}
+                >
                   +{achievements.length - 12} more
                 </span>
               )}
@@ -212,24 +254,35 @@ export default function Stats() {
             <h3>🎒 Equipped Items</h3>
             <div className="stats-row">
               <span className="stats-label">Theme</span>
-              <span className="stats-value">{stats?.equippedTheme?.replace("theme_", "") ?? "Default"}</span>
+              <span className="stats-value">
+                {stats?.equippedTheme?.replace("theme_", "") ?? "Default"}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Card Back</span>
-              <span className="stats-value">{stats?.equippedCardBack?.replace("cardback_", "") ?? "Default"}</span>
+              <span className="stats-value">
+                {stats?.equippedCardBack?.replace("cardback_", "") ?? "Default"}
+              </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Emoji</span>
               <span className="stats-value">
-                {stats?.equippedEmoji === "emoji_crown" ? "👑" :
-                 stats?.equippedEmoji === "emoji_fire" ? "🔥" :
-                 stats?.equippedEmoji === "emoji_diamond" ? "💎" :
-                 stats?.equippedEmoji === "emoji_skull" ? "💀" : "None"}
+                {stats?.equippedEmoji === "emoji_crown"
+                  ? "👑"
+                  : stats?.equippedEmoji === "emoji_fire"
+                    ? "🔥"
+                    : stats?.equippedEmoji === "emoji_diamond"
+                      ? "💎"
+                      : stats?.equippedEmoji === "emoji_skull"
+                        ? "💀"
+                        : "None"}
               </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Owned Items</span>
-              <span className="stats-value">{stats?.ownedItems?.length ?? 0}</span>
+              <span className="stats-value">
+                {stats?.ownedItems?.length ?? 0}
+              </span>
             </div>
           </div>
         </div>

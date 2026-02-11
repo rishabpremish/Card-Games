@@ -80,11 +80,22 @@ export default function Leaderboard() {
             margin: "0 auto 20px",
           }}
         >
-          <h3 style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "0.7rem", marginBottom: "15px" }}>
+          <h3
+            style={{
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "0.7rem",
+              marginBottom: "15px",
+            }}
+          >
             Your Achievements
           </h3>
           {achievements.length === 0 ? (
-            <p style={{ fontFamily: "'VT323', monospace", color: "var(--text-secondary)" }}>
+            <p
+              style={{
+                fontFamily: "'VT323', monospace",
+                color: "var(--text-secondary)",
+              }}
+            >
               No achievements yet. Keep playing to unlock them!
             </p>
           ) : (
@@ -106,8 +117,20 @@ export default function Leaderboard() {
             </div>
           )}
           {winStreak > 0 && (
-            <div style={{ marginTop: "15px", paddingTop: "15px", borderTop: "1px dashed var(--retro-cyan)" }}>
-              <span style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "0.5rem", color: "var(--retro-orange)" }}>
+            <div
+              style={{
+                marginTop: "15px",
+                paddingTop: "15px",
+                borderTop: "1px dashed var(--retro-cyan)",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.5rem",
+                  color: "var(--retro-orange)",
+                }}
+              >
                 🔥 Current Win Streak: {winStreak}
               </span>
             </div>
@@ -123,7 +146,8 @@ export default function Leaderboard() {
         >
           {currentLeaderboard && (
             <option value="current">
-              {formatDate(currentLeaderboard.weekStart)} - {formatDate(currentLeaderboard.weekEnd)}
+              {formatDate(currentLeaderboard.weekStart)} -{" "}
+              {formatDate(currentLeaderboard.weekEnd)}
             </option>
           )}
           {historicalLeaderboards
@@ -191,7 +215,13 @@ export default function Leaderboard() {
                       <span className="username">
                         {entry.username}
                         {entry.level > 1 && (
-                          <span style={{ color: "var(--retro-cyan)", fontSize: "0.4rem", marginLeft: "6px" }}>
+                          <span
+                            style={{
+                              color: "var(--retro-cyan)",
+                              fontSize: "0.4rem",
+                              marginLeft: "6px",
+                            }}
+                          >
                             Lv{entry.level}
                           </span>
                         )}

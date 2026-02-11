@@ -1,4 +1,4 @@
-export type AchievementId = 
+export type AchievementId =
   | "first_blackjack"
   | "first_win"
   | "clear_the_deck"

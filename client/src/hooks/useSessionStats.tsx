@@ -1,4 +1,10 @@
-import { createContext, useContext, useCallback, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  type ReactNode,
+} from "react";
 
 interface GameSessionStats {
   higherLower: { wagered: number; won: number; lost: number };
@@ -16,9 +22,21 @@ interface SessionStatsContextType {
   totalWon: number;
   totalLost: number;
   netProfit: number;
-  gamesPlayed: { higherLower: number; blackjack: number; baccarat: number; slots: number; roulette: number; craps: number; war: number };
+  gamesPlayed: {
+    higherLower: number;
+    blackjack: number;
+    baccarat: number;
+    slots: number;
+    roulette: number;
+    craps: number;
+    war: number;
+  };
   biggestWin: number;
-  recordBet: (game: keyof GameSessionStats, amount: number, result: "win" | "loss") => void;
+  recordBet: (
+    game: keyof GameSessionStats,
+    amount: number,
+    result: "win" | "loss",
+  ) => void;
   resetSession: () => void;
 }
 
@@ -36,33 +54,52 @@ const initialStats: GameSessionStats = {
 
 export function SessionStatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<GameSessionStats>(initialStats);
-  const [gamesPlayed, setGamesPlayed] = useState({ higherLower: 0, blackjack: 0, baccarat: 0, slots: 0, roulette: 0, craps: 0, war: 0 });
+  const [gamesPlayed, setGamesPlayed] = useState({
+    higherLower: 0,
+    blackjack: 0,
+    baccarat: 0,
+    slots: 0,
+    roulette: 0,
+    craps: 0,
+    war: 0,
+  });
   const [biggestWin, setBiggestWin] = useState(0);
 
-  const recordBet = useCallback((game: keyof GameSessionStats, amount: number, result: "win" | "loss") => {
-    setStats((prev) => {
-      const newStats = { ...prev };
-      newStats[game] = {
-        wagered: prev[game].wagered + amount,
-        won: result === "win" ? prev[game].won + amount : prev[game].won,
-        lost: result === "loss" ? prev[game].lost + amount : prev[game].lost,
-      };
-      return newStats;
-    });
+  const recordBet = useCallback(
+    (game: keyof GameSessionStats, amount: number, result: "win" | "loss") => {
+      setStats((prev) => {
+        const newStats = { ...prev };
+        newStats[game] = {
+          wagered: prev[game].wagered + amount,
+          won: result === "win" ? prev[game].won + amount : prev[game].won,
+          lost: result === "loss" ? prev[game].lost + amount : prev[game].lost,
+        };
+        return newStats;
+      });
 
-    setGamesPlayed((prev) => ({
-      ...prev,
-      [game]: prev[game] + 1,
-    }));
+      setGamesPlayed((prev) => ({
+        ...prev,
+        [game]: prev[game] + 1,
+      }));
 
-    if (result === "win" && amount > biggestWin) {
-      setBiggestWin(amount);
-    }
-  }, [biggestWin]);
+      if (result === "win" && amount > biggestWin) {
+        setBiggestWin(amount);
+      }
+    },
+    [biggestWin],
+  );
 
   const resetSession = useCallback(() => {
     setStats(initialStats);
-    setGamesPlayed({ higherLower: 0, blackjack: 0, baccarat: 0, slots: 0, roulette: 0, craps: 0, war: 0 });
+    setGamesPlayed({
+      higherLower: 0,
+      blackjack: 0,
+      baccarat: 0,
+      slots: 0,
+      roulette: 0,
+      craps: 0,
+      war: 0,
+    });
     setBiggestWin(0);
   }, []);
 
@@ -93,7 +130,9 @@ export function SessionStatsProvider({ children }: { children: ReactNode }) {
 export function useSessionStats() {
   const context = useContext(SessionStatsContext);
   if (!context) {
-    throw new Error("useSessionStats must be used within a SessionStatsProvider");
+    throw new Error(
+      "useSessionStats must be used within a SessionStatsProvider",
+    );
   }
   return context;
 }

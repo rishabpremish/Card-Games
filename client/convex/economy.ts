@@ -9,7 +9,11 @@ function xpForLevel(level: number): number {
   return level * 100;
 }
 
-function getLevelFromXP(totalXP: number): { level: number; xpInLevel: number; xpNeeded: number } {
+function getLevelFromXP(totalXP: number): {
+  level: number;
+  xpInLevel: number;
+  xpNeeded: number;
+} {
   let level = 1;
   let remaining = totalXP;
   while (remaining >= xpForLevel(level)) {
@@ -27,7 +31,10 @@ export const getPlayerStats = query({
     const xp = user.xp ?? 0;
     const { level, xpInLevel, xpNeeded } = getLevelFromXP(xp);
     return {
-      xp, level, xpInLevel, xpNeeded,
+      xp,
+      level,
+      xpInLevel,
+      xpNeeded,
       vipTier: user.vipTier ?? "bronze",
       totalWagered: user.totalWagered ?? 0,
       ownedItems: user.ownedItems ?? [],
@@ -96,24 +103,74 @@ export const addWagered = mutation({
 // ═══════════════════════════════════
 
 const DAILY_CHALLENGES = [
-  { id: "daily_win_3", title: "Win 3 Games", description: "Win 3 games today", target: 3, reward: 50, rewardType: "xp" as const },
-  { id: "daily_wager_500", title: "Wager $500", description: "Wager a total of $500 today", target: 500, reward: 100, rewardType: "xp" as const },
-  { id: "daily_play_5", title: "Play 5 Games", description: "Play 5 games today", target: 5, reward: 30, rewardType: "xp" as const },
-  { id: "daily_big_win", title: "Big Winner", description: "Win $200+ in a single game", target: 200, reward: 25, rewardType: "money" as const },
+  {
+    id: "daily_win_3",
+    title: "Win 3 Games",
+    description: "Win 3 games today",
+    target: 3,
+    reward: 50,
+    rewardType: "xp" as const,
+  },
+  {
+    id: "daily_wager_500",
+    title: "Wager $500",
+    description: "Wager a total of $500 today",
+    target: 500,
+    reward: 100,
+    rewardType: "xp" as const,
+  },
+  {
+    id: "daily_play_5",
+    title: "Play 5 Games",
+    description: "Play 5 games today",
+    target: 5,
+    reward: 30,
+    rewardType: "xp" as const,
+  },
+  {
+    id: "daily_big_win",
+    title: "Big Winner",
+    description: "Win $200+ in a single game",
+    target: 200,
+    reward: 25,
+    rewardType: "money" as const,
+  },
 ];
 
 // Weekly challenge templates (for future use)
 const _WEEKLY_CHALLENGES = [
-  { id: "weekly_win_20", title: "20 Wins", description: "Win 20 games this week", target: 20, reward: 500, rewardType: "xp" as const },
-  { id: "weekly_wager_5000", title: "High Roller", description: "Wager $5,000 this week", target: 5000, reward: 100, rewardType: "money" as const },
-  { id: "weekly_play_50", title: "Dedicated", description: "Play 50 games this week", target: 50, reward: 300, rewardType: "xp" as const },
+  {
+    id: "weekly_win_20",
+    title: "20 Wins",
+    description: "Win 20 games this week",
+    target: 20,
+    reward: 500,
+    rewardType: "xp" as const,
+  },
+  {
+    id: "weekly_wager_5000",
+    title: "High Roller",
+    description: "Wager $5,000 this week",
+    target: 5000,
+    reward: 100,
+    rewardType: "money" as const,
+  },
+  {
+    id: "weekly_play_50",
+    title: "Dedicated",
+    description: "Play 50 games this week",
+    target: 50,
+    reward: 300,
+    rewardType: "xp" as const,
+  },
 ];
 
 export const getChallenges = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
     const now = Date.now();
-    const challenges = await ctx.db.query("challenges")
+    const challenges = await ctx.db
+      .query("challenges")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
       .collect();
     return challenges.filter((c: any) => c.expiresAt > now || c.completed);
@@ -127,13 +184,21 @@ export const generateDailyChallenges = mutation({
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const existing = await ctx.db.query("challenges")
-      .withIndex("by_user_and_type", (q: any) => q.eq("userId", userId).eq("type", "daily"))
+    const existing = await ctx.db
+      .query("challenges")
+      .withIndex("by_user_and_type", (q: any) =>
+        q.eq("userId", userId).eq("type", "daily"),
+      )
       .collect();
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const hasToday = existing.some((c: any) => c.createdAt >= todayStart.getTime());
-    if (hasToday) return existing.filter((c: any) => c.type === "daily" && c.expiresAt > now);
+    const hasToday = existing.some(
+      (c: any) => c.createdAt >= todayStart.getTime(),
+    );
+    if (hasToday)
+      return existing.filter(
+        (c: any) => c.type === "daily" && c.expiresAt > now,
+      );
 
     const shuffled = [...DAILY_CHALLENGES].sort(() => Math.random() - 0.5);
     const picked = shuffled.slice(0, 3);
@@ -162,25 +227,43 @@ export const generateDailyChallenges = mutation({
 });
 
 export const updateChallengeProgress = mutation({
-  args: { userId: v.id("users"), challengeType: v.string(), amount: v.number() },
+  args: {
+    userId: v.id("users"),
+    challengeType: v.string(),
+    amount: v.number(),
+  },
   handler: async (ctx, { userId, challengeType, amount }) => {
     const now = Date.now();
-    const challenges = await ctx.db.query("challenges")
+    const challenges = await ctx.db
+      .query("challenges")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
       .collect();
 
-    const active = challenges.filter((c: any) => !c.completed && c.expiresAt > now);
+    const active = challenges.filter(
+      (c: any) => !c.completed && c.expiresAt > now,
+    );
 
     for (const ch of active) {
       let shouldUpdate = false;
-      if (challengeType === "win" && ch.challengeId.includes("win") && !ch.challengeId.includes("big")) shouldUpdate = true;
-      if (challengeType === "wager" && ch.challengeId.includes("wager")) shouldUpdate = true;
-      if (challengeType === "play" && ch.challengeId.includes("play")) shouldUpdate = true;
-      if (challengeType === "big_win" && ch.challengeId.includes("big_win")) shouldUpdate = true;
+      if (
+        challengeType === "win" &&
+        ch.challengeId.includes("win") &&
+        !ch.challengeId.includes("big")
+      )
+        shouldUpdate = true;
+      if (challengeType === "wager" && ch.challengeId.includes("wager"))
+        shouldUpdate = true;
+      if (challengeType === "play" && ch.challengeId.includes("play"))
+        shouldUpdate = true;
+      if (challengeType === "big_win" && ch.challengeId.includes("big_win"))
+        shouldUpdate = true;
 
       if (shouldUpdate) {
         const newProgress = Math.min(ch.progress + amount, ch.target);
-        await ctx.db.patch(ch._id, { progress: newProgress, completed: newProgress >= ch.target });
+        await ctx.db.patch(ch._id, {
+          progress: newProgress,
+          completed: newProgress >= ch.target,
+        });
       }
     }
   },
@@ -191,7 +274,8 @@ export const claimChallengeReward = mutation({
   handler: async (ctx, { userId, challengeId }) => {
     const challenge = await ctx.db.get(challengeId);
     if (!challenge || challenge.userId !== userId) throw new Error("Not found");
-    if (!challenge.completed || challenge.claimed) throw new Error("Cannot claim");
+    if (!challenge.completed || challenge.claimed)
+      throw new Error("Cannot claim");
 
     await ctx.db.patch(challengeId, { claimed: true });
 
@@ -213,17 +297,83 @@ export const claimChallengeReward = mutation({
 // ═══════════════════════════════════
 
 export const SHOP_ITEMS = [
-  { id: "theme_neon", name: "Neon Theme", category: "theme", price: 500, description: "Bright neon color scheme" },
-  { id: "theme_midnight", name: "Midnight Theme", category: "theme", price: 500, description: "Deep blue dark theme" },
-  { id: "theme_sunset", name: "Sunset Theme", category: "theme", price: 750, description: "Warm orange & purple" },
-  { id: "theme_matrix", name: "Matrix Theme", category: "theme", price: 1000, description: "Green on black hacker look" },
-  { id: "cardback_gold", name: "Gold Card Back", category: "cardback", price: 300, description: "Shiny gold card backs" },
-  { id: "cardback_diamond", name: "Diamond Card Back", category: "cardback", price: 800, description: "Diamond patterned cards" },
-  { id: "cardback_fire", name: "Fire Card Back", category: "cardback", price: 600, description: "Flaming card design" },
-  { id: "emoji_crown", name: "Crown Emoji", category: "emoji", price: 200, description: "👑 next to your name" },
-  { id: "emoji_fire", name: "Fire Emoji", category: "emoji", price: 200, description: "🔥 next to your name" },
-  { id: "emoji_diamond", name: "Diamond Emoji", category: "emoji", price: 400, description: "💎 next to your name" },
-  { id: "emoji_skull", name: "Skull Emoji", category: "emoji", price: 300, description: "💀 next to your name" },
+  {
+    id: "theme_neon",
+    name: "Neon Theme",
+    category: "theme",
+    price: 500,
+    description: "Bright neon color scheme",
+  },
+  {
+    id: "theme_midnight",
+    name: "Midnight Theme",
+    category: "theme",
+    price: 500,
+    description: "Deep blue dark theme",
+  },
+  {
+    id: "theme_sunset",
+    name: "Sunset Theme",
+    category: "theme",
+    price: 750,
+    description: "Warm orange & purple",
+  },
+  {
+    id: "theme_matrix",
+    name: "Matrix Theme",
+    category: "theme",
+    price: 1000,
+    description: "Green on black hacker look",
+  },
+  {
+    id: "cardback_gold",
+    name: "Gold Card Back",
+    category: "cardback",
+    price: 300,
+    description: "Shiny gold card backs",
+  },
+  {
+    id: "cardback_diamond",
+    name: "Diamond Card Back",
+    category: "cardback",
+    price: 800,
+    description: "Diamond patterned cards",
+  },
+  {
+    id: "cardback_fire",
+    name: "Fire Card Back",
+    category: "cardback",
+    price: 600,
+    description: "Flaming card design",
+  },
+  {
+    id: "emoji_crown",
+    name: "Crown Emoji",
+    category: "emoji",
+    price: 200,
+    description: "👑 next to your name",
+  },
+  {
+    id: "emoji_fire",
+    name: "Fire Emoji",
+    category: "emoji",
+    price: 200,
+    description: "🔥 next to your name",
+  },
+  {
+    id: "emoji_diamond",
+    name: "Diamond Emoji",
+    category: "emoji",
+    price: 400,
+    description: "💎 next to your name",
+  },
+  {
+    id: "emoji_skull",
+    name: "Skull Emoji",
+    category: "emoji",
+    price: 300,
+    description: "💀 next to your name",
+  },
 ];
 
 export const getShopItems = query({
@@ -285,8 +435,11 @@ export const equipItem = mutation({
 export const getActiveLoans = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    return await ctx.db.query("loans")
-      .withIndex("by_active", (q: any) => q.eq("userId", userId).eq("isActive", true))
+    return await ctx.db
+      .query("loans")
+      .withIndex("by_active", (q: any) =>
+        q.eq("userId", userId).eq("isActive", true),
+      )
       .collect();
   },
 });
@@ -297,13 +450,17 @@ export const takeLoan = mutation({
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
-    if (amount < 100 || amount > 5000) throw new Error("Loan must be $100-$5000");
-    const active = await ctx.db.query("loans")
-      .withIndex("by_active", (q: any) => q.eq("userId", userId).eq("isActive", true))
+    if (amount < 100 || amount > 5000)
+      throw new Error("Loan must be $100-$5000");
+    const active = await ctx.db
+      .query("loans")
+      .withIndex("by_active", (q: any) =>
+        q.eq("userId", userId).eq("isActive", true),
+      )
       .collect();
     if (active.length > 0) throw new Error("Already have an active loan");
 
-    const interestRate = 0.10;
+    const interestRate = 0.1;
     const totalOwed = Math.round(amount * (1 + interestRate));
     const dueAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
@@ -330,7 +487,8 @@ export const repayLoan = mutation({
     if (!user) throw new Error("User not found");
 
     const loan = await ctx.db.get(loanId);
-    if (!loan || loan.userId !== userId || !loan.isActive) throw new Error("Loan not found");
+    if (!loan || loan.userId !== userId || !loan.isActive)
+      throw new Error("Loan not found");
 
     const remaining = loan.totalOwed - loan.repaid;
     const repay = Math.min(amount, remaining, user.wallet);
@@ -356,9 +514,16 @@ export const searchUsers = query({
     if (search.length < 2) return [];
     const users = await ctx.db.query("users").collect();
     return users
-      .filter((u: any) => u.username.toLowerCase().includes(search.toLowerCase()))
+      .filter((u: any) =>
+        u.username.toLowerCase().includes(search.toLowerCase()),
+      )
       .slice(0, 10)
-      .map((u: any) => ({ id: u._id, username: u.username, level: getLevelFromXP(u.xp ?? 0).level, vipTier: u.vipTier ?? "bronze" }));
+      .map((u: any) => ({
+        id: u._id,
+        username: u.username,
+        level: getLevelFromXP(u.xp ?? 0).level,
+        vipTier: u.vipTier ?? "bronze",
+      }));
   },
 });
 
@@ -416,16 +581,24 @@ export const getFriends = query({
 
     const friends = await Promise.all(
       friendIds.map(async (id: any) => {
-        const f = await ctx.db.get(id) as any;
-        return f && f.username ? { id: f._id, username: f.username, wallet: f.wallet, level: getLevelFromXP(f.xp ?? 0).level, vipTier: f.vipTier ?? "bronze" } : null;
-      })
+        const f = (await ctx.db.get(id)) as any;
+        return f && f.username
+          ? {
+              id: f._id,
+              username: f.username,
+              wallet: f.wallet,
+              level: getLevelFromXP(f.xp ?? 0).level,
+              vipTier: f.vipTier ?? "bronze",
+            }
+          : null;
+      }),
     );
 
     const requests = await Promise.all(
       requestIds.map(async (id: any) => {
-        const f = await ctx.db.get(id) as any;
+        const f = (await ctx.db.get(id)) as any;
         return f && f.username ? { id: f._id, username: f.username } : null;
-      })
+      }),
     );
 
     return {

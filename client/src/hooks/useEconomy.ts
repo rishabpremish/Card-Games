@@ -36,8 +36,12 @@ export function useEconomy() {
   const addXPMutation = useMutation(api.economy.addXP);
   const addWageredMutation = useMutation(api.economy.addWagered);
   const updateVIPTierMutation = useMutation(api.economy.updateVIPTier);
-  const generateDailyMutation = useMutation(api.economy.generateDailyChallenges);
-  const updateProgressMutation = useMutation(api.economy.updateChallengeProgress);
+  const generateDailyMutation = useMutation(
+    api.economy.generateDailyChallenges,
+  );
+  const updateProgressMutation = useMutation(
+    api.economy.updateChallengeProgress,
+  );
   const claimRewardMutation = useMutation(api.economy.claimChallengeReward);
   const buyItemMutation = useMutation(api.economy.buyShopItem);
   const equipItemMutation = useMutation(api.economy.equipItem);
@@ -53,19 +57,24 @@ export function useEconomy() {
   };
 
   const addXP = (amount: number) => addXPMutation({ userId: uid(), amount });
-  const addWagered = (amount: number) => addWageredMutation({ userId: uid(), amount });
+  const addWagered = (amount: number) =>
+    addWageredMutation({ userId: uid(), amount });
   const updateVIPTier = () => updateVIPTierMutation({ userId: uid() });
 
-  const generateDailyChallenges = () => generateDailyMutation({ userId: uid() });
+  const generateDailyChallenges = () =>
+    generateDailyMutation({ userId: uid() });
   const updateChallengeProgress = (challengeType: string, amount: number) =>
     updateProgressMutation({ userId: uid(), challengeType, amount });
   const claimChallengeReward = (challengeId: Id<"challenges">) =>
     claimRewardMutation({ userId: uid(), challengeId });
 
-  const buyShopItem = (itemId: string) => buyItemMutation({ userId: uid(), itemId });
-  const equipItem = (itemId: string) => equipItemMutation({ userId: uid(), itemId });
+  const buyShopItem = (itemId: string) =>
+    buyItemMutation({ userId: uid(), itemId });
+  const equipItem = (itemId: string) =>
+    equipItemMutation({ userId: uid(), itemId });
 
-  const takeLoan = (amount: number) => takeLoanMutation({ userId: uid(), amount });
+  const takeLoan = (amount: number) =>
+    takeLoanMutation({ userId: uid(), amount });
   const repayLoan = (loanId: Id<"loans">, amount: number) =>
     repayLoanMutation({ userId: uid(), loanId, amount });
 
@@ -81,7 +90,9 @@ export function useEconomy() {
       await updateChallengeProgress("wager", amount);
       await updateChallengeProgress("play", 1);
       await updateVIPTier();
-    } catch { /* fire-and-forget */ }
+    } catch {
+      /* fire-and-forget */
+    }
   };
 
   // Convenience: call after every win
@@ -91,7 +102,9 @@ export function useEconomy() {
       await addXP(xpGain);
       await updateChallengeProgress("win", 1);
       if (winAmount >= 200) await updateChallengeProgress("big_win", winAmount);
-    } catch { /* fire-and-forget */ }
+    } catch {
+      /* fire-and-forget */
+    }
   };
 
   return {

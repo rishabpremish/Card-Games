@@ -6,7 +6,8 @@ import { useAuth } from "../hooks/useAuth";
 
 export default function FriendsPanel() {
   const { user } = useAuth();
-  const { friends, friendRequests, sendFriendRequest, acceptFriendRequest } = useEconomy();
+  const { friends, friendRequests, sendFriendRequest, acceptFriendRequest } =
+    useEconomy();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,9 +55,9 @@ export default function FriendsPanel() {
           background: "var(--bg-secondary, #1a1a3e)",
           border: `3px solid ${pendingCount > 0 ? "#ff8c00" : "var(--retro-yellow, #ffd700)"}`,
           color: pendingCount > 0 ? "#ff8c00" : "var(--retro-yellow, #ffd700)",
-          padding: "10px 20px",
+          padding: "14px 24px",
           fontFamily: "'Press Start 2P', cursive",
-          fontSize: "0.5rem",
+          fontSize: "0.72rem",
           cursor: "pointer",
           zIndex: 100,
           boxShadow: "3px 3px 0px rgba(255,215,0,0.3)",
@@ -71,7 +72,10 @@ export default function FriendsPanel() {
     <div
       style={{
         position: "fixed",
-        top: 0, left: 0, right: 0, bottom: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: "rgba(15, 15, 35, 0.92)",
         display: "flex",
         alignItems: "center",
@@ -94,12 +98,36 @@ export default function FriendsPanel() {
           fontFamily: "'Press Start 2P', cursive",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h2 style={{ color: "var(--retro-yellow, #ffd700)", fontSize: "0.7rem", margin: 0 }}>👥 Friends</h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <h2
+            style={{
+              color: "var(--retro-yellow, #ffd700)",
+              fontSize: "1.05rem",
+              margin: 0,
+            }}
+          >
+            👥 Friends
+          </h2>
           <button
             onClick={() => setIsOpen(false)}
-            style={{ background: "none", border: "none", color: "#ff4444", fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem", cursor: "pointer" }}
-          >✕</button>
+            style={{
+              background: "none",
+              border: "none",
+              color: "#ff4444",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "0.82rem",
+              cursor: "pointer",
+            }}
+          >
+            ✕
+          </button>
         </div>
 
         {/* Search */}
@@ -107,15 +135,18 @@ export default function FriendsPanel() {
           type="text"
           placeholder="Search users..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setMsg(null); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setMsg(null);
+          }}
           style={{
             width: "100%",
             background: "rgba(255,255,255,0.05)",
             border: "2px solid rgba(255,255,255,0.2)",
             color: "#fff",
-            padding: "8px 12px",
+            padding: "10px 14px",
             fontFamily: "'Press Start 2P', cursive",
-            fontSize: "0.38rem",
+            fontSize: "0.52rem",
             borderRadius: "4px",
             marginBottom: "12px",
             boxSizing: "border-box",
@@ -124,74 +155,164 @@ export default function FriendsPanel() {
 
         {searchResults && searchResults.length > 0 && (
           <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.38rem", marginBottom: "8px" }}>Results</h3>
+            <h3
+              style={{
+                color: "rgba(255,255,255,0.5)",
+                fontSize: "0.38rem",
+                marginBottom: "8px",
+              }}
+            >
+              Results
+            </h3>
             {searchResults.map((u: any) => (
-              <div key={u.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "6px 8px", background: "rgba(255,255,255,0.03)", borderRadius: "4px", marginBottom: "4px",
-              }}>
-                <span style={{ color: "#fff", fontSize: "0.38rem" }}>
-                  {u.username} <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.3rem" }}>Lv{u.level}</span>
+              <div
+                key={u.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "6px 8px",
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "4px",
+                  marginBottom: "4px",
+                }}
+              >
+                <span style={{ color: "#fff", fontSize: "0.52rem" }}>
+                  {u.username}{" "}
+                  <span
+                    style={{
+                      color: "rgba(255,255,255,0.4)",
+                      fontSize: "0.44rem",
+                    }}
+                  >
+                    Lv{u.level}
+                  </span>
                 </span>
                 {u.id !== user.userId && (
                   <button
                     onClick={() => handleAdd(u.id)}
                     disabled={busy}
                     style={{
-                      background: "#00ff88", color: "#000", border: "none",
-                      padding: "3px 8px", fontFamily: "'Press Start 2P', cursive",
-                      fontSize: "0.3rem", cursor: "pointer", borderRadius: "3px",
+                      background: "#00ff88",
+                      color: "#000",
+                      border: "none",
+                      padding: "3px 8px",
+                      fontFamily: "'Press Start 2P', cursive",
+                      fontSize: "0.3rem",
+                      cursor: "pointer",
+                      borderRadius: "3px",
                     }}
-                  >Add</button>
+                  >
+                    Add
+                  </button>
                 )}
               </div>
             ))}
           </div>
         )}
 
-        {msg && <p style={{ color: "#ffd700", fontSize: "0.35rem", marginBottom: "8px" }}>{msg}</p>}
+        {msg && (
+          <p
+            style={{
+              color: "#ffd700",
+              fontSize: "0.35rem",
+              marginBottom: "8px",
+            }}
+          >
+            {msg}
+          </p>
+        )}
 
         {/* Friend Requests */}
         {friendRequests.length > 0 && (
           <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ color: "#ff8c00", fontSize: "0.4rem", marginBottom: "8px" }}>Pending Requests</h3>
+            <h3
+              style={{
+                color: "#ff8c00",
+                fontSize: "0.4rem",
+                marginBottom: "8px",
+              }}
+            >
+              Pending Requests
+            </h3>
             {friendRequests.map((r: any) => (
-              <div key={r.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "8px", background: "rgba(255,140,0,0.1)", border: "1px solid rgba(255,140,0,0.3)",
-                borderRadius: "4px", marginBottom: "6px",
-              }}>
-                <span style={{ color: "#fff", fontSize: "0.38rem" }}>{r.username}</span>
+              <div
+                key={r.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px",
+                  background: "rgba(255,140,0,0.1)",
+                  border: "1px solid rgba(255,140,0,0.3)",
+                  borderRadius: "4px",
+                  marginBottom: "6px",
+                }}
+              >
+                <span style={{ color: "#fff", fontSize: "0.52rem" }}>
+                  {r.username}
+                </span>
                 <button
                   onClick={() => handleAccept(r.id)}
                   disabled={busy}
                   style={{
-                    background: "#00ff88", color: "#000", border: "none",
-                    padding: "4px 10px", fontFamily: "'Press Start 2P', cursive",
-                    fontSize: "0.3rem", cursor: "pointer", borderRadius: "3px",
+                    background: "#00ff88",
+                    color: "#000",
+                    border: "none",
+                    padding: "6px 12px",
+                    fontFamily: "'Press Start 2P', cursive",
+                    fontSize: "0.44rem",
+                    cursor: "pointer",
+                    borderRadius: "3px",
                   }}
-                >Accept</button>
+                >
+                  Accept
+                </button>
               </div>
             ))}
           </div>
         )}
 
         {/* Friends List */}
-        <h3 style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.4rem", marginBottom: "8px" }}>
+        <h3
+          style={{
+            color: "rgba(255,255,255,0.5)",
+            fontSize: "0.4rem",
+            marginBottom: "8px",
+          }}
+        >
           Friends ({friends.length})
         </h3>
         {friends.length === 0 && (
-          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.35rem" }}>No friends yet. Search above to add!</p>
+          <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.35rem" }}>
+            No friends yet. Search above to add!
+          </p>
         )}
         {friends.map((f: any) => (
-          <div key={f.id} style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "8px", background: "rgba(255,255,255,0.03)", borderRadius: "4px", marginBottom: "4px",
-          }}>
-            <span style={{ color: "#fff", fontSize: "0.38rem" }}>{f.username}</span>
+          <div
+            key={f.id}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: "4px",
+              marginBottom: "4px",
+            }}
+          >
+            <span style={{ color: "#fff", fontSize: "0.52rem" }}>
+              {f.username}
+            </span>
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.3rem" }}>Lv{f.level}</span>
-              <span style={{ color: "#00ff88", fontSize: "0.3rem" }}>${f.wallet?.toLocaleString()}</span>
+              <span
+                style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.44rem" }}
+              >
+                Lv{f.level}
+              </span>
+              <span style={{ color: "#00ff88", fontSize: "0.44rem" }}>
+                ${f.wallet?.toLocaleString()}
+              </span>
             </div>
           </div>
         ))}

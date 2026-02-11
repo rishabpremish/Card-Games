@@ -30,35 +30,57 @@ export default function Slots() {
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
-  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementSessionWins } = useAchievements();
+  const {
+    unlockAchievement,
+    incrementWinStreak,
+    resetWinStreak,
+    incrementSessionWins,
+  } = useAchievements();
   const { recordBet } = useSessionStats();
 
-  const [display, setDisplay] = useState<string[]>(["⭐", "💎", "7️⃣", "💎", "⭐"]);
+  const [display, setDisplay] = useState<string[]>([
+    "⭐",
+    "💎",
+    "7️⃣",
+    "💎",
+    "⭐",
+  ]);
   const [spinning, setSpinning] = useState(false);
   const [stagedBet, setStagedBet] = useState(0);
   const [message, setMessage] = useState("");
-  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">("neutral");
+  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">(
+    "neutral",
+  );
   const [winAmount, setWinAmount] = useState(0);
   const [autoSpin, setAutoSpin] = useState(false);
   const autoSpinRef = useRef(false);
   const spinTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => { autoSpinRef.current = autoSpin; }, [autoSpin]);
+  useEffect(() => {
+    autoSpinRef.current = autoSpin;
+  }, [autoSpin]);
 
   const addChip = (val: number) => {
     if (spinning) return;
     const avail = (wallet ?? 0) - stagedBet;
-    if (avail >= val) setStagedBet(p => p + val);
+    if (avail >= val) setStagedBet((p) => p + val);
   };
-  const clearBet = () => { if (!spinning) setStagedBet(0); };
-  const allIn = () => { if (!spinning) setStagedBet(wallet ?? 0); };
+  const clearBet = () => {
+    if (!spinning) setStagedBet(0);
+  };
+  const allIn = () => {
+    if (!spinning) setStagedBet(wallet ?? 0);
+  };
 
   const spin = useCallback(async () => {
     if (spinning || stagedBet <= 0 || stagedBet > (wallet ?? 0)) return;
 
     try {
       await placeBetMutation(stagedBet, "Slots");
-    } catch { setMessage("Failed to place bet"); return; }
+    } catch {
+      setMessage("Failed to place bet");
+      return;
+    }
 
     setSpinning(true);
     setMessage("");
@@ -74,13 +96,21 @@ export default function Slots() {
 
     for (let r = 0; r < 5; r++) {
       const iv = setInterval(() => {
-        setDisplay(prev => { const n = [...prev]; n[r] = getRandomSymbol(); return n; });
+        setDisplay((prev) => {
+          const n = [...prev];
+          n[r] = getRandomSymbol();
+          return n;
+        });
       }, 80);
       intervals.push(iv);
 
       const timer = setTimeout(() => {
         clearInterval(intervals[r]);
-        setDisplay(prev => { const n = [...prev]; n[r] = finalResults[r]; return n; });
+        setDisplay((prev) => {
+          const n = [...prev];
+          n[r] = finalResults[r];
+          return n;
+        });
         playSound("deal");
       }, animDuration[r]);
       spinTimers.current.push(timer);
@@ -97,22 +127,31 @@ export default function Slots() {
       for (const [sym, count] of Object.entries(counts)) {
         if (count >= 2 && PAYOUTS[sym]) {
           const mult = PAYOUTS[sym][count] || 0;
-          if (mult > bestMultiplier) { bestMultiplier = mult; bestSymbol = sym; }
+          if (mult > bestMultiplier) {
+            bestMultiplier = mult;
+            bestSymbol = sym;
+          }
         }
       }
 
       if (bestMultiplier > 0) {
         const win = stagedBet * bestMultiplier;
         setWinAmount(win);
-        setMessage(`${bestSymbol} x${Object.entries(counts).find(([s]) => s === bestSymbol)?.[1]}! +$${win}`);
+        setMessage(
+          `${bestSymbol} x${Object.entries(counts).find(([s]) => s === bestSymbol)?.[1]}! +$${win}`,
+        );
         setResultType("win");
         playSound("win");
-        triggerConfetti({ intensity: bestMultiplier >= 50 ? "high" : "medium" });
+        triggerConfetti({
+          intensity: bestMultiplier >= 50 ? "high" : "medium",
+        });
         incrementWinStreak();
         incrementSessionWins();
         recordBet("slots", stagedBet, "win");
         if (bestMultiplier >= 200) unlockAchievement("jackpot_winner");
-        try { await addWinnings(win, "Slots"); } catch {}
+        try {
+          await addWinnings(win, "Slots");
+        } catch {}
       } else {
         setMessage(`No match. -$${stagedBet}`);
         setResultType("lose");
@@ -125,19 +164,27 @@ export default function Slots() {
 
       // Auto-spin
       if (autoSpinRef.current) {
-        setTimeout(() => { if (autoSpinRef.current) spin(); }, 1500);
+        setTimeout(() => {
+          if (autoSpinRef.current) spin();
+        }, 1500);
       }
     }, 2000);
     spinTimers.current.push(finalTimer);
   }, [spinning, stagedBet, wallet]);
 
-  useEffect(() => { return () => { spinTimers.current.forEach(clearTimeout); }; }, []);
+  useEffect(() => {
+    return () => {
+      spinTimers.current.forEach(clearTimeout);
+    };
+  }, []);
 
   const availBet = (wallet ?? 0) - stagedBet;
 
   return (
     <div className="slots-page">
-      <button className="home-btn" onClick={() => navigate("/")}>🏠 HOME</button>
+      <button className="home-btn" onClick={() => navigate("/")}>
+        🏠 HOME
+      </button>
 
       <style>{`
         .slots-page {
@@ -166,8 +213,8 @@ export default function Slots() {
           padding: clamp(5px,1vh,10px) clamp(10px,2vw,18px); text-align: center;
           box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
         }
-        .slots-stat-lbl { font-family: 'Press Start 2P'; font-size: clamp(0.3rem,0.8vw,0.4rem); color: var(--text-secondary); display: block; margin-bottom: 1px; }
-        .slots-stat-val { font-family: 'Press Start 2P'; font-size: clamp(0.7rem,2vw,1.2rem); color: var(--retro-green); }
+        .slots-stat-lbl { font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.2vw,0.65rem); color: var(--text-secondary); display: block; margin-bottom: 2px; }
+        .slots-stat-val { font-family: 'Press Start 2P'; font-size: clamp(1.05rem,2.8vw,1.5rem); color: var(--retro-green); }
 
         .slots-machine {
           flex: 1; display: flex; flex-direction: column;
@@ -184,9 +231,9 @@ export default function Slots() {
         }
 
         .slots-reel {
-          width: clamp(50px,10vw,90px); height: clamp(60px,12vw,100px);
+          width: clamp(64px,13vw,115px); height: clamp(76px,15vw,130px);
           display: flex; align-items: center; justify-content: center;
-          font-size: clamp(2rem,6vw,4rem);
+          font-size: clamp(2.5rem,7vw,4.5rem);
           background: var(--bg-secondary); border: 3px solid var(--retro-purple);
           box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
           transition: border-color 0.3s;
@@ -196,8 +243,8 @@ export default function Slots() {
         @keyframes reelFlash { 0% { border-color: var(--retro-purple); } 100% { border-color: var(--retro-magenta); } }
 
         .slots-msg {
-          font-family: 'Press Start 2P'; font-size: clamp(0.5rem,1.4vw,0.8rem);
-          padding: 6px 18px; background: rgba(10,16,32,0.85); border: 3px solid;
+          font-family: 'Press Start 2P'; font-size: clamp(0.75rem,1.8vw,1.05rem);
+          padding: 12px 24px; background: rgba(10,16,32,0.85); border: 3px solid;
           box-shadow: 4px 4px 0 rgba(0,0,0,0.4); animation: msgPop 0.3s ease-out;
         }
         .slots-msg.win { color: var(--retro-green); border-color: var(--retro-green); }
@@ -205,8 +252,8 @@ export default function Slots() {
         @keyframes msgPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .slots-paytable {
-          display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
-          font-family: 'VT323', monospace; font-size: clamp(0.65rem,1.4vw,0.9rem);
+          display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+          font-family: 'VT323', monospace; font-size: clamp(0.9rem,1.8vw,1.2rem);
           color: var(--text-secondary);
         }
         .slots-pay-item { background: rgba(0,0,0,0.3); padding: 2px 8px; border: 1px solid rgba(255,255,255,0.1); }
@@ -217,10 +264,10 @@ export default function Slots() {
         }
         .slots-chips { display: flex; gap: clamp(5px,1vw,10px); flex-wrap: wrap; justify-content: center; }
         .s-chip {
-          width: clamp(38px,6.5vw,56px); height: clamp(38px,6.5vw,56px);
+          width: clamp(50px,8.5vw,74px); height: clamp(50px,8.5vw,74px);
           border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.28rem,0.8vw,0.42rem);
+          font-family: 'Press Start 2P'; font-size: clamp(0.44rem,1.1vw,0.64rem);
           color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
           position: relative;
@@ -237,17 +284,17 @@ export default function Slots() {
         .s-chip.vmax { background: var(--retro-yellow); color: black; text-shadow: none; border-color: #ffffaa; }
 
         .slots-bet-row { display: flex; align-items: center; gap: 10px; }
-        .slots-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(0.75rem,2.2vw,1.2rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }
+        .slots-bet-amt { font-family: 'Press Start 2P'; font-size: clamp(1.05rem,2.8vw,1.6rem); color: var(--retro-yellow); text-shadow: 2px 2px 0 #000; }
         .slots-btn {
           font-family: 'Press Start 2P'; border: 3px solid; background: var(--bg-secondary);
           cursor: pointer; box-shadow: 4px 4px 0 rgba(0,0,0,0.5); transition: transform 0.1s;
-          padding: clamp(5px,0.9vh,8px) clamp(10px,1.8vw,16px); font-size: clamp(0.4rem,1vw,0.55rem);
+          padding: clamp(8px,1.3vh,14px) clamp(16px,2.5vw,24px); font-size: clamp(0.6rem,1.4vw,0.8rem);
         }
         .slots-btn.clr { border-color: #888; color: #aaa; }
         .slots-btn.spin-btn {
           border-color: var(--retro-green); color: var(--retro-green);
-          padding: clamp(8px,1.3vh,14px) clamp(20px,3vw,36px);
-          font-size: clamp(0.5rem,1.3vw,0.75rem);
+          padding: clamp(12px,1.8vh,20px) clamp(30px,4.5vw,56px);
+          font-size: clamp(0.75rem,1.8vw,1.1rem);
         }
         .slots-btn.spin-btn:hover:not(:disabled) { background: var(--retro-green); color: black; }
         .slots-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -264,7 +311,12 @@ export default function Slots() {
       <div className="slots-stats">
         <div className="slots-stat">
           <span className="slots-stat-lbl">Wallet</span>
-          <span className="slots-stat-val">${(wallet ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <span className="slots-stat-val">
+            $
+            {(wallet ?? 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </span>
         </div>
         {stagedBet > 0 && (
           <div className="slots-stat">
@@ -275,7 +327,12 @@ export default function Slots() {
         {winAmount > 0 && (
           <div className="slots-stat">
             <span className="slots-stat-lbl">Win</span>
-            <span className="slots-stat-val" style={{ color: 'var(--retro-green)' }}>+${winAmount}</span>
+            <span
+              className="slots-stat-val"
+              style={{ color: "var(--retro-green)" }}
+            >
+              +${winAmount}
+            </span>
           </div>
         )}
       </div>
@@ -283,7 +340,10 @@ export default function Slots() {
       <div className="slots-machine">
         <div className="slots-reels">
           {display.map((sym, i) => (
-            <div key={i} className={`slots-reel ${spinning ? "spinning" : ""} ${winAmount > 0 ? "win-reel" : ""}`}>
+            <div
+              key={i}
+              className={`slots-reel ${spinning ? "spinning" : ""} ${winAmount > 0 ? "win-reel" : ""}`}
+            >
               {sym}
             </div>
           ))}
@@ -292,22 +352,43 @@ export default function Slots() {
         {message && <div className={`slots-msg ${resultType}`}>{message}</div>}
 
         <div className="slots-paytable">
-          {Object.entries(PAYOUTS).reverse().map(([sym, pays]) => (
-            <div key={sym} className="slots-pay-item">{sym} x3={pays[3]} x4={pays[4]}</div>
-          ))}
+          {Object.entries(PAYOUTS)
+            .reverse()
+            .map(([sym, pays]) => (
+              <div key={sym} className="slots-pay-item">
+                {sym} x3={pays[3]} x4={pays[4]}
+              </div>
+            ))}
         </div>
       </div>
 
       <div className="slots-controls">
         <div className="slots-chips">
-          {CHIP_VALUES.map(v => (
-            <div key={v} className={`s-chip v${v} ${availBet < v || spinning ? "off" : ""}`} onClick={() => addChip(v)}>${v}</div>
+          {CHIP_VALUES.map((v) => (
+            <div
+              key={v}
+              className={`s-chip v${v} ${availBet < v || spinning ? "off" : ""}`}
+              onClick={() => addChip(v)}
+            >
+              ${v}
+            </div>
           ))}
-          <div className={`s-chip vmax ${availBet <= 0 || spinning ? "off" : ""}`} onClick={allIn}>ALL</div>
+          <div
+            className={`s-chip vmax ${availBet <= 0 || spinning ? "off" : ""}`}
+            onClick={allIn}
+          >
+            ALL
+          </div>
         </div>
         <div className="slots-bet-row">
           <span className="slots-bet-amt">${stagedBet}</span>
-          <button className="slots-btn clr" onClick={clearBet} disabled={spinning}>CLEAR</button>
+          <button
+            className="slots-btn clr"
+            onClick={clearBet}
+            disabled={spinning}
+          >
+            CLEAR
+          </button>
         </div>
         <div className="slots-action-row">
           <button
@@ -319,7 +400,7 @@ export default function Slots() {
           </button>
           <button
             className={`slots-btn auto ${autoSpin ? "on" : ""}`}
-            onClick={() => setAutoSpin(prev => !prev)}
+            onClick={() => setAutoSpin((prev) => !prev)}
             disabled={spinning}
           >
             AUTO {autoSpin ? "ON" : "OFF"}
