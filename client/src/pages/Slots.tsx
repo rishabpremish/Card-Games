@@ -6,7 +6,6 @@ import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
 
-const SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "💎", "7️⃣"];
 const CHIP_VALUES = [1, 5, 10, 25, 100, 500];
 
 // Payout table: [symbol, count-in-line, multiplier] — casino-realistic odds
@@ -22,7 +21,8 @@ const PAYOUTS: Record<string, number[]> = {
 };
 
 function getRandomSymbol(): string {
-  return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  const symbols = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "💎", "7️⃣"];
+  return symbols[Math.floor(Math.random() * symbols.length)];
 }
 
 export default function Slots() {
