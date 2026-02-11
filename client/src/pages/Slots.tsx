@@ -20,9 +20,31 @@ const PAYOUTS: Record<string, number[]> = {
   "🍒": [0, 0, 1, 2, 10],
 };
 
+// Weighted virtual reel – casino-style symbol weighting.
+// Low-value symbols appear far more often than high-value ones,
+// producing a house edge similar to real casino slot machines.
+const WEIGHTED_REEL: string[] = [];
+const SYMBOL_WEIGHTS: Record<string, number> = {
+  "🍒": 30, // most common
+  "🍋": 25,
+  "🍊": 20,
+  "🍇": 14,
+  "🔔": 10,
+  "⭐": 6,
+  "💎": 3,
+  "7️⃣": 1, // rarest – jackpot symbol
+};
+for (const [sym, weight] of Object.entries(SYMBOL_WEIGHTS)) {
+  for (let i = 0; i < weight; i++) WEIGHTED_REEL.push(sym);
+}
+
 function getRandomSymbol(): string {
+<<<<<<< HEAD
   const symbols = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "💎", "7️⃣"];
   return symbols[Math.floor(Math.random() * symbols.length)];
+=======
+  return WEIGHTED_REEL[Math.floor(Math.random() * WEIGHTED_REEL.length)];
+>>>>>>> 20ed62b8ef7fe778824429311a7184d449e4c3b0
 }
 
 export default function Slots() {
@@ -295,12 +317,20 @@ export default function Slots() {
         .slots-btn.clr { border-color: #888; color: #aaa; }
         .slots-btn.spin-btn {
           border-color: var(--retro-green); color: var(--retro-green);
-          padding: clamp(12px,1.8vh,20px) clamp(30px,4.5vw,56px);
-          font-size: clamp(0.75rem,1.8vw,1.1rem);
+          padding: clamp(12px,1.8vh,20px) clamp(24px,3.5vw,40px);
+          font-size: clamp(0.65rem,1.5vw,0.9rem);
+          min-width: clamp(120px,18vw,180px);
+          text-align: center;
         }
         .slots-btn.spin-btn:hover:not(:disabled) { background: var(--retro-green); color: black; }
         .slots-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .slots-btn.auto { border-color: var(--retro-magenta); color: var(--retro-magenta); }
+        .slots-btn.auto {
+          border-color: var(--retro-magenta); color: var(--retro-magenta);
+          padding: clamp(12px,1.8vh,20px) clamp(24px,3.5vw,40px);
+          font-size: clamp(0.65rem,1.5vw,0.9rem);
+          min-width: clamp(120px,18vw,180px);
+          text-align: center;
+        }
         .slots-btn.auto.on { background: var(--retro-magenta); color: white; }
 
         .slots-action-row { display: flex; gap: 10px; align-items: center; }
@@ -424,6 +454,32 @@ export default function Slots() {
             AUTO {autoSpin ? "ON" : "OFF"}
           </button>
         </div>
+      </div>
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Select chips to set your bet amount</li>
+          <li>Press <strong>SPIN</strong> to spin the 5 reels</li>
+          <li>Match 2 or more symbols across the reels to win</li>
+          <li>Higher-value symbols (7️⃣, 💎, ⭐) pay more</li>
+          <li>More matching symbols = bigger multiplier</li>
+        </ol>
+        <p className="note">
+          Tip: Use AUTO to spin automatically. Check the Payouts table for exact multipliers!
+        </p>
       </div>
     </div>
   );

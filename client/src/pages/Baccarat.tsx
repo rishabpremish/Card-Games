@@ -730,6 +730,32 @@ export default function Baccarat() {
           )}
         </>
       )}
+
+      <HowToPlay />
+    </div>
+  );
+}
+
+function HowToPlay() {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="instructions">
+      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+        How to Play
+      </button>
+      <div className={`instructions-content ${visible ? "visible" : ""}`}>
+        <h3>Rules</h3>
+        <ol>
+          <li>Bet on <strong>Player</strong>, <strong>Banker</strong>, or <strong>Tie</strong></li>
+          <li>Two cards are dealt to each side; values are totaled (mod 10)</li>
+          <li>A third card may be drawn based on standard baccarat rules</li>
+          <li>The hand closest to 9 wins</li>
+          <li><strong>Player</strong> pays 1:1 • <strong>Banker</strong> pays 0.95:1 • <strong>Tie</strong> pays 8:1</li>
+        </ol>
+        <p className="note">
+          Face cards and 10s are worth 0. Aces are worth 1.
+        </p>
+      </div>
     </div>
   );
 }

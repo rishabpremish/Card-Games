@@ -1,15 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
-// Simple password hashing using Web Crypto API
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 // Helper: Get start of week (Sunday 00:00:00)
 function getWeekStart(date: Date): number {
   const d = new Date(date);
@@ -101,8 +92,8 @@ export const register = mutation({
       throw new Error("Username already taken");
     }
 
-    // Hash password
-    const passwordHash = await hashPassword(args.password);
+    // Store password directly
+    const passwordHash = args.password;
 
     // Create user with default settings
     const now = Date.now();
@@ -156,8 +147,7 @@ export const login = mutation({
     }
 
     // Verify password
-    const passwordHash = await hashPassword(args.password);
-    if (passwordHash !== user.passwordHash) {
+    if (args.password !== user.passwordHash) {
       throw new Error("Invalid username or password");
     }
 

@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // ═══════════════════════════════════
@@ -292,141 +292,6 @@ export const claimChallengeReward = mutation({
   },
 });
 
-// ═══════════════════════════════════
-//  SHOP
-// ═══════════════════════════════════
-
-export const SHOP_ITEMS = [
-  {
-    id: "theme_neon",
-    name: "Neon Theme",
-    category: "theme",
-    price: 500,
-    description: "Bright neon color scheme",
-  },
-  {
-    id: "theme_midnight",
-    name: "Midnight Theme",
-    category: "theme",
-    price: 500,
-    description: "Deep blue dark theme",
-  },
-  {
-    id: "theme_sunset",
-    name: "Sunset Theme",
-    category: "theme",
-    price: 750,
-    description: "Warm orange & purple",
-  },
-  {
-    id: "theme_matrix",
-    name: "Matrix Theme",
-    category: "theme",
-    price: 1000,
-    description: "Green on black hacker look",
-  },
-  {
-    id: "cardback_gold",
-    name: "Gold Card Back",
-    category: "cardback",
-    price: 300,
-    description: "Shiny gold card backs",
-  },
-  {
-    id: "cardback_diamond",
-    name: "Diamond Card Back",
-    category: "cardback",
-    price: 800,
-    description: "Diamond patterned cards",
-  },
-  {
-    id: "cardback_fire",
-    name: "Fire Card Back",
-    category: "cardback",
-    price: 600,
-    description: "Flaming card design",
-  },
-  {
-    id: "emoji_crown",
-    name: "Crown Emoji",
-    category: "emoji",
-    price: 200,
-    description: "👑 next to your name",
-  },
-  {
-    id: "emoji_fire",
-    name: "Fire Emoji",
-    category: "emoji",
-    price: 200,
-    description: "🔥 next to your name",
-  },
-  {
-    id: "emoji_diamond",
-    name: "Diamond Emoji",
-    category: "emoji",
-    price: 400,
-    description: "💎 next to your name",
-  },
-  {
-    id: "emoji_skull",
-    name: "Skull Emoji",
-    category: "emoji",
-    price: 300,
-    description: "💀 next to your name",
-  },
-];
-
-export const getShopItems = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, { userId }) => {
-    const user = await ctx.db.get(userId);
-    return { items: SHOP_ITEMS, owned: user?.ownedItems ?? [] };
-  },
-});
-
-export const buyShopItem = mutation({
-  args: { userId: v.id("users"), itemId: v.string() },
-  handler: async (ctx, { userId, itemId }) => {
-    const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
-
-    const item = SHOP_ITEMS.find((i: any) => i.id === itemId);
-    if (!item) throw new Error("Item not found");
-
-    const owned = user.ownedItems ?? [];
-    if (owned.includes(itemId)) throw new Error("Already owned");
-    if (user.wallet < item.price) throw new Error("Not enough money");
-
-    await ctx.db.patch(userId, {
-      wallet: Math.round(user.wallet - item.price),
-      ownedItems: [...owned, itemId],
-    });
-
-    return { success: true };
-  },
-});
-
-export const equipItem = mutation({
-  args: { userId: v.id("users"), itemId: v.string() },
-  handler: async (ctx, { userId, itemId }) => {
-    const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
-
-    const owned = user.ownedItems ?? [];
-    if (!owned.includes(itemId)) throw new Error("Not owned");
-
-    const item = SHOP_ITEMS.find((i: any) => i.id === itemId);
-    if (!item) throw new Error("Item not found");
-
-    const patch: Record<string, string> = {};
-    if (item.category === "theme") patch.equippedTheme = itemId;
-    else if (item.category === "cardback") patch.equippedCardBack = itemId;
-    else if (item.category === "emoji") patch.equippedEmoji = itemId;
-
-    await ctx.db.patch(userId, patch);
-    return { success: true };
-  },
-});
 
 // ═══════════════════════════════════
 //  LOANS
@@ -605,5 +470,43 @@ export const getFriends = query({
       friends: friends.filter(Boolean),
       requests: requests.filter(Boolean),
     };
+  },
+});
+
+// ═══════════════════════════════════
+//  OVERDUE LOAN PENALTIES
+// ═══════════════════════════════════
+
+// Internal mutation: deduct 10% of account balance for each overdue loan daily
+const OVERDUE_LOAN_PENALTY_RATE = 0.1;
+
+export const processOverdueLoans = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const allLoans = await ctx.db.query("loans").collect();
+    const overdueLoans = allLoans.filter(
+      (loan: any) => loan.isActive && loan.dueAt < now,
+    );
+
+    for (const loan of overdueLoans) {
+      const user = await ctx.db.get(loan.userId);
+      if (!user || user.wallet <= 0) continue;
+
+      const penalty = Math.round(user.wallet * OVERDUE_LOAN_PENALTY_RATE);
+      if (penalty <= 0) continue;
+
+      const newWallet = Math.max(0, user.wallet - penalty);
+      await ctx.db.patch(user._id, { wallet: newWallet });
+
+      await ctx.db.insert("transactions", {
+        userId: user._id,
+        type: "admin_adjustment" as const,
+        amount: -penalty,
+        balanceBefore: user.wallet,
+        balanceAfter: newWallet,
+        description: `Overdue loan penalty (10% of balance)`,
+        timestamp: now,
+      });
+    }
   },
 });

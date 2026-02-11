@@ -301,6 +301,126 @@ export default function Settings({ onLogout }: SettingsProps) {
         "#c4cf04",
       ],
     },
+    {
+      id: "retrowave",
+      name: "Retrowave",
+      colors: [
+        "#1a0a2e",
+        "#e040fb",
+        "#00e5ff",
+        "#ffea00",
+        "#76ff03",
+        "#ff1744",
+      ],
+    },
+    {
+      id: "oceanic",
+      name: "Oceanic",
+      colors: [
+        "#1b2838",
+        "#4fc3f7",
+        "#0097a7",
+        "#80cbc4",
+        "#c5e1a5",
+        "#ffcc80",
+      ],
+    },
+    {
+      id: "volcano",
+      name: "Volcano",
+      colors: [
+        "#1a0000",
+        "#ff3d00",
+        "#ff6e40",
+        "#ffab40",
+        "#ffd740",
+        "#fff176",
+      ],
+    },
+    {
+      id: "forest",
+      name: "Forest",
+      colors: [
+        "#1b2d1b",
+        "#2e7d32",
+        "#66bb6a",
+        "#a5d6a7",
+        "#c8e6c9",
+        "#fff9c4",
+      ],
+    },
+    {
+      id: "midnight",
+      name: "Midnight",
+      colors: [
+        "#0a0a1a",
+        "#1a237e",
+        "#3949ab",
+        "#7986cb",
+        "#c5cae9",
+        "#e8eaf6",
+      ],
+    },
+    {
+      id: "sakura",
+      name: "Sakura",
+      colors: [
+        "#1a0a14",
+        "#f48fb1",
+        "#f06292",
+        "#ec407a",
+        "#ffcdd2",
+        "#fce4ec",
+      ],
+    },
+    {
+      id: "amber",
+      name: "Amber",
+      colors: [
+        "#1a1400",
+        "#ff8f00",
+        "#ffa000",
+        "#ffb300",
+        "#ffca28",
+        "#fff8e1",
+      ],
+    },
+    {
+      id: "arctic",
+      name: "Arctic",
+      colors: [
+        "#0d1b2a",
+        "#90caf9",
+        "#42a5f5",
+        "#e1f5fe",
+        "#b3e5fc",
+        "#81d4fa",
+      ],
+    },
+    {
+      id: "neonnight",
+      name: "Neon Night",
+      colors: [
+        "#0a0014",
+        "#e040fb",
+        "#7c4dff",
+        "#18ffff",
+        "#69f0ae",
+        "#ffff00",
+      ],
+    },
+    {
+      id: "desert",
+      name: "Desert",
+      colors: [
+        "#2c1a0e",
+        "#d4a574",
+        "#e8c39e",
+        "#f5deb3",
+        "#c19a6b",
+        "#8b6914",
+      ],
+    },
   ];
 
   return (
@@ -331,7 +451,6 @@ export default function Settings({ onLogout }: SettingsProps) {
               <button
                 onClick={onLogout}
                 style={{
-                  width: "100%",
                   background: "rgba(255, 0, 0, 0.1)",
                   border: "2px solid var(--retro-red)",
                   color: "var(--retro-red)",
@@ -345,6 +464,7 @@ export default function Settings({ onLogout }: SettingsProps) {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "10px",
+                  width: "auto",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--retro-red)";
