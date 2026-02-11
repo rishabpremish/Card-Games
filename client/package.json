@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run convex\" \"vite\"",
     "server": "cd ../server && node server.js",
-    "convex": "npx convex dev",
+    "convex": "npx convex dev --local --local-force-upgrade",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

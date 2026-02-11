@@ -27,7 +27,21 @@ type MsgType = "win" | "bad" | "neutral";
 // ─── Constants ───────────────────────────────────────────
 
 const SUITS = ["hearts", "diamonds", "clubs", "spades"];
-const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+const RANKS = [
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+  "A",
+];
 const CHIP_VALUES = [1, 5, 10, 25, 100, 500, 1000];
 
 // ─── Pure Helpers ────────────────────────────────────────
@@ -134,12 +148,17 @@ export default function Blackjack() {
     addWinnings: walletAddWinnings,
     isLoading: walletLoading,
   } = useWallet();
-  
+
   // Fun feature hooks
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { triggerShake } = useScreenShake();
-  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementSessionWins } = useAchievements();
+  const {
+    unlockAchievement,
+    incrementWinStreak,
+    resetWinStreak,
+    incrementSessionWins,
+  } = useAchievements();
   const { recordBet } = useSessionStats();
 
   // Game state
@@ -159,9 +178,15 @@ export default function Blackjack() {
   const deckRef = useRef(deck);
   const handsRef = useRef(playerHands);
 
-  useEffect(() => { dealerRef.current = dealerHand; }, [dealerHand]);
-  useEffect(() => { deckRef.current = deck; }, [deck]);
-  useEffect(() => { handsRef.current = playerHands; }, [playerHands]);
+  useEffect(() => {
+    dealerRef.current = dealerHand;
+  }, [dealerHand]);
+  useEffect(() => {
+    deckRef.current = deck;
+  }, [deck]);
+  useEffect(() => {
+    handsRef.current = playerHands;
+  }, [playerHands]);
 
   // ─── Reset ─────────────────────────────────────────────
 
@@ -209,7 +234,7 @@ export default function Blackjack() {
         if (hand.status === "blackjack") {
           hasBlackjack = true;
           if (dealerBJ) {
-            totalReturn += hand.bet;       // push
+            totalReturn += hand.bet; // push
             pushCount++;
           } else {
             totalReturn += hand.bet + Math.floor(hand.bet * 1.5); // 3:2
@@ -251,14 +276,14 @@ export default function Blackjack() {
             text: profit > 0 ? `YOU WIN +$${profit}` : "YOU WIN!",
             type: "win",
           });
-          
+
           // Fun features on win
           playSound("win");
           triggerConfetti({ intensity: winCount >= 2 ? "high" : "medium" });
           incrementWinStreak();
           incrementSessionWins();
           recordBet("blackjack", totalBets, "win");
-          
+
           // Check for blackjack achievement
           if (hasBlackjack) {
             unlockAchievement("first_blackjack");
@@ -268,7 +293,7 @@ export default function Blackjack() {
           playSound("button");
         } else {
           setMsg({ text: "DEALER WINS", type: "bad" });
-          
+
           // Fun features on loss
           playSound("lose");
           triggerShake("medium");
@@ -280,7 +305,17 @@ export default function Blackjack() {
         setShowModal(true);
       }, 2000);
     },
-    [walletAddWinnings, playSound, triggerConfetti, triggerShake, unlockAchievement, incrementWinStreak, resetWinStreak, incrementSessionWins, recordBet],
+    [
+      walletAddWinnings,
+      playSound,
+      triggerConfetti,
+      triggerShake,
+      unlockAchievement,
+      incrementWinStreak,
+      resetWinStreak,
+      incrementSessionWins,
+      recordBet,
+    ],
   );
 
   // ─── Dealer play (iterative via setTimeout) ───────────
@@ -416,7 +451,14 @@ export default function Blackjack() {
     setPlayerHands([pHand]);
     handsRef.current = [pHand];
     setGameState("PLAYING");
-  }, [stagedBet, busy, walletPlaceBet, settleRound, playSound, unlockAchievement]);
+  }, [
+    stagedBet,
+    busy,
+    walletPlaceBet,
+    settleRound,
+    playSound,
+    unlockAchievement,
+  ]);
 
   // ─── Hit ──────────────────────────────────────────────
 
@@ -455,7 +497,17 @@ export default function Blackjack() {
       setPlayerHands(updated);
       handsRef.current = updated;
     }
-  }, [gameState, busy, playerHands, currentHandIndex, deck, flash, advanceHand, playSound, triggerShake]);
+  }, [
+    gameState,
+    busy,
+    playerHands,
+    currentHandIndex,
+    deck,
+    flash,
+    advanceHand,
+    playSound,
+    triggerShake,
+  ]);
 
   // ─── Stand ────────────────────────────────────────────
 
@@ -510,7 +562,17 @@ export default function Blackjack() {
     if (score > 21) flash("BUST!", "bad");
     setBusy(false);
     advanceHand(updated, currentHandIndex);
-  }, [gameState, busy, playerHands, currentHandIndex, deck, wallet, walletPlaceBet, flash, advanceHand]);
+  }, [
+    gameState,
+    busy,
+    playerHands,
+    currentHandIndex,
+    deck,
+    wallet,
+    walletPlaceBet,
+    flash,
+    advanceHand,
+  ]);
 
   // ─── Split ────────────────────────────────────────────
 
@@ -522,7 +584,8 @@ export default function Blackjack() {
     if (!hand || hand.cards.length !== 2) return;
 
     const [c1, c2] = hand.cards;
-    const canSplitCards = c1.rank === c2.rank || (c1.value === 10 && c2.value === 10);
+    const canSplitCards =
+      c1.rank === c2.rank || (c1.value === 10 && c2.value === 10);
     if (!canSplitCards) return;
     if ((wallet ?? 0) < hand.bet) return;
 
@@ -539,8 +602,16 @@ export default function Blackjack() {
     const card2 = deck[deck.length - 2];
     const newDeck = deck.slice(0, -2);
 
-    const h1: PlayerHand = { cards: [c1, card1], bet: hand.bet, status: "playing" };
-    const h2: PlayerHand = { cards: [c2, card2], bet: hand.bet, status: "playing" };
+    const h1: PlayerHand = {
+      cards: [c1, card1],
+      bet: hand.bet,
+      status: "playing",
+    };
+    const h2: PlayerHand = {
+      cards: [c2, card2],
+      bet: hand.bet,
+      status: "playing",
+    };
 
     setDeck(newDeck);
     deckRef.current = newDeck;
@@ -550,7 +621,15 @@ export default function Blackjack() {
     setPlayerHands(updated);
     handsRef.current = updated;
     setBusy(false);
-  }, [gameState, busy, playerHands, currentHandIndex, deck, wallet, walletPlaceBet]);
+  }, [
+    gameState,
+    busy,
+    playerHands,
+    currentHandIndex,
+    deck,
+    wallet,
+    walletPlaceBet,
+  ]);
 
   // ─── Derived state ────────────────────────────────────
 
@@ -562,7 +641,8 @@ export default function Blackjack() {
     currentHand?.cards.length === 2 &&
     currentHand?.status === "playing" &&
     (currentHand.cards[0].rank === currentHand.cards[1].rank ||
-      (currentHand.cards[0].value === 10 && currentHand.cards[1].value === 10)) &&
+      (currentHand.cards[0].value === 10 &&
+        currentHand.cards[1].value === 10)) &&
     (wallet ?? 0) >= currentHand.bet;
 
   const canDoubleCheck =
@@ -584,14 +664,26 @@ export default function Blackjack() {
   const displayBet = gameState === "BETTING" ? stagedBet : totalBetInPlay;
   const availableForBet = (wallet ?? 0) - stagedBet;
 
-
-
   // ─── Render ───────────────────────────────────────────
 
   if (walletLoading) {
     return (
-      <div className="game-container" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
-        <div style={{ fontFamily: "'Press Start 2P'", color: "var(--retro-cyan)", fontSize: "1rem" }}>
+      <div
+        className="game-container"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Press Start 2P'",
+            color: "var(--retro-cyan)",
+            fontSize: "1rem",
+          }}
+        >
           Loading...
         </div>
       </div>
@@ -599,19 +691,21 @@ export default function Blackjack() {
   }
 
   return (
-    <div className="game-container blackjack-game" style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", padding: "5px 15px" }}>
+    <div className="game-container blackjack-game">
       {/* Home Button */}
-      <button className="home-btn" onClick={() => navigate("/")} style={{ position: "absolute", top: "5px", left: "15px", padding: "6px 12px", fontSize: "0.4rem" }}>🏠 HOME</button>
+      <button className="home-btn bj-home-btn" onClick={() => navigate("/")}>
+        🏠 HOME
+      </button>
       <div className="bg-decoration" />
 
       {/* Header */}
-      <header className="game-header bj-header" style={{ marginTop: "30px" }}>
+      <header className="game-header bj-header">
         <h1>BLACKJACK</h1>
         <p className="subtitle">Pixel Casino</p>
       </header>
 
       {/* Stats */}
-      <div className="game-stats bj-stats" style={{ marginBottom: "8px" }}>
+      <div className="game-stats bj-stats">
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
           <span className="stat-value">${wallet ?? 0}</span>
@@ -632,21 +726,30 @@ export default function Blackjack() {
           </div>
           <div className="hand-container">
             {dealerHand.map((card, i) => (
-              <BJCard key={`d-${i}`} card={card} hidden={gameState === "PLAYING" && i === 1} />
+              <BJCard
+                key={`d-${i}`}
+                card={card}
+                hidden={gameState === "PLAYING" && i === 1}
+              />
             ))}
           </div>
         </div>
 
         {/* Center */}
         <div className="table-center">
-          <div className={`message-overlay ${showMsg ? "visible" : ""}`} style={{ opacity: showMsg ? 1 : 0 }}>
+          <div
+            className={`message-overlay ${showMsg ? "visible" : ""}`}
+            style={{ opacity: showMsg ? 1 : 0 }}
+          >
             <div
               className="big-text"
               style={{
                 color:
-                  msg.type === "win" ? "var(--retro-green)" :
-                  msg.type === "bad" ? "var(--retro-red)" :
-                  "var(--retro-yellow)",
+                  msg.type === "win"
+                    ? "var(--retro-green)"
+                    : msg.type === "bad"
+                      ? "var(--retro-red)"
+                      : "var(--retro-yellow)",
               }}
             >
               {msg.text}
@@ -669,8 +772,17 @@ export default function Blackjack() {
           ) : (
             <div className="split-wrapper">
               {playerHands.map((hand, idx) => (
-                <div key={`h-${idx}`} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div className={`hand-container ${idx === currentHandIndex && gameState === "PLAYING" ? "active-hand" : "inactive-hand"}`}>
+                <div
+                  key={`h-${idx}`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    className={`hand-container ${idx === currentHandIndex && gameState === "PLAYING" ? "active-hand" : "inactive-hand"}`}
+                  >
                     {hand.cards.map((card, i) => (
                       <BJCard key={`s-${idx}-${i}`} card={card} />
                     ))}
@@ -679,7 +791,12 @@ export default function Blackjack() {
                     {calculateScore(hand.cards)}
                     {hand.status === "bust" && " 💥"}
                   </div>
-                  <div className="hand-label" style={{ fontSize: "0.5rem", marginTop: "2px" }}>${hand.bet}</div>
+                  <div
+                    className="hand-label"
+                    style={{ fontSize: "0.5rem", marginTop: "2px" }}
+                  >
+                    ${hand.bet}
+                  </div>
                 </div>
               ))}
             </div>
@@ -698,16 +815,44 @@ export default function Blackjack() {
           <div className="control-panel" style={{ marginTop: "8px" }}>
             {/* BETTING */}
             {gameState === "BETTING" && (
-              <div className="betting-controls" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div
+                className="betting-controls"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
                 <div className="chip-rack">
                   {CHIP_VALUES.map((v) => (
-                    <Chip key={v} value={v} onClick={() => stageBetAmount(v)} disabled={availableForBet < v} />
+                    <Chip
+                      key={v}
+                      value={v}
+                      onClick={() => stageBetAmount(v)}
+                      disabled={availableForBet < v}
+                    />
                   ))}
-                  <Chip value="ALL" onClick={() => stageBetAmount(availableForBet)} disabled={availableForBet <= 0} />
+                  <Chip
+                    value="ALL"
+                    onClick={() => stageBetAmount(availableForBet)}
+                    disabled={availableForBet <= 0}
+                  />
                 </div>
                 <div style={{ display: "flex", gap: "10px" }}>
-                  <button className="action-btn" onClick={clearBet} style={{ borderColor: "#888", color: "#aaa" }}>Clear</button>
-                  <button className="action-btn btn-hit" onClick={deal} disabled={stagedBet === 0 || busy}>DEAL</button>
+                  <button
+                    className="action-btn"
+                    onClick={clearBet}
+                    style={{ borderColor: "#888", color: "#aaa" }}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    className="action-btn btn-hit"
+                    onClick={deal}
+                    disabled={stagedBet === 0 || busy}
+                  >
+                    DEAL
+                  </button>
                 </div>
               </div>
             )}
@@ -715,11 +860,35 @@ export default function Blackjack() {
             {/* PLAYING */}
             {gameState === "PLAYING" && (
               <div className="action-controls">
-                <button className="action-btn btn-hit" onClick={hit} disabled={busy}>HIT</button>
-                <button className="action-btn btn-stand" onClick={stand} disabled={busy}>STAND</button>
-                <button className="action-btn btn-double" onClick={doubleDown} disabled={!canDoubleCheck}>DOUBLE</button>
+                <button
+                  className="action-btn btn-hit"
+                  onClick={hit}
+                  disabled={busy}
+                >
+                  HIT
+                </button>
+                <button
+                  className="action-btn btn-stand"
+                  onClick={stand}
+                  disabled={busy}
+                >
+                  STAND
+                </button>
+                <button
+                  className="action-btn btn-double"
+                  onClick={doubleDown}
+                  disabled={!canDoubleCheck}
+                >
+                  DOUBLE
+                </button>
                 {canSplitCheck && (
-                  <button className="action-btn btn-split" onClick={split} disabled={busy}>SPLIT</button>
+                  <button
+                    className="action-btn btn-split"
+                    onClick={split}
+                    disabled={busy}
+                  >
+                    SPLIT
+                  </button>
                 )}
               </div>
             )}
@@ -727,7 +896,14 @@ export default function Blackjack() {
             {/* DEALER_TURN */}
             {gameState === "DEALER_TURN" && (
               <div className="action-controls">
-                <div style={{ fontFamily: "'Press Start 2P'", fontSize: "0.85rem", color: "var(--retro-yellow)", animation: "pulse 1s steps(2) infinite" }}>
+                <div
+                  style={{
+                    fontFamily: "'Press Start 2P'",
+                    fontSize: "0.85rem",
+                    color: "var(--retro-yellow)",
+                    animation: "pulse 1s steps(2) infinite",
+                  }}
+                >
                   Dealer playing...
                 </div>
               </div>
@@ -736,7 +912,9 @@ export default function Blackjack() {
             {/* GAME_OVER */}
             {gameState === "GAME_OVER" && (
               <div className="action-controls">
-                <button className="action-btn btn-hit" onClick={resetHand}>NEW HAND</button>
+                <button className="action-btn btn-hit" onClick={resetHand}>
+                  NEW HAND
+                </button>
               </div>
             )}
           </div>
@@ -744,15 +922,15 @@ export default function Blackjack() {
       </div>
 
       {/* Game Over Modal */}
-      <div className={`bj-modal-overlay ${gameState === "GAME_OVER" && showModal ? "visible" : ""}`}>
+      <div
+        className={`bj-modal-overlay ${gameState === "GAME_OVER" && showModal ? "visible" : ""}`}
+      >
         <div className="bj-result-modal">
           <div className="modal-icon">
             {msg.type === "win" ? "🎉" : msg.type === "bad" ? "😔" : "🤝"}
           </div>
-          <h2 className={`result-title ${msg.type}`}>
-            {msg.text}
-          </h2>
-          
+          <h2 className={`result-title ${msg.type}`}>{msg.text}</h2>
+
           {/* Hand Summary */}
           <div className="hand-summary">
             {/* Dealer Hand */}
@@ -767,10 +945,10 @@ export default function Blackjack() {
                 Score: {calculateScore(dealerHand)}
               </div>
             </div>
-            
+
             {/* VS Divider */}
             <div className="vs-divider">VS</div>
-            
+
             {/* Player Hand(s) */}
             <div className="summary-section player-summary">
               <div className="summary-label">Player</div>
@@ -808,25 +986,42 @@ export default function Blackjack() {
               )}
             </div>
           </div>
-          
+
           <div className="modal-buttons">
-            <button className="play-again-btn" onClick={resetHand}>New Hand</button>
+            <button className="play-again-btn" onClick={resetHand}>
+              New Hand
+            </button>
           </div>
         </div>
       </div>
       {/* Blackjack Styles */}
       <style>{`
+        .blackjack-game {
+          --bj-card-w: clamp(86px, 14vw, 160px);
+          --bj-card-h: clamp(120px, 20vw, 224px);
+          --bj-card-overlap: clamp(-60px, -7vw, -32px);
+          --bj-chip: clamp(52px, 8vw, 92px);
+          max-width: 1300px;
+          margin: 0 auto;
+          padding: clamp(10px, 1.8vw, 18px) clamp(14px, 2.4vw, 22px);
+          height: 100svh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
         .bj-game-area {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           flex-grow: 1;
           width: 100%;
-          max-width: 1000px;
+          max-width: 1100px;
           margin: 0 auto;
           position: relative;
-          padding: 16px 0;
-          overflow: hidden;
+          padding: clamp(8px, 2vh, 16px) 0;
+          gap: clamp(6px, 2vh, 14px);
+          min-height: 0;
         }
 
         .dealer-area {
@@ -834,7 +1029,7 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: 200px;
+          min-height: clamp(140px, 24vh, 220px);
           flex-shrink: 0;
         }
 
@@ -843,7 +1038,7 @@ export default function Blackjack() {
           flex-direction: column;
           align-items: center;
           position: relative;
-          min-height: 260px;
+          min-height: clamp(200px, 30vh, 320px);
           flex-shrink: 0;
           justify-content: flex-end;
         }
@@ -854,16 +1049,16 @@ export default function Blackjack() {
           align-items: center;
           justify-content: center;
           flex-grow: 1;
-          gap: 16px;
-          min-height: 140px;
+          gap: clamp(10px, 2.2vh, 16px);
+          min-height: clamp(90px, 18vh, 160px);
         }
 
         .hand-container {
           display: flex;
           justify-content: center;
-          margin: 10px 0;
-          min-width: 200px;
-          min-height: 180px;
+          margin: clamp(4px, 1.4vh, 10px) 0;
+          min-width: min(200px, 80vw);
+          min-height: clamp(120px, 22vh, 200px);
           transition: all 0.3s;
         }
 
@@ -880,9 +1075,10 @@ export default function Blackjack() {
 
         .split-wrapper {
           display: flex;
-          gap: 20px;
+          gap: clamp(10px, 2.6vw, 20px);
           justify-content: center;
           width: 100%;
+          flex-wrap: wrap;
         }
 
         .hand-score {
@@ -890,9 +1086,9 @@ export default function Blackjack() {
           border: 4px solid var(--retro-cyan);
           color: var(--retro-yellow);
           font-family: 'Press Start 2P';
-          font-size: 1.2rem;
-          padding: 8px 16px;
-          margin-top: 6px;
+          font-size: clamp(0.7rem, 2.2vw, 1.2rem);
+          padding: clamp(4px, 1vw, 8px) clamp(8px, 2vw, 16px);
+          margin-top: clamp(4px, 1vh, 6px);
           text-shadow: 2px 2px 0 #000;
           box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
           z-index: 10;
@@ -901,18 +1097,18 @@ export default function Blackjack() {
         .hand-label {
           font-family: 'Press Start 2P';
           color: var(--text-secondary);
-          font-size: 1rem;
-          margin-top: 14px;
-          margin-bottom: 6px;
+          font-size: clamp(0.6rem, 1.8vw, 1rem);
+          margin-top: clamp(6px, 1.8vh, 14px);
+          margin-bottom: clamp(4px, 1vh, 6px);
           text-transform: uppercase;
         }
 
         .bj-card {
-          width: 140px;
-          height: 196px;
+          width: var(--bj-card-w);
+          height: var(--bj-card-h);
           position: relative;
           transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          margin-left: -56px;
+          margin-left: var(--bj-card-overlap);
           transform-origin: center bottom;
         }
 
@@ -980,21 +1176,23 @@ export default function Blackjack() {
 
         .chip-rack {
           display: flex;
-          gap: 16px;
-          margin-bottom: 16px;
+          gap: clamp(8px, 1.6vw, 16px);
+          margin-bottom: clamp(8px, 1.6vh, 16px);
           perspective: 500px;
+          flex-wrap: wrap;
+          justify-content: center;
         }
 
         .chip {
-          width: 80px;
-          height: 80px;
+          width: var(--bj-chip);
+          height: var(--bj-chip);
           border-radius: 50%;
           border: 4px dashed rgba(255,255,255,0.4);
           display: flex;
           justify-content: center;
           align-items: center;
           font-family: 'Press Start 2P';
-          font-size: 0.6rem;
+          font-size: clamp(0.45rem, 1.4vw, 0.6rem);
           color: white;
           cursor: pointer;
           box-shadow: 0 6px 0 rgba(0,0,0,0.5);
@@ -1027,14 +1225,16 @@ export default function Blackjack() {
 
         .action-controls {
           display: flex;
-          gap: 20px;
-          margin-top: 18px;
+          gap: clamp(10px, 2.2vw, 20px);
+          margin-top: clamp(10px, 2vh, 18px);
+          flex-wrap: wrap;
+          justify-content: center;
         }
 
         .action-btn {
           font-family: 'Press Start 2P';
-          font-size: 0.95rem;
-          padding: 18px 30px;
+          font-size: clamp(0.6rem, 1.6vw, 0.95rem);
+          padding: clamp(10px, 1.8vw, 18px) clamp(16px, 3vw, 30px);
           border: 4px solid;
           background: var(--bg-secondary);
           color: white;
@@ -1075,9 +1275,10 @@ export default function Blackjack() {
 
         .big-text {
           font-family: 'Press Start 2P';
-          font-size: 3.5rem;
+          font-size: clamp(1.6rem, 6vw, 3.5rem);
           text-shadow: 4px 4px 0 #000, -2px -2px 0 var(--retro-magenta);
-          white-space: nowrap;
+          white-space: normal;
+          max-width: 90vw;
           animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -1088,8 +1289,8 @@ export default function Blackjack() {
         }
 
         .deck-shoe {
-          width: 140px;
-          height: 196px;
+          width: var(--bj-card-w);
+          height: var(--bj-card-h);
           background: var(--bg-card);
           border: 4px solid var(--retro-purple);
           position: relative;
@@ -1104,25 +1305,15 @@ export default function Blackjack() {
           opacity: 0.5;
         }
 
-        @media (max-height: 600px) {
-          .bj-card { width: 90px; height: 126px; margin-left: -40px; }
-          .deck-shoe { width: 90px !important; height: 126px !important; }
-          .hand-container { min-height: 130px; }
-          .dealer-area { min-height: 140px; }
-          .player-area { min-height: 180px; }
-          .hand-label { font-size: 0.7rem; }
-          .hand-score { font-size: 0.85rem; padding: 5px 10px; }
-          .chip { width: 56px; height: 56px; font-size: 0.45rem; }
-          .chip-rack { gap: 10px; margin-bottom: 10px; }
-          .action-btn { padding: 12px 20px; font-size: 0.65rem; }
+        @media (max-width: 720px) {
+          .bj-header h1 { font-size: clamp(1.2rem, 6.6vw, 2.2rem) !important; }
+          .bj-header .subtitle { font-size: clamp(0.65rem, 3.8vw, 1.1rem) !important; }
+          .bj-stats { gap: 10px; flex-wrap: wrap; }
+          .bj-stats .stat-item { padding: 10px 14px !important; }
+          .bj-stats .stat-label { font-size: 0.45rem !important; }
+          .bj-stats .stat-value { font-size: clamp(0.9rem, 4.2vw, 1.4rem) !important; }
+          .hand-container { min-width: 0; }
         }
-
-        /* Blackjack header & stats - larger within scaled design */
-        .bj-header h1 { font-size: 2.6rem !important; }
-        .bj-header .subtitle { font-size: 1.6rem !important; margin-top: 14px !important; }
-        .bj-stats .stat-item { padding: 18px 30px !important; }
-        .bj-stats .stat-label { font-size: 0.6rem !important; }
-        .bj-stats .stat-value { font-size: 1.9rem !important; }
 
         /* Scaled wrapper adjustments */
         .scaled-game-wrapper {
@@ -1132,10 +1323,19 @@ export default function Blackjack() {
           justify-content: flex-start;
         }
 
-        /* Ensure game container fills viewport with no scroll */
         .game-container {
           position: relative;
+          height: 100svh;
           overflow: hidden;
+        }
+
+        .bj-home-btn {
+          position: absolute;
+          top: clamp(10px, 2vh, 16px);
+          left: clamp(10px, 2vw, 20px);
+          padding: clamp(10px, 1.6vw, 16px) clamp(16px, 2.2vw, 22px);
+          font-size: clamp(0.55rem, 1.6vw, 0.85rem);
+          z-index: 5;
         }
 
         /* Popup-style Modal (not full screen) */
@@ -1242,9 +1442,9 @@ export default function Blackjack() {
         }
 
         .summary-cards .bj-card {
-          width: 85px;
-          height: 119px;
-          margin-left: -34px;
+          width: clamp(56px, 9vw, 85px);
+          height: clamp(78px, 12.5vw, 119px);
+          margin-left: clamp(-34px, -4vw, -18px);
         }
 
         .summary-cards .bj-card:first-child {
@@ -1313,9 +1513,9 @@ export default function Blackjack() {
         }
 
         .split-cards .bj-card {
-          width: 60px;
-          height: 84px;
-          margin-left: -18px;
+          width: clamp(48px, 7.5vw, 60px);
+          height: clamp(68px, 10.5vw, 84px);
+          margin-left: clamp(-18px, -3.2vw, -12px);
         }
 
         /* Match game card styling for split hands */
@@ -1352,145 +1552,45 @@ export default function Blackjack() {
           100% { transform: translateY(-10px); }
         }
 
-        /* Blackjack game - fit viewport without scrolling */
-        .blackjack-game {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 5px 15px;
-          height: 100vh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
         .bj-header {
-          margin-bottom: 4px !important;
+          margin-bottom: clamp(4px, 1.4vh, 12px) !important;
           flex-shrink: 0;
         }
 
         .bj-header h1 {
-          font-size: 1.2rem !important;
+          font-size: clamp(1.2rem, 5vw, 2.6rem) !important;
           margin: 0;
         }
 
         .bj-header .subtitle {
-          font-size: 0.7rem !important;
-          margin-top: 2px !important;
+          font-size: clamp(0.7rem, 3vw, 1.4rem) !important;
+          margin-top: clamp(2px, 0.8vh, 10px) !important;
         }
 
         .bj-stats {
-          margin-bottom: 4px !important;
-          gap: 8px;
+          margin-bottom: clamp(6px, 1.2vh, 12px) !important;
+          gap: clamp(8px, 2vw, 20px);
           flex-shrink: 0;
         }
 
         .bj-stats .stat-item {
-          padding: 4px 12px !important;
+          padding: clamp(8px, 1.6vh, 16px) clamp(12px, 2.4vw, 22px) !important;
         }
 
         .bj-stats .stat-label {
-          font-size: 0.4rem !important;
+          font-size: clamp(0.45rem, 1.2vw, 0.6rem) !important;
           margin-bottom: 2px;
         }
 
         .bj-stats .stat-value {
-          font-size: 0.9rem !important;
-        }
-
-        /* Smaller cards to fit screen */
-        .bj-card {
-          width: 85px !important;
-          height: 119px !important;
-          margin-left: -34px !important;
-        }
-
-        .bj-card:first-child {
-          margin-left: 0 !important;
-        }
-
-        .deck-shoe {
-          width: 85px !important;
-          height: 119px !important;
-        }
-
-        .bj-game-area {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          min-height: 0;
-          padding: 4px 0;
-        }
-
-        .dealer-area {
-          min-height: auto !important;
-          flex-shrink: 0;
-        }
-
-        .player-area {
-          min-height: auto !important;
-          flex-shrink: 0;
-        }
-
-        .hand-container {
-          min-height: auto !important;
-          margin: 2px 0;
-        }
-
-        .hand-label {
-          font-size: 0.6rem !important;
-          margin: 2px 0;
-        }
-
-        .hand-score {
-          font-size: 0.75rem !important;
-          padding: 3px 8px !important;
-          margin: 2px 0;
+          font-size: clamp(1rem, 3vw, 1.9rem) !important;
         }
 
         .control-panel {
-          margin-top: 4px !important;
+          margin-top: clamp(6px, 1.6vh, 12px) !important;
           flex-shrink: 0;
         }
 
-        .chip {
-          width: 48px !important;
-          height: 48px !important;
-          font-size: 0.45rem !important;
-        }
-
-        .chip-rack {
-          gap: 8px !important;
-          margin-bottom: 8px !important;
-        }
-
-        .action-btn {
-          padding: 10px 20px !important;
-          font-size: 0.7rem !important;
-        }
-
-        .action-controls {
-          gap: 12px !important;
-          margin-top: 8px !important;
-        }
-
-        .big-text {
-          font-size: 1.8rem !important;
-        }
-
-        .table-center {
-          min-height: 60px;
-          flex-shrink: 0;
-        }
-
-        /* Ensure controls are always visible */
-        .action-controls {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-
-        /* Scaled wrapper removal cleanup */
         .scaled-game-wrapper {
           display: contents;
         }

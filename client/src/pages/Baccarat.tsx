@@ -22,14 +22,18 @@ function Instructions() {
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
-          <li>Bet on <strong>Player</strong> (1:1), <strong>Banker</strong> (1:1 - 5% commission), or <strong>Tie</strong> (8:1)</li>
+          <li>
+            Bet on <strong>Player</strong> (1:1), <strong>Banker</strong> (1:1 -
+            5% commission), or <strong>Tie</strong> (8:1)
+          </li>
           <li>Two cards dealt to Player and Banker hands</li>
           <li>Closest to 9 wins - only last digit counts (15 = 5)</li>
           <li>8 or 9 on first two cards = Natural (game ends immediately)</li>
           <li>Third cards may be drawn based on specific rules</li>
         </ol>
         <p className="note">
-          Note: 10s, J, Q, K = 0 | A = 1 | Others = face value. Banker wins slightly more often!
+          Note: 10s, J, Q, K = 0 | A = 1 | Others = face value. Banker wins
+          slightly more often!
         </p>
       </div>
     </div>
@@ -45,11 +49,31 @@ interface Card {
 }
 
 type BetType = "player" | "banker" | "tie";
-type GamePhase = "betting" | "dealing" | "playerThird" | "bankerThird" | "settling" | "complete";
+type GamePhase =
+  | "betting"
+  | "dealing"
+  | "playerThird"
+  | "bankerThird"
+  | "settling"
+  | "complete";
 
 // Card suits and values
 const SUITS = ["♠", "♥", "♦", "♣"];
-const VALUES = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const VALUES = [
+  "A",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+];
 
 // Create a shoe with 6 decks (standard for Baccarat)
 function createShoe(): Card[] {
@@ -66,7 +90,7 @@ function createShoe(): Card[] {
         } else {
           numericValue = parseInt(value);
         }
-        
+
         shoe.push({
           suit,
           value,
@@ -111,11 +135,18 @@ export default function Baccarat() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
   const { user } = useAuth();
-  
+
   // Fun feature hooks
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
-  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementBankerWins, incrementTieWins, incrementSessionWins } = useAchievements();
+  const {
+    unlockAchievement,
+    incrementWinStreak,
+    resetWinStreak,
+    incrementBankerWins,
+    incrementTieWins,
+    incrementSessionWins,
+  } = useAchievements();
   const { recordBet } = useSessionStats();
 
   // Game state
@@ -125,7 +156,9 @@ export default function Baccarat() {
   const [betAmount, setBetAmount] = useState<number>(10);
   const [selectedBet, setSelectedBet] = useState<BetType | null>(null);
   const [gamePhase, setGamePhase] = useState<GamePhase>("betting");
-  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(null);
+  const [winner, setWinner] = useState<"player" | "banker" | "tie" | null>(
+    null,
+  );
   const [, setWinnings] = useState<number>(0);
   const [message, setMessage] = useState<string>("");
   const [isDealing, setIsDealing] = useState(false);
@@ -157,16 +190,16 @@ export default function Baccarat() {
       setGamePhase("dealing");
       setIsDealing(true);
       setMessage("");
-      
+
       // Play sound and check achievement
       playSound("chip");
       if (betAmount >= 100) {
         unlockAchievement("high_roller");
       }
-      
+
       // Check for reshuffle
       let currentShoe = checkReshuffle(shoe);
-      
+
       // Deal initial cards with animation delay
       setTimeout(() => {
         playSound("deal");
@@ -180,17 +213,17 @@ export default function Baccarat() {
   // Deal initial 2 cards to each hand
   const dealInitialCards = (currentShoe: Card[]) => {
     let newShoe = [...currentShoe];
-    
+
     // Deal alternately: Player, Banker, Player, Banker
     const { card: p1, newShoe: s1 } = dealCard(newShoe);
     const { card: b1, newShoe: s2 } = dealCard(s1);
     const { card: p2, newShoe: s3 } = dealCard(s2);
     const { card: b2, newShoe: s4 } = dealCard(s3);
-    
+
     setPlayerHand([p1, p2]);
     setBankerHand([b1, b2]);
     setShoe(s4);
-    
+
     // Check for naturals after a delay
     setTimeout(() => checkNaturals([p1, p2], [b1, b2], s4), 1000);
   };
@@ -199,7 +232,7 @@ export default function Baccarat() {
   const checkNaturals = (pHand: Card[], bHand: Card[], currentShoe: Card[]) => {
     const playerScore = calculateScore(pHand);
     const bankerScore = calculateScore(bHand);
-    
+
     if (playerScore >= 8 || bankerScore >= 8) {
       // Natural - game ends
       setMessage("Natural!");
@@ -212,37 +245,53 @@ export default function Baccarat() {
   };
 
   // Player third card rule
-  const handlePlayerThirdCard = (pHand: Card[], bHand: Card[], currentShoe: Card[]) => {
+  const handlePlayerThirdCard = (
+    pHand: Card[],
+    bHand: Card[],
+    currentShoe: Card[],
+  ) => {
     const playerScore = calculateScore(pHand);
-    
+
     if (playerScore <= 5) {
       // Player draws
       const { card: newCard, newShoe } = dealCard(currentShoe);
       const newPlayerHand = [...pHand, newCard];
       setPlayerHand(newPlayerHand);
       setShoe(newShoe);
-      
+
       // Now handle banker third card
       setGamePhase("bankerThird");
-      setTimeout(() => handleBankerThirdCard(newPlayerHand, bHand, newShoe, newCard.numericValue), 1000);
+      setTimeout(
+        () =>
+          handleBankerThirdCard(
+            newPlayerHand,
+            bHand,
+            newShoe,
+            newCard.numericValue,
+          ),
+        1000,
+      );
     } else {
       // Player stands (6 or 7)
       // Banker draws if 5 or less
       setGamePhase("bankerThird");
-      setTimeout(() => handleBankerThirdCard(pHand, bHand, currentShoe, null), 1000);
+      setTimeout(
+        () => handleBankerThirdCard(pHand, bHand, currentShoe, null),
+        1000,
+      );
     }
   };
 
   // Banker third card rule (complex)
   const handleBankerThirdCard = (
-    pHand: Card[], 
-    bHand: Card[], 
+    pHand: Card[],
+    bHand: Card[],
     currentShoe: Card[],
-    playerThirdCard: number | null
+    playerThirdCard: number | null,
   ) => {
     const bankerScore = calculateScore(bHand);
     let shouldDraw = false;
-    
+
     if (playerThirdCard === null) {
       // Player stood - Banker draws on 0-5, stands on 6-7
       shouldDraw = bankerScore <= 5;
@@ -261,7 +310,7 @@ export default function Baccarat() {
       }
       // Banker score 7 always stands
     }
-    
+
     if (shouldDraw) {
       const { card: newCard, newShoe } = dealCard(currentShoe);
       const newBankerHand = [...bHand, newCard];
@@ -274,13 +323,17 @@ export default function Baccarat() {
   };
 
   // Determine winner and handle payouts
-  const determineWinner = async (pHand: Card[], bHand: Card[], currentShoe: Card[]) => {
+  const determineWinner = async (
+    pHand: Card[],
+    bHand: Card[],
+    currentShoe: Card[],
+  ) => {
     const playerScore = calculateScore(pHand);
     const bankerScore = calculateScore(bHand);
-    
+
     let gameWinner: "player" | "banker" | "tie";
     let winAmount = 0;
-    
+
     if (playerScore > bankerScore) {
       gameWinner = "player";
     } else if (bankerScore > playerScore) {
@@ -288,10 +341,10 @@ export default function Baccarat() {
     } else {
       gameWinner = "tie";
     }
-    
+
     setWinner(gameWinner);
     setGamePhase("complete");
-    
+
     // Calculate payout
     if (selectedBet === gameWinner) {
       if (gameWinner === "player") {
@@ -302,7 +355,9 @@ export default function Baccarat() {
         // Banker bet pays 1:1 minus 5% commission
         const commission = betAmount * 0.05;
         winAmount = betAmount * 2 - commission; // Original bet + winnings minus commission
-        setMessage(`Banker wins! You won $${(betAmount - commission).toFixed(2)} (5% commission)`);
+        setMessage(
+          `Banker wins! You won $${(betAmount - commission).toFixed(2)} (5% commission)`,
+        );
         incrementBankerWins();
       } else {
         // Tie pays 8:1
@@ -310,9 +365,9 @@ export default function Baccarat() {
         setMessage(`Tie! You won $${(betAmount * 8).toFixed(2)} (8:1 payout)`);
         incrementTieWins();
       }
-      
+
       setWinnings(winAmount);
-      
+
       // Fun features on win
       playSound("win");
       const intensity = gameWinner === "tie" ? "high" : "medium";
@@ -320,24 +375,26 @@ export default function Baccarat() {
       incrementWinStreak();
       incrementSessionWins();
       recordBet("baccarat", betAmount, "win");
-      
+
       try {
         await addWinnings(winAmount, "Baccarat");
       } catch (error) {
         console.error("Failed to add winnings:", error);
       }
     } else {
-      setMessage(`${gameWinner.charAt(0).toUpperCase() + gameWinner.slice(1)} wins. You lost $${betAmount.toFixed(2)}`);
+      setMessage(
+        `${gameWinner.charAt(0).toUpperCase() + gameWinner.slice(1)} wins. You lost $${betAmount.toFixed(2)}`,
+      );
       setWinnings(0);
-      
+
       // Fun features on loss
       playSound("lose");
       resetWinStreak();
       recordBet("baccarat", betAmount, "loss");
     }
-    
+
     setIsDealing(false);
-    
+
     // Check if reshuffle needed
     if (shouldReshuffle(currentShoe)) {
       setTimeout(() => {
@@ -396,7 +453,10 @@ export default function Baccarat() {
         <div className="stat-item wallet-stat">
           <span className="stat-label">Wallet</span>
           <span className="stat-value">
-            ${(wallet ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            $
+            {(wallet ?? 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
           </span>
         </div>
         <div className="stat-item">
@@ -407,7 +467,9 @@ export default function Baccarat() {
 
       {/* Hands side by side */}
       <div className="baccarat-hands-row">
-        <section className={`baccarat-hand ${winner === "banker" ? "winner" : ""}`}>
+        <section
+          className={`baccarat-hand ${winner === "banker" ? "winner" : ""}`}
+        >
           <h2 className="baccarat-hand-label">Banker</h2>
           <div className="baccarat-cards-row">
             {bankerHand.length === 0 ? (
@@ -430,7 +492,9 @@ export default function Baccarat() {
 
         <div className="baccarat-vs">VS</div>
 
-        <section className={`baccarat-hand ${winner === "player" ? "winner" : ""}`}>
+        <section
+          className={`baccarat-hand ${winner === "player" ? "winner" : ""}`}
+        >
           <h2 className="baccarat-hand-label">Player</h2>
           <div className="baccarat-cards-row">
             {playerHand.length === 0 ? (
@@ -456,7 +520,11 @@ export default function Baccarat() {
       {message && <div className="baccarat-message">{message}</div>}
       {isDealing && <div className="baccarat-dealing">Dealing…</div>}
       {gamePhase === "complete" && (
-        <button type="button" className="baccarat-next-btn" onClick={handleNextRound}>
+        <button
+          type="button"
+          className="baccarat-next-btn"
+          onClick={handleNextRound}
+        >
           Next Round
         </button>
       )}
@@ -499,15 +567,25 @@ export default function Baccarat() {
             <span className="baccarat-amount-display">${betAmount}</span>
           </div>
           <div className="baccarat-quick-bets">
-            <button type="button" onClick={() => setBetAmount(10)}>$10</button>
-            <button type="button" onClick={() => setBetAmount(50)}>$50</button>
-            <button type="button" onClick={() => setBetAmount(100)}>$100</button>
-            <button type="button" onClick={() => setBetAmount(wallet ?? 0)}>MAX</button>
+            <button type="button" onClick={() => setBetAmount(10)}>
+              $10
+            </button>
+            <button type="button" onClick={() => setBetAmount(50)}>
+              $50
+            </button>
+            <button type="button" onClick={() => setBetAmount(100)}>
+              $100
+            </button>
+            <button type="button" onClick={() => setBetAmount(wallet ?? 0)}>
+              MAX
+            </button>
           </div>
           <button
             className="baccarat-deal-btn"
             onClick={handlePlaceBet}
-            disabled={!selectedBet || betAmount <= 0 || betAmount > (wallet ?? 0)}
+            disabled={
+              !selectedBet || betAmount <= 0 || betAmount > (wallet ?? 0)
+            }
           >
             DEAL
           </button>
@@ -538,336 +616,6 @@ export default function Baccarat() {
           )}
         </>
       )}
-
-      {/* Baccarat Simple Styles */}
-      <style>{`
-        .baccarat-game {
-          height: 100vh;
-          display: flex;
-          flex-direction: column;
-          padding: 10px;
-          overflow: hidden;
-        }
-
-        .baccarat-header {
-          text-align: center;
-          margin-bottom: 15px;
-          flex-shrink: 0;
-        }
-
-        .baccarat-title {
-          font-family: "Press Start 2P", cursive;
-          font-size: 1.8rem;
-          color: var(--retro-cyan);
-          text-shadow: 3px 3px 0px var(--retro-magenta);
-          margin: 0;
-        }
-
-        .baccarat-subtitle {
-          font-family: "VT323", monospace;
-          color: var(--retro-yellow);
-          font-size: 1rem;
-          margin-top: 5px;
-        }
-
-        .baccarat-stats {
-          display: flex;
-          justify-content: center;
-          gap: 20px;
-          margin-top: 10px;
-        }
-
-        .baccarat-stat {
-          background: var(--bg-secondary);
-          padding: 8px 20px;
-          border: 2px solid var(--retro-cyan);
-        }
-
-        .baccarat-stat-label {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.5rem;
-          color: var(--text-secondary);
-          display: block;
-          margin-bottom: 4px;
-        }
-
-        .baccarat-stat-value {
-          font-family: "Press Start 2P", cursive;
-          font-size: 1.2rem;
-          color: var(--retro-yellow);
-        }
-
-        .baccarat-table {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          max-width: 800px;
-          margin: 0 auto;
-          width: 100%;
-        }
-
-        .baccarat-felt {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          background: rgba(0, 60, 0, 0.2);
-          border: 2px solid var(--retro-green);
-          padding: 15px;
-        }
-
-        .baccarat-hand {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .baccarat-hand-label {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.8rem;
-          color: var(--text-secondary);
-          text-transform: uppercase;
-          margin: 0;
-        }
-
-        .baccarat-cards-row {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          height: 110px;
-        }
-
-        .baccarat-card {
-          width: 80px;
-          height: 110px;
-          background: var(--card-white);
-          border: 2px solid var(--card-black);
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 5px;
-          position: relative;
-        }
-
-        .baccarat-card.red { color: var(--card-red); }
-        .baccarat-card.black { color: var(--card-black); }
-
-        .baccarat-card .card-corner {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          line-height: 1;
-        }
-
-        .baccarat-card .card-corner.top { align-self: flex-start; }
-        .baccarat-card .card-corner.bottom { align-self: flex-end; transform: rotate(180deg); }
-
-        .baccarat-card .card-value {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.6rem;
-        }
-
-        .baccarat-card .card-suit-small {
-          font-size: 0.9rem;
-          margin-top: 2px;
-        }
-
-        .baccarat-card .card-center {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 2rem;
-        }
-
-        .baccarat-score {
-          font-family: "Press Start 2P", cursive;
-          font-size: 1rem;
-          color: var(--retro-yellow);
-          background: var(--bg-secondary);
-          border: 2px solid var(--retro-cyan);
-          padding: 5px 12px;
-        }
-
-        .baccarat-bet-zone {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 15px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 2px dashed var(--retro-cyan);
-          margin: 10px 0;
-        }
-
-        .baccarat-bet-controls {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-        }
-
-        .baccarat-bet-step {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.6rem;
-          color: var(--retro-cyan);
-          margin: 0;
-        }
-
-        .baccarat-bet-types {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-        }
-
-        .baccarat-bet-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 10px 20px;
-          background: var(--bg-secondary);
-          border: 2px solid var(--text-secondary);
-          color: var(--text-primary);
-          cursor: pointer;
-          font-family: "Press Start 2P", cursive;
-          min-width: 100px;
-        }
-
-        .baccarat-bet-btn.selected { border-color: var(--retro-yellow); }
-        .baccarat-bet-btn.player.selected { border-color: var(--retro-blue); }
-        .baccarat-bet-btn.banker.selected { border-color: var(--retro-red); }
-        .baccarat-bet-btn.tie.selected { border-color: var(--retro-green); }
-
-        .baccarat-bet-name { font-size: 0.65rem; margin-bottom: 3px; }
-        .baccarat-bet-odds { font-size: 0.45rem; color: var(--text-secondary); }
-
-        .baccarat-amount-row {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          width: 100%;
-          max-width: 400px;
-        }
-
-        .baccarat-slider {
-          flex: 1;
-          height: 8px;
-          background: var(--bg-secondary);
-          border: 1px solid var(--retro-purple);
-          cursor: pointer;
-        }
-
-        .baccarat-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 20px;
-          height: 20px;
-          background: var(--retro-magenta);
-          cursor: pointer;
-          border: 2px solid #fff;
-        }
-
-        .baccarat-amount-display {
-          font-family: "Press Start 2P", cursive;
-          font-size: 1rem;
-          color: var(--retro-yellow);
-          min-width: 80px;
-          text-align: center;
-        }
-
-        .baccarat-quick-bets {
-          display: flex;
-          gap: 10px;
-          justify-content: center;
-        }
-
-        .baccarat-quick-bets button {
-          background: var(--bg-secondary);
-          border: 2px solid var(--retro-cyan);
-          color: var(--retro-cyan);
-          padding: 8px 16px;
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.5rem;
-          cursor: pointer;
-        }
-
-        .baccarat-deal-btn, .baccarat-next-btn {
-          padding: 12px 30px;
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.8rem;
-          cursor: pointer;
-          text-transform: uppercase;
-          border: 3px solid;
-        }
-
-        .baccarat-deal-btn {
-          background: var(--retro-green);
-          color: var(--bg-primary);
-          border-color: var(--retro-green);
-        }
-
-        .baccarat-deal-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          filter: grayscale(0.5);
-        }
-
-        .baccarat-next-btn {
-          background: var(--retro-yellow);
-          color: var(--bg-primary);
-          border-color: var(--retro-orange);
-        }
-
-        .baccarat-message {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.8rem;
-          color: var(--retro-cyan);
-          text-align: center;
-          padding: 10px;
-          background: rgba(0, 0, 0, 0.5);
-          border: 2px solid var(--retro-cyan);
-        }
-
-        .baccarat-dealing {
-          font-family: "Press Start 2P", cursive;
-          font-size: 0.9rem;
-          color: var(--retro-yellow);
-        }
-
-        @media (max-height: 800px) {
-          .baccarat-card { width: 70px; height: 96px; }
-          .baccarat-cards-row { height: 96px; }
-          .baccarat-card .card-center { font-size: 1.7rem; }
-          .baccarat-bet-btn { padding: 8px 16px; min-width: 90px; }
-          .baccarat-bet-zone { padding: 12px; margin: 8px 0; }
-        }
-
-        @media (max-height: 700px) {
-          .baccarat-title { font-size: 1.5rem; }
-          .baccarat-card { width: 60px; height: 82px; }
-          .baccarat-cards-row { height: 82px; }
-          .baccarat-card .card-center { font-size: 1.4rem; }
-          .baccarat-score { font-size: 0.85rem; padding: 4px 10px; }
-          .baccarat-hand-label { font-size: 0.7rem; }
-          .baccarat-bet-types { gap: 10px; }
-          .baccarat-bet-btn { padding: 8px 14px; min-width: 85px; }
-          .baccarat-bet-name { font-size: 0.6rem; }
-        }
-
-        @media (max-height: 600px) {
-          .baccarat-header { margin-bottom: 10px; }
-          .baccarat-stats { gap: 15px; }
-          .baccarat-card { width: 55px; height: 76px; }
-          .baccarat-cards-row { height: 76px; }
-          .baccarat-card .card-center { font-size: 1.2rem; }
-          .baccarat-bet-zone { padding: 10px; margin: 5px 0; }
-          .baccarat-bet-controls { gap: 8px; }
-          .baccarat-deal-btn, .baccarat-next-btn { padding: 10px 24px; font-size: 0.75rem; }
-        }
-      `}</style>
     </div>
   );
 }

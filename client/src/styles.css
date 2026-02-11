@@ -1285,16 +1285,37 @@ body::before {
 
 /* Screen Shake Animation */
 @keyframes screenShake {
-  0%, 100% { transform: translateX(0); }
-  10% { transform: translateX(-8px); }
-  20% { transform: translateX(8px); }
-  30% { transform: translateX(-8px); }
-  40% { transform: translateX(8px); }
-  50% { transform: translateX(-6px); }
-  60% { transform: translateX(6px); }
-  70% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-  90% { transform: translateX(-2px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-8px);
+  }
+  20% {
+    transform: translateX(8px);
+  }
+  30% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  50% {
+    transform: translateX(-6px);
+  }
+  60% {
+    transform: translateX(6px);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+  90% {
+    transform: translateX(-2px);
+  }
 }
 
 .shake-screen {
@@ -1463,10 +1484,12 @@ body::before {
   color: var(--retro-cyan);
   font-family: "Press Start 2P", cursive;
   font-size: 1.2rem;
-  padding: 10px;
-  width: 120px;
+  padding: 10px 12px;
+  width: clamp(140px, 40vw, 220px);
+  max-width: 100%;
   text-align: center;
   outline: none;
+  box-sizing: border-box;
 }
 
 .bet-input:focus {
@@ -3830,10 +3853,12 @@ body.theme-gameboy .bg-decoration::before {
   color: var(--retro-cyan);
   font-family: "Press Start 2P", cursive;
   font-size: 1.2rem;
-  padding: 10px;
-  width: 120px;
+  padding: 10px 12px;
+  width: clamp(140px, 40vw, 220px);
+  max-width: 100%;
   text-align: center;
   outline: none;
+  box-sizing: border-box;
 }
 
 .bet-input:focus {
@@ -3956,16 +3981,18 @@ body.theme-gameboy .bg-decoration::before {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
-  padding: 40px 20px;
+  padding: 32px clamp(16px, 3vw, 40px);
   font-family: "Press Start 2P", cursive;
 }
 
 .leaderboard-header {
-  max-width: 800px;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto 30px;
   display: flex;
   align-items: center;
   gap: 20px;
+  justify-content: space-between;
 }
 
 .back-button {
@@ -3993,7 +4020,8 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 .leaderboard-controls {
-  max-width: 800px;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto 30px;
 }
 
@@ -4016,7 +4044,8 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 .leaderboard-info {
-  max-width: 800px;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto 30px;
   padding: 20px;
   background: var(--bg-card);
@@ -4057,7 +4086,8 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 .leaderboard-container {
-  max-width: 800px;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto;
   background: var(--bg-card);
   border: 4px solid var(--retro-cyan);
@@ -4176,7 +4206,8 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 .user-rank-card {
-  max-width: 800px;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 30px auto 0;
   padding: 25px;
   background: var(--bg-card);
@@ -4401,8 +4432,6 @@ body.theme-gameboy .bg-decoration::before {
   }
 }
 
-
-
 /* ============================================
    BACCARAT - TABLE LAYOUT, SCALED & INTUITIVE
    ============================================ */
@@ -4413,16 +4442,39 @@ body.theme-gameboy .bg-decoration::before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 10px 20px;
+  padding: clamp(12px, 2vw, 20px) clamp(16px, 3vw, 28px);
   position: relative;
+  gap: clamp(8px, 1.5vh, 16px);
+  isolation: isolate;
+}
+
+.baccarat-game::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      70% 45% at 50% 35%,
+      rgba(0, 255, 247, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      60% 40% at 50% 70%,
+      rgba(255, 0, 255, 0.07),
+      transparent 65%
+    );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .baccarat-game .game-header {
   margin-bottom: 15px;
+  z-index: 1;
 }
 
 .baccarat-game .game-stats {
   margin-bottom: 25px;
+  z-index: 1;
 }
 
 /* Align home + dev buttons like Higher/Lower */
@@ -4452,6 +4504,21 @@ body.theme-gameboy .bg-decoration::before {
   margin-bottom: clamp(15px, 3vh, 30px);
   position: relative;
   z-index: 1;
+  width: min(1000px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  padding: clamp(16px, 2.8vh, 26px) clamp(18px, 3vw, 34px);
+  background:
+    linear-gradient(180deg, rgba(16, 28, 52, 0.85), rgba(10, 18, 36, 0.9)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 255, 247, 0.05) 0 1px,
+      transparent 1px 18px
+    );
+  border: 3px solid var(--retro-cyan);
+  box-shadow:
+    10px 10px 0 rgba(0, 255, 247, 0.15),
+    inset 0 0 24px rgba(0, 0, 0, 0.6);
 }
 
 .baccarat-vs {
@@ -4468,8 +4535,9 @@ body.theme-gameboy .bg-decoration::before {
   align-items: center;
   gap: 8px;
   padding: clamp(12px, 2vh, 20px) clamp(20px, 3vw, 30px);
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.28);
+  border: 2px solid rgba(153, 102, 255, 0.5);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
   min-width: clamp(160px, 30vw, 260px);
   transition: filter 0.3s;
 }
@@ -4489,7 +4557,7 @@ body.theme-gameboy .bg-decoration::before {
 
 .baccarat-hand-label {
   font-family: "Press Start 2P", cursive;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--retro-cyan);
   text-shadow: 2px 2px 0 var(--retro-magenta);
   margin: 0;
@@ -4507,7 +4575,7 @@ body.theme-gameboy .bg-decoration::before {
   width: 80px;
   height: 112px;
   border: 3px dashed var(--retro-purple);
-  opacity: 0.35;
+  opacity: 0.5;
   background: repeating-linear-gradient(
     45deg,
     transparent,
@@ -4515,6 +4583,7 @@ body.theme-gameboy .bg-decoration::before {
     rgba(153, 102, 255, 0.06) 8px,
     rgba(153, 102, 255, 0.06) 16px
   );
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
 }
 
 .baccarat-card-wrap {
@@ -4522,18 +4591,28 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 @keyframes baccaratDealCard {
-  from { opacity: 0; transform: translateY(-16px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .baccarat-score {
   font-family: "Press Start 2P", cursive;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--retro-yellow);
-  padding: 6px 14px;
-  background: var(--bg-secondary);
+  padding: 8px 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 26, 46, 0.9),
+    rgba(10, 10, 24, 0.9)
+  );
   border: var(--pixel-border) var(--retro-yellow);
-  box-shadow: var(--pixel-shadow) rgba(255, 255, 0, 0.3);
+  box-shadow: var(--pixel-shadow) rgba(255, 255, 0, 0.35);
 }
 
 .baccarat-card {
@@ -4546,7 +4625,7 @@ body.theme-gameboy .bg-decoration::before {
   justify-content: space-between;
   padding: 6px;
   position: relative;
-  box-shadow: var(--pixel-shadow) rgba(0, 0, 0, 0.4);
+  box-shadow: var(--pixel-shadow) rgba(0, 0, 0, 0.5);
 }
 
 .baccarat-card.red {
@@ -4597,6 +4676,28 @@ body.theme-gameboy .bg-decoration::before {
   width: 100%;
   max-width: 500px;
   margin: clamp(10px, 3vh, 30px) auto 0;
+  padding: clamp(14px, 2.2vh, 22px) clamp(16px, 3vw, 26px);
+  background: linear-gradient(
+    180deg,
+    rgba(18, 26, 48, 0.9),
+    rgba(10, 16, 32, 0.95)
+  );
+  border: 3px solid var(--retro-cyan);
+  box-shadow: 8px 8px 0 rgba(0, 255, 247, 0.15);
+}
+
+.baccarat-bet-controls::before {
+  content: "BET CONTROLS";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  padding: 2px 10px;
+  font-family: "Press Start 2P", cursive;
+  font-size: 0.45rem;
+  color: var(--retro-cyan);
+  border: 2px solid var(--retro-cyan);
 }
 
 .baccarat-bet-types {
@@ -4610,16 +4711,22 @@ body.theme-gameboy .bg-decoration::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 18px;
-  background: var(--bg-secondary);
+  padding: 14px 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(26, 26, 46, 0.9),
+    rgba(12, 12, 26, 0.95)
+  );
   border: var(--pixel-border);
   cursor: pointer;
   transition: var(--transition-fast);
-  min-width: 100px;
+  min-width: 110px;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
 }
 
 .baccarat-bet-btn:hover {
   transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
 }
 
 .baccarat-bet-btn.player {
@@ -4675,13 +4782,14 @@ body.theme-gameboy .bg-decoration::before {
   align-items: center;
   gap: 14px;
   width: 100%;
-  max-width: 320px;
+  max-width: 340px;
 }
 
 .baccarat-slider {
   flex: 1;
-  height: 6px;
+  height: 8px;
   accent-color: var(--retro-cyan);
+  box-shadow: inset 0 0 0 2px rgba(0, 255, 247, 0.2);
 }
 
 .baccarat-amount-display {
@@ -4703,11 +4811,12 @@ body.theme-gameboy .bg-decoration::before {
   background: var(--bg-secondary);
   border: 3px solid var(--retro-cyan);
   color: var(--retro-cyan);
-  padding: 8px 14px;
+  padding: 8px 16px;
   font-family: "Press Start 2P", cursive;
   font-size: 0.4rem;
   cursor: pointer;
   transition: var(--transition-fast);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
 .baccarat-quick-bets button:hover {
@@ -4721,13 +4830,14 @@ body.theme-gameboy .bg-decoration::before {
   background: var(--retro-green);
   color: var(--bg-primary);
   border: var(--pixel-border) var(--retro-green);
-  padding: 14px 40px;
+  padding: 16px 44px;
   font-family: "Press Start 2P", cursive;
   font-size: 0.8rem;
   cursor: pointer;
   box-shadow: var(--pixel-shadow) rgba(0, 255, 0, 0.4);
   transition: var(--transition-fast);
   text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .baccarat-deal-btn:hover:not(:disabled) {
@@ -4749,17 +4859,25 @@ body.theme-gameboy .bg-decoration::before {
   font-size: clamp(0.6rem, 1.4vw, 0.85rem);
   color: var(--retro-yellow);
   text-align: center;
-  padding: 10px 20px;
+  padding: 12px 24px;
   margin: 0 auto clamp(10px, 2vh, 18px);
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
   animation: baccaratMessagePulse 1s ease-in-out;
   position: relative;
   z-index: 1;
+  background: rgba(10, 16, 32, 0.75);
+  border: 3px solid var(--retro-yellow);
+  box-shadow: 6px 6px 0 rgba(255, 255, 0, 0.2);
 }
 
 @keyframes baccaratMessagePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
 }
 
 .baccarat-next-btn {
@@ -4795,8 +4913,13 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 @keyframes baccaratDealingBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* Betting Controls - Compact (legacy) */
@@ -4964,8 +5087,13 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 @keyframes messagePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 /* Next Round Button - Compact */
@@ -4997,8 +5125,13 @@ body.theme-gameboy .bg-decoration::before {
 }
 
 @keyframes dealingBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* Baccarat Instructions */
@@ -5038,16 +5171,16 @@ body.theme-gameboy .bg-decoration::before {
   .baccarat-game .game-header h1 {
     font-size: 1rem;
   }
-  
+
   .hand-area {
     min-width: 150px;
     padding: 5px 10px;
   }
-  
+
   .hand-cards {
     min-height: 55px;
   }
-  
+
   .baccarat-card {
     width: 40px;
     height: 55px;
@@ -5058,30 +5191,30 @@ body.theme-gameboy .bg-decoration::before {
     width: 40px;
     height: 55px;
   }
-  
+
   .baccarat-card .card-center {
     font-size: 1rem;
   }
-  
+
   .baccarat-card .card-value {
     font-size: 0.4rem;
   }
-  
+
   .betting-controls-baccarat {
     min-width: 250px;
     padding: 10px;
     gap: 8px;
   }
-  
+
   .bet-btn {
     min-width: 60px;
     padding: 8px 10px;
   }
-  
+
   .bet-btn .bet-label {
     font-size: 0.4rem;
   }
-  
+
   .quick-bet-buttons button {
     padding: 4px 8px;
     font-size: 0.3rem;
@@ -5092,50 +5225,50 @@ body.theme-gameboy .bg-decoration::before {
   .baccarat-game {
     height: 100dvh; /* Dynamic viewport height for mobile */
   }
-  
+
   .baccarat-game .game-header {
     margin-top: 5px;
   }
-  
+
   .baccarat-game .game-header h1 {
     font-size: 0.8rem;
   }
-  
+
   .baccarat-game .game-header .subtitle {
     font-size: 0.4rem;
   }
-  
+
   .baccarat-table {
     gap: 5px;
     padding: 5px;
   }
-  
+
   .hand-area h3 {
     font-size: 0.5rem;
   }
-  
+
   .hand-score {
     font-size: 0.8rem;
   }
-  
+
   .bet-type-buttons {
     gap: 5px;
   }
-  
+
   .bet-btn {
     min-width: 50px;
     padding: 6px 8px;
   }
-  
+
   .bet-btn .bet-odds {
     font-size: 0.6rem;
   }
-  
+
   .deal-btn {
     padding: 8px 20px;
     font-size: 0.5rem;
   }
-  
+
   .game-message {
     font-size: 0.4rem;
     padding: 6px 10px;

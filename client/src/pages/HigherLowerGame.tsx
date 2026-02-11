@@ -462,7 +462,9 @@ function BettingModal({
 }) {
   const safeWallet = wallet ?? 0;
   const [betAmount, setBetAmount] = useState(Math.min(10, safeWallet));
-  const [inputDisplay, setInputDisplay] = useState(String(Math.min(10, safeWallet)));
+  const [inputDisplay, setInputDisplay] = useState(
+    String(Math.min(10, safeWallet)),
+  );
 
   useEffect(() => {
     if (visible) {
@@ -609,12 +611,17 @@ export default function HigherLowerGame() {
     updateWallet,
   } = useWallet();
   const { user } = useAuth();
-  
+
   // New hooks for fun features
   const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { triggerShake } = useScreenShake();
-  const { unlockAchievement, incrementWinStreak, resetWinStreak, incrementSessionWins } = useAchievements();
+  const {
+    unlockAchievement,
+    incrementWinStreak,
+    resetWinStreak,
+    incrementSessionWins,
+  } = useAchievements();
   const { recordBet } = useSessionStats();
   const [currentBet, setCurrentBet] = useState(restored?.currentBet ?? 0);
 
@@ -641,7 +648,14 @@ export default function HigherLowerGame() {
     restored?.cardsPlayedThisLevel ?? 0,
   );
   // Level 1: 4 cards, Level 2: 3 cards, Level 3: 2 cards, Level 4+: 0 (can cash out anytime)
-  const cardsRequiredForCashout = currentLevel === 1 ? 4 : currentLevel === 2 ? 3 : currentLevel === 3 ? 2 : 0;
+  const cardsRequiredForCashout =
+    currentLevel === 1
+      ? 4
+      : currentLevel === 2
+        ? 3
+        : currentLevel === 3
+          ? 2
+          : 0;
 
   // Modal states
   const [showGameOverModal, setShowGameOverModal] = useState(
@@ -760,7 +774,7 @@ export default function HigherLowerGame() {
           setGamblingStake(0);
           setShowCashOut(false);
           resetGame();
-          
+
           // Fun features on loss
           playSound("lose");
           triggerShake("medium");
@@ -784,7 +798,7 @@ export default function HigherLowerGame() {
           });
           setGamblingStake(0);
           setShowCashOut(false);
-          
+
           // Fun features on big win
           playSound("win");
           triggerConfetti({ intensity: "high" });
@@ -889,7 +903,7 @@ export default function HigherLowerGame() {
 
       lastDrawTimeRef.current = now;
       setIsProcessing(true);
-      
+
       // Play card deal sound
       playSound("deal");
 
@@ -1041,7 +1055,14 @@ export default function HigherLowerGame() {
       // Track cards played for level progression and auto-advance if threshold reached
       setCardsPlayedThisLevel((prev: number) => {
         const newCount = prev + 1;
-        const required = currentLevel === 1 ? 4 : currentLevel === 2 ? 3 : currentLevel === 3 ? 2 : 0;
+        const required =
+          currentLevel === 1
+            ? 4
+            : currentLevel === 2
+              ? 3
+              : currentLevel === 3
+                ? 2
+                : 0;
         if (required > 0 && newCount >= required) {
           // Auto-advance to next level silently
           setCurrentLevel((level: number) => level + 1);
@@ -1132,7 +1153,7 @@ export default function HigherLowerGame() {
         setCardsPlayedThisLevel(0);
 
         initGame();
-        
+
         // Sound and achievement for high roller
         playSound("chip");
         if (amount >= 100) {
@@ -1148,8 +1169,13 @@ export default function HigherLowerGame() {
   const handleCashOut = async () => {
     if (isActive()) {
       // Check if player has played enough cards for this level
-      if (cardsPlayedThisLevel >= 1 && cardsPlayedThisLevel < cardsRequiredForCashout) {
-        alert(`You must play ${cardsRequiredForCashout - cardsPlayedThisLevel} more card${cardsRequiredForCashout - cardsPlayedThisLevel === 1 ? '' : 's'} before you can cash out!`);
+      if (
+        cardsPlayedThisLevel >= 1 &&
+        cardsPlayedThisLevel < cardsRequiredForCashout
+      ) {
+        alert(
+          `You must play ${cardsRequiredForCashout - cardsPlayedThisLevel} more card${cardsRequiredForCashout - cardsPlayedThisLevel === 1 ? "" : "s"} before you can cash out!`,
+        );
         return;
       }
 
@@ -1165,9 +1191,8 @@ export default function HigherLowerGame() {
         // Advance to next level and reset cards played
         setCurrentLevel((prev: number) => prev + 1);
         setCardsPlayedThisLevel(0);
-        
-        // Sound effect for cash out
-        playSound("cashout");
+
+        // No sound on cash out
         triggerConfetti({ intensity: "low" });
       } catch (error) {
         console.error("Failed to cash out:", error);
@@ -1277,7 +1302,8 @@ export default function HigherLowerGame() {
           {cardsRequiredForCashout > 0 && (
             <div className="level-progress-container">
               <div className="level-progress-info">
-                Level {currentLevel} — {cardsPlayedThisLevel}/{cardsRequiredForCashout}
+                Level {currentLevel} — {cardsPlayedThisLevel}/
+                {cardsRequiredForCashout}
               </div>
               <div className="level-progress-bar">
                 <div
@@ -1292,7 +1318,11 @@ export default function HigherLowerGame() {
           <button
             className="cash-out-btn"
             onClick={handleCashOut}
-            disabled={cardsRequiredForCashout > 0 && cardsPlayedThisLevel >= 1 && cardsPlayedThisLevel < cardsRequiredForCashout}
+            disabled={
+              cardsRequiredForCashout > 0 &&
+              cardsPlayedThisLevel >= 1 &&
+              cardsPlayedThisLevel < cardsRequiredForCashout
+            }
           >
             CASH OUT
           </button>
