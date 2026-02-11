@@ -9,16 +9,16 @@ import { useSessionStats } from "../hooks/useSessionStats";
 const SYMBOLS = ["🍒", "🍋", "🍊", "🍇", "🔔", "⭐", "💎", "7️⃣"];
 const CHIP_VALUES = [1, 5, 10, 25, 100, 500];
 
-// Payout table: [symbol, count-in-line, multiplier]
+// Payout table: [symbol, count-in-line, multiplier] — casino-realistic odds
 const PAYOUTS: Record<string, number[]> = {
-  "7️⃣": [0, 0, 50, 200, 1000],
-  "💎": [0, 0, 25, 100, 500],
-  "⭐": [0, 0, 15, 50, 250],
-  "🔔": [0, 0, 10, 30, 150],
-  "🍇": [0, 0, 8, 20, 100],
-  "🍊": [0, 0, 5, 15, 75],
-  "🍋": [0, 0, 3, 10, 50],
-  "🍒": [0, 0, 2, 5, 25],
+  "7️⃣": [0, 0, 10, 75, 500],
+  "💎": [0, 0, 8, 40, 200],
+  "⭐": [0, 0, 5, 20, 100],
+  "🔔": [0, 0, 3, 12, 60],
+  "🍇": [0, 0, 2, 8, 40],
+  "🍊": [0, 0, 1, 5, 25],
+  "🍋": [0, 0, 1, 3, 15],
+  "🍒": [0, 0, 1, 2, 10],
 };
 
 function getRandomSymbol(): string {
@@ -53,6 +53,7 @@ export default function Slots() {
   );
   const [winAmount, setWinAmount] = useState(0);
   const [autoSpin, setAutoSpin] = useState(false);
+  const [showPaytable, setShowPaytable] = useState(false);
   const autoSpinRef = useRef(false);
   const spinTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -262,18 +263,19 @@ export default function Slots() {
           flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
           gap: clamp(6px,1.2vh,12px); padding: clamp(8px,1.5vh,14px) 0;
         }
-        .slots-chips { display: flex; gap: clamp(5px,1vw,10px); flex-wrap: wrap; justify-content: center; }
+        .slots-chips { display: flex; gap: clamp(8px,1.6vw,16px); flex-wrap: wrap; justify-content: center; }
         .s-chip {
-          width: clamp(50px,8.5vw,74px); height: clamp(50px,8.5vw,74px);
-          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          width: clamp(44px,7vw,76px); height: clamp(44px,7vw,76px);
+          border-radius: 50%; border: 4px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.44rem,1.1vw,0.64rem);
-          color: white; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.4vw,0.6rem);
+          color: white; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
           position: relative;
         }
-        .s-chip::before { content:''; position:absolute; top:3px;left:3px;right:3px;bottom:3px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
-        .s-chip:hover { transform: translateY(-3px); }
+        .s-chip::before { content:''; position:absolute; top:5px;left:5px;right:5px;bottom:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .s-chip:hover { transform: translateY(-5px); }
+        .s-chip:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .s-chip.off { filter: grayscale(1) brightness(0.5); pointer-events: none; }
         .s-chip.v1 { background: #666; border-color: #999; }
         .s-chip.v5 { background: var(--retro-blue); border-color: #88ccff; }
@@ -351,15 +353,31 @@ export default function Slots() {
 
         {message && <div className={`slots-msg ${resultType}`}>{message}</div>}
 
-        <div className="slots-paytable">
-          {Object.entries(PAYOUTS)
-            .reverse()
-            .map(([sym, pays]) => (
-              <div key={sym} className="slots-pay-item">
-                {sym} x3={pays[3]} x4={pays[4]}
-              </div>
-            ))}
-        </div>
+        <button
+          onClick={() => setShowPaytable((prev) => !prev)}
+          style={{
+            background: "none",
+            border: "2px solid rgba(255,255,255,0.2)",
+            color: "var(--text-secondary)",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "clamp(0.4rem, 1vw, 0.55rem)",
+            padding: "4px 12px",
+            cursor: "pointer",
+          }}
+        >
+          {showPaytable ? "▲ Hide Payouts" : "▼ Payouts"}
+        </button>
+        {showPaytable && (
+          <div className="slots-paytable">
+            {Object.entries(PAYOUTS)
+              .reverse()
+              .map(([sym, pays]) => (
+                <div key={sym} className="slots-pay-item">
+                  {sym} x3={pays[3]} x4={pays[4]}
+                </div>
+              ))}
+          </div>
+        )}
       </div>
 
       <div className="slots-controls">

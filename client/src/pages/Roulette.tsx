@@ -342,20 +342,23 @@ export default function Roulette() {
           flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
           gap: clamp(4px,0.8vh,8px); padding: clamp(6px,1vh,10px) 0;
         }
-        .rou-chips { display: flex; gap: clamp(4px,0.8vw,8px); flex-wrap: wrap; justify-content: center; }
+        .rou-chips { display: flex; gap: clamp(8px,1.6vw,16px); flex-wrap: wrap; justify-content: center; }
         .rc {
-          width: clamp(46px,7.5vw,68px); height: clamp(46px,7.5vw,68px);
-          border-radius: 50%; border: 3px dashed rgba(255,255,255,0.4);
+          width: clamp(44px,7vw,76px); height: clamp(44px,7vw,76px);
+          border-radius: 50%; border: 4px dashed rgba(255,255,255,0.4);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.42rem,1.1vw,0.6rem);
-          color: white; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.5);
+          font-family: 'Press Start 2P'; font-size: clamp(0.45rem,1.4vw,0.6rem);
+          color: white; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.5);
           transition: transform 0.1s; user-select: none; text-shadow: 1px 1px 0 #000;
+          position: relative;
         }
-        .rc:hover { transform: translateY(-3px); }
+        .rc::before { content:''; position:absolute; top:5px;left:5px;right:5px;bottom:5px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); }
+        .rc:hover { transform: translateY(-5px); }
+        .rc:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .rc.sel { box-shadow: 0 0 10px rgba(255,255,0,0.7); transform: translateY(-4px) scale(1.1); }
-        .rc.v1 { background: #666; } .rc.v5 { background: var(--retro-blue); }
-        .rc.v10 { background: var(--retro-green); } .rc.v25 { background: var(--retro-red); }
-        .rc.v100 { background: var(--retro-purple); } .rc.v500 { background: #cc6600; }
+        .rc.v1 { background: #666; border-color: #999; } .rc.v5 { background: var(--retro-blue); border-color: #88ccff; }
+        .rc.v10 { background: var(--retro-green); border-color: #88ff88; } .rc.v25 { background: var(--retro-red); border-color: #ff8888; }
+        .rc.v100 { background: var(--retro-purple); border-color: #dcb3ff; } .rc.v500 { background: #cc6600; border-color: #ff9933; }
 
         .rou-action-row { display: flex; gap: 8px; align-items: center; }
         .rou-btn {

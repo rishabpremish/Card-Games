@@ -73,13 +73,7 @@ export default function SessionStatsPanel() {
         </span>
         <button
           onClick={() => setIsOpen(false)}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "var(--retro-red)",
-            cursor: "pointer",
-            fontSize: "1rem",
-          }}
+          className="retro-close-btn"
         >
           ✕
         </button>

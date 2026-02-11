@@ -61,7 +61,7 @@ export default function FriendsPanel() {
           textAlign: "center" as const,
         }}
       >
-        👥 {pendingCount > 0 ? `${pendingCount}!` : `${friends.length}`}
+        👥 {pendingCount > 0 ? `Friends ${pendingCount}!` : `Friends`}
       </button>
     );
   }
@@ -115,14 +115,7 @@ export default function FriendsPanel() {
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#ff4444",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "0.82rem",
-              cursor: "pointer",
-            }}
+            className="retro-close-btn"
           >
             ✕
           </button>

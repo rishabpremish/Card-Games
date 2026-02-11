@@ -116,14 +116,7 @@ export default function LoanPanel() {
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#ff4444",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "0.82rem",
-              cursor: "pointer",
-            }}
+            className="retro-close-btn"
           >
             ✕
           </button>

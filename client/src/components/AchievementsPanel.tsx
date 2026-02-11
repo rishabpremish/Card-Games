@@ -82,15 +82,7 @@ export default function AchievementsPanel() {
           </h2>
           <button
             onClick={() => setIsOpen(false)}
-            style={{
-              background: "transparent",
-              border: "2px solid var(--retro-red)",
-              color: "var(--retro-red)",
-              padding: "5px 10px",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "0.5rem",
-              cursor: "pointer",
-            }}
+            className="retro-close-btn"
           >
             ✕
           </button>

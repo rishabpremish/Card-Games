@@ -117,18 +117,27 @@ export default function XPBar() {
           margin: 0;
         }
         .xp-panel-close {
-          background: none;
-          border: 2px solid #ff4444;
-          color: #ff4444;
+          background: #cc0000;
+          border: 3px solid #ff4444;
+          color: #000;
           font-family: 'Press Start 2P', cursive;
           font-size: 0.8rem;
           cursor: pointer;
-          padding: 6px 10px;
-          transition: all 0.15s;
+          padding: 0;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+          font-weight: bold;
+          transition: all 0.1s;
         }
         .xp-panel-close:hover {
           background: #ff4444;
-          color: #fff;
+          color: #000;
+          transform: translate(-1px, -1px);
+          box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
         }
 
         .xp-panel-row {
