@@ -242,10 +242,7 @@ export default function XPBar() {
 
             <div>
               <div className="xp-panel-track">
-                <div
-                  className="xp-panel-fill"
-                  style={{ width: `${pct}%` }}
-                />
+                <div className="xp-panel-fill" style={{ width: `${pct}%` }} />
               </div>
               <div className="xp-panel-xp-text">
                 {playerStats.xpInLevel} / {playerStats.xpNeeded} XP to next

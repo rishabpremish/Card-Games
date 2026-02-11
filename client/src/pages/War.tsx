@@ -53,22 +53,25 @@ function createDeck(): Card[] {
 
 function WarCard({ card }: { card: Card }) {
   return (
-    <div className={`war-card ${card.isRed ? "red" : "black"}`}>
-      <div className="wc-corner top">
-        <span className="wc-rank">{card.value}</span>
-        <span className="wc-suit-sm">{card.suit}</span>
+    <div className="war-card">
+      <div className={`card-front ${card.isRed ? "red" : "black"}`}>
+        <div className="card-corner top">
+          <span className="card-value">{card.value}</span>
+          <span className="card-suit-small">{card.suit}</span>
+        </div>
+        <span className="card-center">{card.suit}</span>
+        <div className="card-corner bottom">
+          <span className="card-value">{card.value}</span>
+          <span className="card-suit-small">{card.suit}</span>
+        </div>
       </div>
-      <div className="wc-center">{card.suit}</div>
-      <div className="wc-corner bottom">
-        <span className="wc-rank">{card.value}</span>
-        <span className="wc-suit-sm">{card.suit}</span>
-      </div>
+      <div className="card-back" />
     </div>
   );
 }
 
 function CardSlot() {
-  return <div className="war-card-slot" />;
+  return <div className="war-card-slot"><div className="card-back" /></div>;
 }
 
 export default function War() {
@@ -319,27 +322,62 @@ export default function War() {
         .war-slabel.wt { color: var(--retro-green); }
         .war-vs { font-family: 'Press Start 2P'; font-size: clamp(0.88rem,2.2vw,1.3rem); color: var(--retro-magenta); align-self: center; }
 
-        /* Cards */
+        /* Cards — reuse global card-front / card-back / card-corner etc. */
         .war-card {
           width: clamp(80px,16vw,132px); height: clamp(112px,22vw,185px);
-          background: var(--card-white); border: 3px solid var(--text-secondary);
-          display: flex; flex-direction: column; justify-content: space-between;
-          padding: 4px; position: relative; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+          position: relative;
           animation: warSlide 0.3s ease-out;
         }
         @keyframes warSlide { from { opacity:0; transform:translateY(-16px) scale(0.92); } to { opacity:1; transform:translateY(0) scale(1); } }
-        .war-card.red { color: var(--card-red); border-color: var(--retro-red); }
-        .war-card.black { color: var(--card-black); }
-        .wc-corner { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-        .wc-corner.bottom { transform: rotate(180deg); }
-        .wc-rank { font-family: 'Press Start 2P'; font-size: clamp(0.52rem,1.3vw,0.78rem); }
-        .wc-suit-sm { font-size: clamp(0.52rem,1.2vw,0.72rem); }
-        .wc-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(1.6rem,4.5vw,2.8rem); }
+        .war-card .card-front,
+        .war-card .card-back {
+          width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+        }
+        .war-card .card-front {
+          background-color: var(--card-white);
+          display: flex; flex-direction: column; justify-content: space-between;
+          padding: 6px; border: 4px solid var(--card-black);
+          box-shadow: 4px 4px 0px rgba(0,0,0,0.5); z-index: 2;
+        }
+        .war-card .card-front::before {
+          content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+          border: 2px solid rgba(0,0,0,0.15); pointer-events: none;
+        }
+        .war-card .card-back {
+          background: var(--bg-card);
+          border: 4px solid var(--retro-purple);
+          box-shadow: 4px 4px 0px rgba(153,102,255,0.4);
+          display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1;
+        }
+        .war-card .card-back::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
+          background-size: 16px 16px; opacity: 0.3;
+        }
+        .war-card .card-back::after {
+          content: ''; width: 30px; height: 30px;
+          border: 4px solid var(--retro-magenta); position: relative; z-index: 1;
+        }
         .war-card-slot {
           width: clamp(80px,16vw,132px); height: clamp(112px,22vw,185px);
           border: 3px dashed var(--retro-purple); opacity: 0.35;
-          background: repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(153,102,255,0.06) 6px,rgba(153,102,255,0.06) 12px);
+          position: relative; overflow: hidden;
           box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        }
+        .war-card-slot .card-back {
+          width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+          background: var(--bg-card);
+          border: none;
+          display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .war-card-slot .card-back::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
+          background-size: 12px 12px; opacity: 0.15;
+        }
+        .war-card-slot .card-back::after {
+          content: ''; width: 20px; height: 20px;
+          border: 3px solid var(--retro-magenta); position: relative; z-index: 1; opacity: 0.4;
         }
 
         /* War cards row */
@@ -347,8 +385,6 @@ export default function War() {
         .war-extra .war-card {
           width: clamp(52px,10vw,76px); height: clamp(72px,14vw,106px);
         }
-        .war-extra .war-card .wc-rank { font-size: clamp(0.42rem,1vw,0.58rem); }
-        .war-extra .war-card .wc-center { font-size: clamp(1.1rem,3vw,1.8rem); }
 
         .war-msg {
           font-family: 'Press Start 2P'; font-size: clamp(0.7rem,1.7vw,0.95rem);

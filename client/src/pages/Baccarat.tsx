@@ -87,22 +87,25 @@ function shouldReshuffle(shoe: Card[]): boolean {
 // Card sub-component
 function BacCard({ card }: { card: Card }) {
   return (
-    <div className={`bac-card ${card.isRed ? "red" : "black"}`}>
-      <div className="bac-card-corner top">
-        <span className="bac-rank">{card.value}</span>
-        <span className="bac-suit-sm">{card.suit}</span>
+    <div className="bac-card">
+      <div className={`card-front ${card.isRed ? "red" : "black"}`}>
+        <div className="card-corner top">
+          <span className="card-value">{card.value}</span>
+          <span className="card-suit-small">{card.suit}</span>
+        </div>
+        <span className="card-center">{card.suit}</span>
+        <div className="card-corner bottom">
+          <span className="card-value">{card.value}</span>
+          <span className="card-suit-small">{card.suit}</span>
+        </div>
       </div>
-      <div className="bac-center-suit">{card.suit}</div>
-      <div className="bac-card-corner bottom">
-        <span className="bac-rank">{card.value}</span>
-        <span className="bac-suit-sm">{card.suit}</span>
-      </div>
+      <div className="card-back" />
     </div>
   );
 }
 
 function CardSlot() {
-  return <div className="bac-card-slot" />;
+  return <div className="bac-card-slot"><div className="card-back" /></div>;
 }
 
 export default function Baccarat() {
@@ -381,27 +384,62 @@ export default function Baccarat() {
         .bac-score.ws { border-color: var(--retro-green); color: var(--retro-green); }
         .bac-vs { font-family: 'Press Start 2P'; font-size: clamp(0.78rem,1.8vw,1.1rem); color: var(--retro-magenta); align-self: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 
-        /* Cards */
+        /* Cards — reuse global card-front / card-back / card-corner etc. */
         .bac-card {
           width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
-          background: var(--card-white); border: 3px solid var(--text-secondary);
-          display: flex; flex-direction: column; justify-content: space-between;
-          padding: 3px; position: relative; box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
+          position: relative;
           animation: bacSlide 0.3s ease-out;
         }
         @keyframes bacSlide { from { opacity:0; transform:translateY(-16px) scale(0.92); } to { opacity:1; transform:translateY(0) scale(1); } }
-        .bac-card.red { color: var(--card-red); border-color: var(--retro-red); }
-        .bac-card.black { color: var(--card-black); }
-        .bac-card-corner { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-        .bac-card-corner.bottom { transform: rotate(180deg); }
-        .bac-rank { font-family: 'Press Start 2P'; font-size: clamp(0.48rem,1.2vw,0.72rem); }
-        .bac-suit-sm { font-size: clamp(0.48rem,1.1vw,0.68rem); }
-        .bac-center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: clamp(1.3rem,3.5vw,2.2rem); }
+        .bac-card .card-front,
+        .bac-card .card-back {
+          width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+        }
+        .bac-card .card-front {
+          background-color: var(--card-white);
+          display: flex; flex-direction: column; justify-content: space-between;
+          padding: 6px; border: 4px solid var(--card-black);
+          box-shadow: 4px 4px 0px rgba(0,0,0,0.5); z-index: 2;
+        }
+        .bac-card .card-front::before {
+          content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+          border: 2px solid rgba(0,0,0,0.15); pointer-events: none;
+        }
+        .bac-card .card-back {
+          background: var(--bg-card);
+          border: 4px solid var(--retro-purple);
+          box-shadow: 4px 4px 0px rgba(153,102,255,0.4);
+          display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1;
+        }
+        .bac-card .card-back::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
+          background-size: 16px 16px; opacity: 0.3;
+        }
+        .bac-card .card-back::after {
+          content: ''; width: 30px; height: 30px;
+          border: 4px solid var(--retro-magenta); position: relative; z-index: 1;
+        }
         .bac-card-slot {
           width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
           border: 3px dashed var(--retro-purple); opacity: 0.35;
-          background: repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(153,102,255,0.06) 6px,rgba(153,102,255,0.06) 12px);
+          position: relative; overflow: hidden;
           box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        }
+        .bac-card-slot .card-back {
+          width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+          background: var(--bg-card);
+          border: none;
+          display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .bac-card-slot .card-back::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
+          background-size: 12px 12px; opacity: 0.15;
+        }
+        .bac-card-slot .card-back::after {
+          content: ''; width: 20px; height: 20px;
+          border: 3px solid var(--retro-magenta); position: relative; z-index: 1; opacity: 0.4;
         }
 
         /* Message */
