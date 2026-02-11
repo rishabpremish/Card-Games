@@ -4,6 +4,7 @@ import { useWallet } from "../hooks/useWallet";
 import Settings from "../components/Settings";
 import AchievementsPanel from "../components/AchievementsPanel";
 import DailyBonus from "../components/DailyBonus";
+import QueryErrorBoundary from "../components/QueryErrorBoundary";
 import SessionStatsPanel from "../components/SessionStatsPanel";
 
 export default function Home() {
@@ -107,7 +108,9 @@ export default function Home() {
       <Settings />
       
       {/* New features */}
-      <DailyBonus />
+      <QueryErrorBoundary>
+        <DailyBonus />
+      </QueryErrorBoundary>
       <AchievementsPanel />
       <SessionStatsPanel />
     </div>
