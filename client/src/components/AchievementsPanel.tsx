@@ -63,8 +63,21 @@ export default function AchievementsPanel() {
           boxShadow: "8px 8px 0px var(--retro-magenta)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontFamily: "'Press Start 2P', cursive", color: "var(--retro-cyan)", fontSize: "1.2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "'Press Start 2P', cursive",
+              color: "var(--retro-cyan)",
+              fontSize: "1.2rem",
+            }}
+          >
             🏆 Achievements
           </h2>
           <button
@@ -132,14 +145,22 @@ export default function AchievementsPanel() {
                   alignItems: "center",
                   gap: "15px",
                   padding: "15px",
-                  background: unlocked ? "rgba(0, 255, 0, 0.1)" : "rgba(0, 0, 0, 0.3)",
+                  background: unlocked
+                    ? "rgba(0, 255, 0, 0.1)"
+                    : "rgba(0, 0, 0, 0.3)",
                   border: `2px solid ${unlocked ? rarityColor : "#444"}`,
                   opacity: unlocked ? 1 : 0.6,
                 }}
               >
                 <span style={{ fontSize: "2rem" }}>{achievement.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
                     <span
                       style={{
                         fontFamily: "'Press Start 2P', cursive",

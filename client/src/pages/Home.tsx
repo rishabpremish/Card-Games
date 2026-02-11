@@ -37,7 +37,13 @@ export default function Home() {
             textAlign: "center",
           }}
         >
-          <div style={{ marginBottom: "5px", color: "var(--text-secondary)", fontSize: "0.4rem" }}>
+          <div
+            style={{
+              marginBottom: "5px",
+              color: "var(--text-secondary)",
+              fontSize: "0.4rem",
+            }}
+          >
             {user?.username || "Player"}
           </div>
           <div style={{ fontSize: "0.7rem" }}>${wallet}</div>

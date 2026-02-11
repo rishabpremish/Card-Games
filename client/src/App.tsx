@@ -26,9 +26,28 @@ import "./auth.css";
 function QuickMenu() {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "fixed", bottom: "20px", right: "20px", zIndex: 150, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+    <div
+      style={{
+        position: "fixed",
+        bottom: "20px",
+        right: "20px",
+        zIndex: 150,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+      }}
+    >
       {open && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px", width: "180px", animation: "qmSlideUp 0.2s ease-out" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            marginBottom: "10px",
+            width: "180px",
+            animation: "qmSlideUp 0.2s ease-out",
+          }}
+        >
           <ChallengesPanel />
           <LoanPanel />
           <FriendsPanel />
