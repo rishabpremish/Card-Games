@@ -21,8 +21,26 @@ const PAYOUTS: Record<string, number[]> = {
   "🍒": [0, 0, 1, 2, 10],
 };
 
+// Weighted virtual reel – casino-style symbol weighting.
+// Low-value symbols appear far more often than high-value ones,
+// giving an approximate RTP of ~91% over millions of spins.
+const WEIGHTED_REEL: string[] = [];
+const SYMBOL_WEIGHTS: Record<string, number> = {
+  "🍒": 30, // most common
+  "🍋": 25,
+  "🍊": 20,
+  "🍇": 14,
+  "🔔": 10,
+  "⭐": 6,
+  "💎": 3,
+  "7️⃣": 1, // rarest – jackpot symbol
+};
+for (const [sym, weight] of Object.entries(SYMBOL_WEIGHTS)) {
+  for (let i = 0; i < weight; i++) WEIGHTED_REEL.push(sym);
+}
+
 function getRandomSymbol(): string {
-  return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  return WEIGHTED_REEL[Math.floor(Math.random() * WEIGHTED_REEL.length)];
 }
 
 export default function Slots() {
@@ -295,12 +313,20 @@ export default function Slots() {
         .slots-btn.clr { border-color: #888; color: #aaa; }
         .slots-btn.spin-btn {
           border-color: var(--retro-green); color: var(--retro-green);
-          padding: clamp(12px,1.8vh,20px) clamp(30px,4.5vw,56px);
-          font-size: clamp(0.75rem,1.8vw,1.1rem);
+          padding: clamp(12px,1.8vh,20px) clamp(24px,3.5vw,40px);
+          font-size: clamp(0.65rem,1.5vw,0.9rem);
+          min-width: clamp(120px,18vw,180px);
+          text-align: center;
         }
         .slots-btn.spin-btn:hover:not(:disabled) { background: var(--retro-green); color: black; }
         .slots-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .slots-btn.auto { border-color: var(--retro-magenta); color: var(--retro-magenta); }
+        .slots-btn.auto {
+          border-color: var(--retro-magenta); color: var(--retro-magenta);
+          padding: clamp(12px,1.8vh,20px) clamp(24px,3.5vw,40px);
+          font-size: clamp(0.65rem,1.5vw,0.9rem);
+          min-width: clamp(120px,18vw,180px);
+          text-align: center;
+        }
         .slots-btn.auto.on { background: var(--retro-magenta); color: white; }
 
         .slots-action-row { display: flex; gap: 10px; align-items: center; }

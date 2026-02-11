@@ -3666,6 +3666,206 @@ body.theme-gameboy .bg-decoration::before {
   display: none;
 }
 
+/* Retrowave Theme */
+body.theme-retrowave {
+  --bg-primary: #1a0a2e;
+  --bg-secondary: #2d1450;
+  --bg-card: #3a1d6e;
+  --retro-cyan: #00e5ff;
+  --retro-magenta: #e040fb;
+  --retro-yellow: #ffea00;
+  --retro-green: #76ff03;
+  --retro-red: #ff1744;
+  --retro-orange: #ff9100;
+  --retro-blue: #00b0ff;
+  --retro-purple: #d500f9;
+  --card-white: #f3e5f5;
+  --card-red: #ff1744;
+  --card-black: #1a0a2e;
+  --text-primary: #f3e5f5;
+  --text-secondary: #9575cd;
+}
+
+/* Oceanic Theme */
+body.theme-oceanic {
+  --bg-primary: #1b2838;
+  --bg-secondary: #263238;
+  --bg-card: #37474f;
+  --retro-cyan: #4fc3f7;
+  --retro-magenta: #f48fb1;
+  --retro-yellow: #ffcc80;
+  --retro-green: #c5e1a5;
+  --retro-red: #ef9a9a;
+  --retro-orange: #ffab91;
+  --retro-blue: #0097a7;
+  --retro-purple: #80cbc4;
+  --card-white: #eceff1;
+  --card-red: #ef5350;
+  --card-black: #1b2838;
+  --text-primary: #eceff1;
+  --text-secondary: #78909c;
+}
+
+/* Volcano Theme */
+body.theme-volcano {
+  --bg-primary: #1a0000;
+  --bg-secondary: #2d0000;
+  --bg-card: #440000;
+  --retro-cyan: #ffab40;
+  --retro-magenta: #ff6e40;
+  --retro-yellow: #ffd740;
+  --retro-green: #fff176;
+  --retro-red: #ff3d00;
+  --retro-orange: #ff6e40;
+  --retro-blue: #ffab40;
+  --retro-purple: #ff8a65;
+  --card-white: #fff3e0;
+  --card-red: #ff3d00;
+  --card-black: #1a0000;
+  --text-primary: #fff3e0;
+  --text-secondary: #bf360c;
+}
+
+/* Forest Theme */
+body.theme-forest {
+  --bg-primary: #1b2d1b;
+  --bg-secondary: #2e4a2e;
+  --bg-card: #3e5e3e;
+  --retro-cyan: #a5d6a7;
+  --retro-magenta: #ce93d8;
+  --retro-yellow: #fff9c4;
+  --retro-green: #66bb6a;
+  --retro-red: #ef5350;
+  --retro-orange: #ffb74d;
+  --retro-blue: #4db6ac;
+  --retro-purple: #ab47bc;
+  --card-white: #e8f5e9;
+  --card-red: #e53935;
+  --card-black: #1b2d1b;
+  --text-primary: #e8f5e9;
+  --text-secondary: #81c784;
+}
+
+/* Midnight Theme */
+body.theme-midnight {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #121230;
+  --bg-card: #1a1a44;
+  --retro-cyan: #7986cb;
+  --retro-magenta: #ab47bc;
+  --retro-yellow: #c5cae9;
+  --retro-green: #9fa8da;
+  --retro-red: #ef5350;
+  --retro-orange: #ffab91;
+  --retro-blue: #3949ab;
+  --retro-purple: #5c6bc0;
+  --card-white: #e8eaf6;
+  --card-red: #e53935;
+  --card-black: #0a0a1a;
+  --text-primary: #c5cae9;
+  --text-secondary: #5c6bc0;
+}
+
+/* Sakura Theme */
+body.theme-sakura {
+  --bg-primary: #1a0a14;
+  --bg-secondary: #2d1422;
+  --bg-card: #3d1e32;
+  --retro-cyan: #f48fb1;
+  --retro-magenta: #ec407a;
+  --retro-yellow: #fce4ec;
+  --retro-green: #f06292;
+  --retro-red: #e91e63;
+  --retro-orange: #ff80ab;
+  --retro-blue: #f48fb1;
+  --retro-purple: #ce93d8;
+  --card-white: #fce4ec;
+  --card-red: #e91e63;
+  --card-black: #1a0a14;
+  --text-primary: #fce4ec;
+  --text-secondary: #f48fb1;
+}
+
+/* Amber Theme */
+body.theme-amber {
+  --bg-primary: #1a1400;
+  --bg-secondary: #2d2200;
+  --bg-card: #3d3000;
+  --retro-cyan: #ffca28;
+  --retro-magenta: #ff8f00;
+  --retro-yellow: #fff8e1;
+  --retro-green: #ffd54f;
+  --retro-red: #ff6f00;
+  --retro-orange: #ffa000;
+  --retro-blue: #ffb300;
+  --retro-purple: #ff8f00;
+  --card-white: #fff8e1;
+  --card-red: #ff6f00;
+  --card-black: #1a1400;
+  --text-primary: #fff8e1;
+  --text-secondary: #ffb300;
+}
+
+/* Arctic Theme */
+body.theme-arctic {
+  --bg-primary: #0d1b2a;
+  --bg-secondary: #1b2838;
+  --bg-card: #263848;
+  --retro-cyan: #81d4fa;
+  --retro-magenta: #b39ddb;
+  --retro-yellow: #e1f5fe;
+  --retro-green: #90caf9;
+  --retro-red: #ef9a9a;
+  --retro-orange: #b3e5fc;
+  --retro-blue: #42a5f5;
+  --retro-purple: #7e57c2;
+  --card-white: #e1f5fe;
+  --card-red: #e57373;
+  --card-black: #0d1b2a;
+  --text-primary: #e1f5fe;
+  --text-secondary: #64b5f6;
+}
+
+/* Neon Night Theme */
+body.theme-neonnight {
+  --bg-primary: #0a0014;
+  --bg-secondary: #14002a;
+  --bg-card: #1e003e;
+  --retro-cyan: #18ffff;
+  --retro-magenta: #e040fb;
+  --retro-yellow: #ffff00;
+  --retro-green: #69f0ae;
+  --retro-red: #ff1744;
+  --retro-orange: #ff9100;
+  --retro-blue: #2979ff;
+  --retro-purple: #7c4dff;
+  --card-white: #ede7f6;
+  --card-red: #ff1744;
+  --card-black: #0a0014;
+  --text-primary: #ede7f6;
+  --text-secondary: #b388ff;
+}
+
+/* Desert Theme */
+body.theme-desert {
+  --bg-primary: #2c1a0e;
+  --bg-secondary: #3e2a1a;
+  --bg-card: #4e3a2a;
+  --retro-cyan: #e8c39e;
+  --retro-magenta: #c19a6b;
+  --retro-yellow: #f5deb3;
+  --retro-green: #d4a574;
+  --retro-red: #a0522d;
+  --retro-orange: #cd853f;
+  --retro-blue: #deb887;
+  --retro-purple: #bc8f8f;
+  --card-white: #faebd7;
+  --card-red: #a0522d;
+  --card-black: #2c1a0e;
+  --text-primary: #faebd7;
+  --text-secondary: #d2b48c;
+}
+
 /* ============================================
    GAMBLING LOGIC - STAKE & MULTIPLIER DISPLAY
    Positioned on the right side of the screen
