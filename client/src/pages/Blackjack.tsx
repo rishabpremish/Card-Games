@@ -1610,8 +1610,21 @@ export default function Blackjack() {
 
 function HowToPlay() {
   const [visible, setVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+    const onPointerDown = (e: MouseEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setVisible(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [visible]);
+
   return (
-    <div className="instructions">
+    <div className="instructions" ref={containerRef}>
       <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
         How to Play
       </button>

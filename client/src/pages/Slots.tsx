@@ -38,8 +38,40 @@ for (const [sym, weight] of Object.entries(SYMBOL_WEIGHTS)) {
   for (let i = 0; i < weight; i++) WEIGHTED_REEL.push(sym);
 }
 
+// About 1 win every 3–4 spins.
+const HIT_FREQUENCY = 0.28;
+
+function shuffled<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function getRandomSymbol(): string {
   return WEIGHTED_REEL[Math.floor(Math.random() * WEIGHTED_REEL.length)];
+}
+
+function generateFinalResults(): string[] {
+  const shouldHit = Math.random() < HIT_FREQUENCY;
+
+  // Force a clean loss by ensuring all 5 symbols are unique.
+  if (!shouldHit) {
+    const uniqueSymbols = shuffled(Object.keys(SYMBOL_WEIGHTS));
+    return uniqueSymbols.slice(0, 5);
+  }
+
+  // Generate a hit: ensure at least one match exists.
+  const results = Array.from({ length: 5 }, () => getRandomSymbol());
+  if (new Set(results).size === results.length) {
+    const i = Math.floor(Math.random() * results.length);
+    let j = Math.floor(Math.random() * results.length);
+    while (j === i) j = Math.floor(Math.random() * results.length);
+    results[j] = results[i];
+  }
+  return results;
 }
 
 export default function Slots() {
@@ -72,6 +104,7 @@ export default function Slots() {
   const [autoSpin, setAutoSpin] = useState(false);
   const [showPaytable, setShowPaytable] = useState(false);
   const autoSpinRef = useRef(false);
+  const autoSpinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spinTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
@@ -106,7 +139,7 @@ export default function Slots() {
     playSound("chip");
 
     // Generate final results
-    const finalResults = Array.from({ length: 5 }, () => getRandomSymbol());
+    const finalResults = generateFinalResults();
 
     // Animate reels
     const animDuration = [600, 900, 1200, 1500, 1800];
@@ -182,7 +215,11 @@ export default function Slots() {
 
       // Auto-spin
       if (autoSpinRef.current) {
-        setTimeout(() => {
+        if (autoSpinTimeoutRef.current) {
+          clearTimeout(autoSpinTimeoutRef.current);
+          autoSpinTimeoutRef.current = null;
+        }
+        autoSpinTimeoutRef.current = setTimeout(() => {
           if (autoSpinRef.current) spin();
         }, 1500);
       }
@@ -193,6 +230,10 @@ export default function Slots() {
   useEffect(() => {
     return () => {
       spinTimers.current.forEach(clearTimeout);
+      if (autoSpinTimeoutRef.current) {
+        clearTimeout(autoSpinTimeoutRef.current);
+        autoSpinTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -443,8 +484,17 @@ export default function Slots() {
           </button>
           <button
             className={`slots-btn auto ${autoSpin ? "on" : ""}`}
-            onClick={() => setAutoSpin((prev) => !prev)}
-            disabled={spinning}
+            onClick={() => {
+              setAutoSpin((prev) => {
+                const next = !prev;
+                autoSpinRef.current = next;
+                if (!next && autoSpinTimeoutRef.current) {
+                  clearTimeout(autoSpinTimeoutRef.current);
+                  autoSpinTimeoutRef.current = null;
+                }
+                return next;
+              });
+            }}
           >
             AUTO {autoSpin ? "ON" : "OFF"}
           </button>
@@ -458,22 +508,41 @@ export default function Slots() {
 
 function HowToPlay() {
   const [visible, setVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+    const onPointerDown = (e: MouseEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setVisible(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [visible]);
+
   return (
-    <div className="instructions">
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+    <div className="instructions" ref={containerRef}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
           <li>Select chips to set your bet amount</li>
-          <li>Press <strong>SPIN</strong> to spin the 5 reels</li>
+          <li>
+            Press <strong>SPIN</strong> to spin the 5 reels
+          </li>
           <li>Match 2 or more symbols across the reels to win</li>
           <li>Higher-value symbols (7️⃣, 💎, ⭐) pay more</li>
           <li>More matching symbols = bigger multiplier</li>
         </ol>
         <p className="note">
-          Tip: Use AUTO to spin automatically. Check the Payouts table for exact multipliers!
+          Tip: Use AUTO to spin automatically. Check the Payouts table for exact
+          multipliers!
         </p>
       </div>
     </div>
