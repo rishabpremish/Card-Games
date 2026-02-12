@@ -633,6 +633,282 @@ body::before {
   z-index: 1;
 }
 
+/* Shop card-back previews (and reusable patterns) */
+.cardback-preview {
+  width: 92px;
+  height: 128px;
+  background: var(--bg-card);
+  border: 4px solid var(--retro-purple);
+  box-shadow: 4px 4px 0px rgba(153, 102, 255, 0.35);
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.cardback-preview::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-conic-gradient(
+    var(--retro-purple) 0deg 90deg,
+    var(--bg-card) 90deg 180deg
+  );
+  background-size: 14px 14px;
+  opacity: 0.32;
+}
+
+.cardback-preview::after {
+  content: "";
+  width: 28px;
+  height: 28px;
+  border: 4px solid var(--retro-magenta);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+/* ── Card Back Variants (body class controls in-game, class controls preview) ── */
+
+/* Neon Grid */
+body.cardback_neon_grid .card-back,
+.cardback-preview.cardback_neon_grid {
+  border-color: var(--retro-cyan) !important;
+  box-shadow: 4px 4px 0px rgba(0, 255, 247, 0.25) !important;
+  background: linear-gradient(
+      135deg,
+      rgba(0, 255, 247, 0.14),
+      rgba(255, 0, 255, 0.10)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_neon_grid .card-back::before,
+.cardback-preview.cardback_neon_grid::before {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 247, 0.25) 0 2px,
+      transparent 2px 12px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 0, 255, 0.20) 0 2px,
+      transparent 2px 12px
+    ) !important;
+  opacity: 0.55 !important;
+}
+body.cardback_neon_grid .card-back::after,
+.cardback-preview.cardback_neon_grid::after {
+  border-color: var(--retro-yellow) !important;
+}
+
+/* Cyber Circuit */
+body.cardback_cyber_circuit .card-back,
+.cardback-preview.cardback_cyber_circuit {
+  border-color: var(--retro-green) !important;
+  box-shadow: 4px 4px 0px rgba(0, 255, 136, 0.22) !important;
+  background: linear-gradient(
+      180deg,
+      rgba(0, 255, 136, 0.10),
+      rgba(0, 0, 0, 0)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_cyber_circuit .card-back::before,
+.cardback-preview.cardback_cyber_circuit::before {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(0, 255, 136, 0.22) 0 1px,
+      transparent 1px 10px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 255, 247, 0.18) 0 1px,
+      transparent 1px 12px
+    ) !important;
+  opacity: 0.55 !important;
+}
+body.cardback_cyber_circuit .card-back::after,
+.cardback-preview.cardback_cyber_circuit::after {
+  border-color: var(--retro-cyan) !important;
+}
+
+/* Arcade Sun */
+body.cardback_arcade_sun .card-back,
+.cardback-preview.cardback_arcade_sun {
+  border-color: var(--retro-magenta) !important;
+  box-shadow: 4px 4px 0px rgba(255, 0, 255, 0.18) !important;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 0, 255, 0.12),
+      rgba(255, 215, 0, 0.10)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_arcade_sun .card-back::before,
+.cardback-preview.cardback_arcade_sun::before {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 215, 0, 0.22) 0 6px,
+      transparent 6px 14px
+    ) !important;
+  opacity: 0.55 !important;
+}
+body.cardback_arcade_sun .card-back::after,
+.cardback-preview.cardback_arcade_sun::after {
+  border-color: var(--retro-cyan) !important;
+}
+
+/* Holo Diamond */
+body.cardback_holo_diamond .card-back,
+.cardback-preview.cardback_holo_diamond {
+  border-color: var(--retro-purple) !important;
+  box-shadow: 4px 4px 0px rgba(153, 102, 255, 0.26) !important;
+  background: linear-gradient(
+      135deg,
+      rgba(0, 255, 247, 0.10),
+      rgba(153, 102, 255, 0.10),
+      rgba(255, 0, 255, 0.08)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_holo_diamond .card-back::before,
+.cardback-preview.cardback_holo_diamond::before {
+  background:
+    repeating-linear-gradient(
+      60deg,
+      rgba(255, 255, 255, 0.14) 0 2px,
+      transparent 2px 14px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      rgba(255, 255, 255, 0.10) 0 2px,
+      transparent 2px 14px
+    ) !important;
+  opacity: 0.45 !important;
+}
+body.cardback_holo_diamond .card-back::after,
+.cardback-preview.cardback_holo_diamond::after {
+  border-color: var(--retro-green) !important;
+}
+
+/* Royal Flush */
+body.cardback_royal_flush .card-back,
+.cardback-preview.cardback_royal_flush {
+  border-color: var(--retro-yellow) !important;
+  box-shadow: 4px 4px 0px rgba(255, 215, 0, 0.18) !important;
+  background: linear-gradient(
+      135deg,
+      rgba(255, 215, 0, 0.12),
+      rgba(0, 0, 0, 0)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_royal_flush .card-back::before,
+.cardback-preview.cardback_royal_flush::before {
+  background: repeating-conic-gradient(
+    rgba(255, 215, 0, 0.18) 0deg 30deg,
+    transparent 30deg 60deg
+  ) !important;
+  background-size: 22px 22px;
+  opacity: 0.55 !important;
+}
+body.cardback_royal_flush .card-back::after,
+.cardback-preview.cardback_royal_flush::after {
+  border-color: var(--retro-magenta) !important;
+}
+
+/* Glitch Wave */
+body.cardback_glitch_wave .card-back,
+.cardback-preview.cardback_glitch_wave {
+  border-color: var(--retro-cyan) !important;
+  box-shadow: 4px 4px 0px rgba(0, 255, 247, 0.22) !important;
+  background: linear-gradient(
+      180deg,
+      rgba(0, 255, 247, 0.08),
+      rgba(255, 0, 255, 0.08)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_glitch_wave .card-back::before,
+.cardback-preview.cardback_glitch_wave::before {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.14) 0 2px,
+      transparent 2px 8px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 0, 255, 0.12) 0 3px,
+      transparent 3px 18px
+    ) !important;
+  opacity: 0.55 !important;
+}
+body.cardback_glitch_wave .card-back::after,
+.cardback-preview.cardback_glitch_wave::after {
+  border-color: var(--retro-purple) !important;
+}
+
+/* Void Vortex */
+body.cardback_void_vortex .card-back,
+.cardback-preview.cardback_void_vortex {
+  border-color: var(--retro-purple) !important;
+  box-shadow: 4px 4px 0px rgba(153, 102, 255, 0.20) !important;
+  background: radial-gradient(
+      circle at 50% 45%,
+      rgba(153, 102, 255, 0.16),
+      rgba(0, 0, 0, 0) 55%
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_void_vortex .card-back::before,
+.cardback-preview.cardback_void_vortex::before {
+  background: repeating-radial-gradient(
+    circle at 50% 45%,
+    rgba(255, 0, 255, 0.10) 0 6px,
+    transparent 6px 14px
+  ) !important;
+  opacity: 0.55 !important;
+}
+body.cardback_void_vortex .card-back::after,
+.cardback-preview.cardback_void_vortex::after {
+  border-color: var(--retro-cyan) !important;
+}
+
+/* Gold Vault */
+body.cardback_gold_vault .card-back,
+.cardback-preview.cardback_gold_vault {
+  border-color: var(--retro-yellow) !important;
+  box-shadow: 4px 4px 0px rgba(255, 215, 0, 0.22) !important;
+  background: linear-gradient(
+      135deg,
+      rgba(255, 215, 0, 0.16),
+      rgba(255, 140, 0, 0.10)
+    ),
+    var(--bg-card) !important;
+}
+body.cardback_gold_vault .card-back::before,
+.cardback-preview.cardback_gold_vault::before {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 215, 0, 0.18) 0 4px,
+      transparent 4px 12px
+    ) !important;
+  opacity: 0.60 !important;
+}
+body.cardback_gold_vault .card-back::after,
+.cardback-preview.cardback_gold_vault::after {
+  border-color: var(--retro-green) !important;
+}
+
 /* Flipped/Locked card */
 .card.flipped {
   transform: rotateY(180deg);

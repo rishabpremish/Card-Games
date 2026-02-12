@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
@@ -27,7 +26,6 @@ function rollDie(): number {
 export default function Craps() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { incrementWinStreak, resetWinStreak, incrementSessionWins } =
     useAchievements();
@@ -73,7 +71,6 @@ export default function Craps() {
 
     setRolling(true);
     setMessage("");
-    playSound("chip");
 
     // Animate dice
     let ticks = 0;
@@ -161,7 +158,6 @@ export default function Craps() {
     const winAmt = betType === "field" ? stagedBet * 2 : stagedBet * 2;
     setMessage(msg + ` +$${stagedBet}`);
     setResultType("win");
-    playSound("win");
     triggerConfetti({ intensity: "medium" });
     incrementWinStreak();
     incrementSessionWins();
@@ -169,6 +165,10 @@ export default function Craps() {
     setHistory((h) => [...h, { total, outcome: "WIN" }]);
     setPhase("result");
     setPoint(null);
+    setTimeout(() => {
+      setDie1(0);
+      setDie2(0);
+    }, 2500);
     try {
       await addWinnings(winAmt, "Craps");
     } catch {}
@@ -178,7 +178,6 @@ export default function Craps() {
     const winAmt = stagedBet * mult;
     setMessage(`Field ${total}! +$${winAmt - stagedBet} (${mult - 1}:1)`);
     setResultType("win");
-    playSound("win");
     triggerConfetti({ intensity: mult >= 3 ? "high" : "medium" });
     incrementWinStreak();
     incrementSessionWins();
@@ -186,6 +185,10 @@ export default function Craps() {
     setHistory((h) => [...h, { total, outcome: "WIN" }]);
     setPhase("result");
     setPoint(null);
+    setTimeout(() => {
+      setDie1(0);
+      setDie2(0);
+    }, 2500);
     try {
       await addWinnings(winAmt, "Craps");
     } catch {}
@@ -194,12 +197,15 @@ export default function Craps() {
   const lose = (total: number, msg: string) => {
     setMessage(msg + ` -$${stagedBet}`);
     setResultType("lose");
-    playSound("lose");
     resetWinStreak();
     recordBet("craps", stagedBet, "loss");
     setHistory((h) => [...h, { total, outcome: "LOSE" }]);
     setPhase("result");
     setPoint(null);
+    setTimeout(() => {
+      setDie1(0);
+      setDie2(0);
+    }, 2500);
   };
 
   const push = async (total: number, msg: string) => {
@@ -208,6 +214,10 @@ export default function Craps() {
     setHistory((h) => [...h, { total, outcome: "PUSH" }]);
     setPhase("result");
     setPoint(null);
+    setTimeout(() => {
+      setDie1(0);
+      setDie2(0);
+    }, 2500);
     try {
       await addWinnings(stagedBet, "Craps");
     } catch {}
@@ -526,17 +536,32 @@ function HowToPlay() {
 
   return (
     <div className="instructions" ref={containerRef}>
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
-          <li>Choose a bet type: <strong>Pass</strong>, <strong>Don't Pass</strong>, or <strong>Field</strong></li>
-          <li>Place your chips and press <strong>ROLL</strong></li>
-          <li><strong>Pass:</strong> Win on 7/11 come-out, lose on 2/3/12. Otherwise a point is set</li>
-          <li><strong>Point phase:</strong> Roll the point again to win, 7 to lose</li>
-          <li><strong>Field:</strong> Win on 2/3/4/9/10/11/12; 2 and 12 pay triple</li>
+          <li>
+            Choose a bet type: <strong>Pass</strong>,{" "}
+            <strong>Don't Pass</strong>, or <strong>Field</strong>
+          </li>
+          <li>
+            Place your chips and press <strong>ROLL</strong>
+          </li>
+          <li>
+            <strong>Pass:</strong> Win on 7/11 come-out, lose on 2/3/12.
+            Otherwise a point is set
+          </li>
+          <li>
+            <strong>Point phase:</strong> Roll the point again to win, 7 to lose
+          </li>
+          <li>
+            <strong>Field:</strong> Win on 2/3/4/9/10/11/12; 2 and 12 pay triple
+          </li>
         </ol>
         <p className="note">
           Don't Pass is the opposite of Pass — you win when the shooter loses!

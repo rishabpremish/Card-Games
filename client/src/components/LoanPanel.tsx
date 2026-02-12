@@ -8,7 +8,8 @@ const LOAN_AMOUNTS = [100, 250, 500, 1000, 2500, 5000];
 export default function LoanPanel() {
   const { user } = useAuth();
   const { wallet: balance } = useWallet();
-  const { activeLoans, takeLoan, repayLoan } = useEconomy();
+  const { activeLoans, takeLoan, repayLoan, extendLoan, reduceLoanPenalty } =
+    useEconomy();
   const [isOpen, setIsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -39,6 +40,32 @@ export default function LoanPanel() {
         setMsg(
           `Repaid $${(result as any).repaid}. Remaining: $${(result as any).remaining}`,
         );
+    } catch (e: any) {
+      setMsg(e.message || "Failed");
+    }
+    setBusy(false);
+  };
+
+  const handleExtend = async () => {
+    if (!currentLoan) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await extendLoan(currentLoan._id);
+      setMsg(`Extended 7 days. Fee: $${(res as any).fee}`);
+    } catch (e: any) {
+      setMsg(e.message || "Failed");
+    }
+    setBusy(false);
+  };
+
+  const handleReducePenalty = async () => {
+    if (!currentLoan) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await reduceLoanPenalty(currentLoan._id);
+      setMsg(`Penalty reduced to 5%. Fee: $${(res as any).fee}`);
     } catch (e: any) {
       setMsg(e.message || "Failed");
     }
@@ -130,10 +157,7 @@ export default function LoanPanel() {
           >
             🏦 Loan Shark
           </h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="retro-close-btn"
-          >
+          <button onClick={() => setIsOpen(false)} className="retro-close-btn">
             ✕
           </button>
         </div>
@@ -279,6 +303,45 @@ export default function LoanPanel() {
                 {new Date(currentLoan.dueAt).toLocaleDateString()}
               </span>
             </div>
+
+            <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+              <button
+                onClick={handleExtend}
+                disabled={busy}
+                style={{
+                  flex: 1,
+                  background: "rgba(0,255,247,0.12)",
+                  border: "2px solid var(--retro-cyan)",
+                  color: "var(--retro-cyan)",
+                  padding: "8px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.45rem",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  borderRadius: "4px",
+                  opacity: busy ? 0.6 : 1,
+                }}
+              >
+                +7 DAYS
+              </button>
+              <button
+                onClick={handleReducePenalty}
+                disabled={busy}
+                style={{
+                  flex: 1,
+                  background: "rgba(255,215,0,0.12)",
+                  border: "2px solid #ffd700",
+                  color: "#ffd700",
+                  padding: "8px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.45rem",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  borderRadius: "4px",
+                  opacity: busy ? 0.6 : 1,
+                }}
+              >
+                REDUCE FEE
+              </button>
+            </div>
             {currentLoan.dueAt < Date.now() && (
               <div
                 style={{
@@ -291,7 +354,8 @@ export default function LoanPanel() {
                 }}
               >
                 <span style={{ color: "#ff4444", fontSize: "0.45rem" }}>
-                  ⚠️ OVERDUE! 10% of your balance is deducted daily until repaid.
+                  ⚠️ OVERDUE! 10% of your balance is deducted daily until
+                  repaid.
                 </span>
               </div>
             )}

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
@@ -77,7 +76,6 @@ function generateFinalResults(): string[] {
 export default function Slots() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const {
     unlockAchievement,
@@ -136,7 +134,6 @@ export default function Slots() {
     setSpinning(true);
     setMessage("");
     setWinAmount(0);
-    playSound("chip");
 
     // Generate final results
     const finalResults = generateFinalResults();
@@ -162,7 +159,6 @@ export default function Slots() {
           n[r] = finalResults[r];
           return n;
         });
-        playSound("deal");
       }, animDuration[r]);
       spinTimers.current.push(timer);
     }
@@ -192,7 +188,6 @@ export default function Slots() {
           `${bestSymbol} x${Object.entries(counts).find(([s]) => s === bestSymbol)?.[1]}! +$${win}`,
         );
         setResultType("win");
-        playSound("win");
         triggerConfetti({
           intensity: bestMultiplier >= 50 ? "high" : "medium",
         });
@@ -206,7 +201,6 @@ export default function Slots() {
       } else {
         setMessage(`No match. -$${stagedBet}`);
         setResultType("lose");
-        playSound("lose");
         resetWinStreak();
         recordBet("slots", stagedBet, "loss");
       }

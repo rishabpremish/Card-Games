@@ -10,7 +10,6 @@ import {
 } from "../utils/gamblingLogic";
 import { useWallet } from "../hooks/useWallet";
 import { useAuth } from "../hooks/useAuth";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useScreenShake } from "../hooks/useScreenShake";
 import { useAchievements } from "../hooks/useAchievements";
@@ -632,7 +631,6 @@ export default function HigherLowerGame() {
   const { user } = useAuth();
 
   // New hooks for fun features
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { triggerShake } = useScreenShake();
   const {
@@ -795,7 +793,6 @@ export default function HigherLowerGame() {
           resetGame();
 
           // Fun features on loss
-          playSound("lose");
           triggerShake("medium");
           recordBet("higherLower", currentBet, "loss");
           resetWinStreak();
@@ -819,7 +816,6 @@ export default function HigherLowerGame() {
           setShowCashOut(false);
 
           // Fun features on big win
-          playSound("win");
           triggerConfetti({ intensity: "high" });
           unlockAchievement("clear_the_deck");
           recordBet("higherLower", currentBet, "win");
@@ -924,7 +920,6 @@ export default function HigherLowerGame() {
       setIsProcessing(true);
 
       // Play card deal sound
-      playSound("deal");
 
       const currentCard =
         grid[stackIndex].cards[grid[stackIndex].cards.length - 1];
@@ -1174,7 +1169,6 @@ export default function HigherLowerGame() {
         initGame();
 
         // Sound and achievement for high roller
-        playSound("chip");
         if (amount >= 100) {
           unlockAchievement("high_roller");
         }

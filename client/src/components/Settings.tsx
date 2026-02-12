@@ -22,7 +22,6 @@ export default function Settings({ onLogout }: SettingsProps) {
     highContrast: false,
     reduceMotion: false,
   });
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Initialize settings from Convex user on mount/update
   useEffect(() => {
@@ -48,7 +47,6 @@ export default function Settings({ onLogout }: SettingsProps) {
       reduceMotion: user.settings.reduceMotion === true,
     };
     setVisualSettings(newVisuals);
-    setSoundEnabled(user.settings.soundEnabled !== false);
 
     toggleBodyClass("no-scanlines", !newVisuals.scanlines);
     toggleBodyClass("no-vignette", !newVisuals.vignette);
@@ -135,7 +133,6 @@ export default function Settings({ onLogout }: SettingsProps) {
         bgAnimation: true,
         highContrast: false,
         reduceMotion: false,
-        soundEnabled: true,
       };
       setTheme("default");
       setGameplaySettings({
@@ -151,7 +148,6 @@ export default function Settings({ onLogout }: SettingsProps) {
         highContrast: false,
         reduceMotion: false,
       });
-      setSoundEnabled(true);
       applyTheme("default");
       toggleBodyClass("no-scanlines", false);
       toggleBodyClass("no-vignette", false);
@@ -160,12 +156,6 @@ export default function Settings({ onLogout }: SettingsProps) {
       toggleBodyClass("reduce-motion", false);
       updateSettings(defaults);
     }
-  };
-
-  const handleSoundToggle = () => {
-    const newValue = !soundEnabled;
-    setSoundEnabled(newValue);
-    updateSettings({ soundEnabled: newValue });
   };
 
   const themes = [
@@ -459,7 +449,7 @@ export default function Settings({ onLogout }: SettingsProps) {
                   fontSize: "0.55rem",
                   cursor: "pointer",
                   transition: "0.15s",
-                  marginBottom: "16px",
+                  margin: "0 auto 16px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -591,21 +581,6 @@ export default function Settings({ onLogout }: SettingsProps) {
                       type="checkbox"
                       checked={visualSettings.bgAnimation}
                       onChange={() => handleVisualToggle("bgAnimation")}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="settings-section">
-                <h3>SOUND</h3>
-                <div className="settings-row">
-                  <span className="settings-label">Sound Effects</span>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={soundEnabled}
-                      onChange={handleSoundToggle}
                     />
                     <span className="toggle-slider"></span>
                   </label>

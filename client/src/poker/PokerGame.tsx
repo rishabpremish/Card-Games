@@ -12,17 +12,34 @@ function suitColor(s: string) {
   return s === "♥" || s === "♦" ? "red" : "black";
 }
 
-function formatAction(entry: { type: string; player?: string; amount?: number; hand?: string; street?: string }) {
+function formatAction(entry: {
+  type: string;
+  player?: string;
+  amount?: number;
+  hand?: string;
+  street?: string;
+}) {
   switch (entry.type) {
-    case "blind": return `${entry.player} posts $${entry.amount}`;
-    case "fold": return `${entry.player} folds`;
-    case "check": return `${entry.player} checks`;
-    case "call": return `${entry.player} calls $${entry.amount}`;
-    case "raise": return `${entry.player} raises to $${entry.amount}`;
-    case "allin": return `${entry.player} ALL-IN $${entry.amount}`;
-    case "win": return `${entry.player} wins $${entry.amount}${entry.hand ? ` (${entry.hand})` : ""}`;
-    case "street": return `── ${entry.street} ──`;
-    default: return "";
+    case "blind":
+      return `${entry.player} posts $${entry.amount}`;
+    case "fold":
+      return `${entry.player} folds`;
+    case "check":
+      return `${entry.player} checks`;
+    case "call":
+      return `${entry.player} calls $${entry.amount}`;
+    case "raise":
+      return `${entry.player} raises to $${entry.amount}`;
+    case "allin":
+      return `${entry.player} ALL-IN $${entry.amount}`;
+    case "win":
+      return `${entry.player} wins $${entry.amount}${entry.hand ? ` (${entry.hand})` : ""}`;
+    case "rake":
+      return `House rake: $${entry.amount ?? 0}`;
+    case "street":
+      return `── ${entry.street} ──`;
+    default:
+      return "";
   }
 }
 
@@ -40,7 +57,15 @@ const SEAT_POSITIONS: Record<number, { top: string; left: string }> = {
 
 // ─── Sub-Components ──────────────────────────────────────
 
-function PokerCardEl({ card, hidden = false, small = false }: { card: PokerCard | null; hidden?: boolean; small?: boolean }) {
+function PokerCardEl({
+  card,
+  hidden = false,
+  small = false,
+}: {
+  card: PokerCard | null;
+  hidden?: boolean;
+  small?: boolean;
+}) {
   const w = small ? 48 : 64;
   const h = small ? 68 : 90;
 
@@ -54,7 +79,10 @@ function PokerCardEl({ card, hidden = false, small = false }: { card: PokerCard 
 
   const color = suitColor(card.suit);
   return (
-    <div className={`pk-card pk-card-front ${color}`} style={{ width: w, height: h }}>
+    <div
+      className={`pk-card pk-card-front ${color}`}
+      style={{ width: w, height: h }}
+    >
       <div className="pk-card-tl">
         <span className="pk-card-val">{card.value}</span>
         <span className="pk-card-suit">{suitSymbol(card.suit)}</span>
@@ -94,7 +122,10 @@ function PlayerSeat({
 
       {/* Name plate */}
       <div className={`pk-nameplate ${isYou ? "pk-nameplate-you" : ""}`}>
-        <div className="pk-name">{player.name}{isYou ? " (You)" : ""}</div>
+        <div className="pk-name">
+          {player.name}
+          {isYou ? " (You)" : ""}
+        </div>
         <div className="pk-chips">${player.chips}</div>
       </div>
 
@@ -107,7 +138,9 @@ function PlayerSeat({
 
       {/* Status */}
       {player.folded && <div className="pk-status-tag fold-tag">FOLD</div>}
-      {player.isAllIn && !player.folded && <div className="pk-status-tag allin-tag">ALL-IN</div>}
+      {player.isAllIn && !player.folded && (
+        <div className="pk-status-tag allin-tag">ALL-IN</div>
+      )}
     </div>
   );
 }
@@ -122,7 +155,13 @@ interface Props {
   onLeave: () => void;
 }
 
-export default function PokerGame({ gameState, playerId, onAction, onNewHand, onLeave }: Props) {
+export default function PokerGame({
+  gameState,
+  playerId,
+  onAction,
+  onNewHand,
+  onLeave,
+}: Props) {
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showLog, setShowLog] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -180,17 +219,25 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
   }, [gameState.communityCards]);
 
   const streetLabel =
-    gameState.gameState === "preflop" ? "PRE-FLOP" :
-    gameState.gameState === "flop" ? "FLOP" :
-    gameState.gameState === "turn" ? "TURN" :
-    gameState.gameState === "river" ? "RIVER" :
-    gameState.gameState === "showdown" ? "SHOWDOWN" : "";
+    gameState.gameState === "preflop"
+      ? "PRE-FLOP"
+      : gameState.gameState === "flop"
+        ? "FLOP"
+        : gameState.gameState === "turn"
+          ? "TURN"
+          : gameState.gameState === "river"
+            ? "RIVER"
+            : gameState.gameState === "showdown"
+              ? "SHOWDOWN"
+              : "";
 
   return (
     <div className="pk-container">
       {/* Top bar */}
       <div className="pk-topbar">
-        <button className="pk-topbar-btn" onClick={onLeave}>✕ Leave</button>
+        <button className="pk-topbar-btn" onClick={onLeave}>
+          ✕ Leave
+        </button>
         <div className="pk-topbar-info">
           <span className="pk-room-code">{gameState.roomCode}</span>
           <span className="pk-street-label">{streetLabel}</span>
@@ -212,7 +259,9 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
               key={player.id}
               player={player}
               isYou={player.id === playerId}
-              isDealer={gameState.players.indexOf(player) === gameState.dealerIndex}
+              isDealer={
+                gameState.players.indexOf(player) === gameState.dealerIndex
+              }
               position={SEAT_POSITIONS[pos]}
               isActive={player.isCurrentPlayer}
             />
@@ -226,7 +275,11 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
                 className={`pk-community-card ${card ? "pk-card-dealt" : ""}`}
                 style={{ animationDelay: `${i * 0.12}s` }}
               >
-                {card ? <PokerCardEl card={card} /> : <div className="pk-card-placeholder" />}
+                {card ? (
+                  <PokerCardEl card={card} />
+                ) : (
+                  <div className="pk-card-placeholder" />
+                )}
               </div>
             ))}
           </div>
@@ -243,7 +296,9 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
               {gameState.winners.map((w, i) => (
                 <div key={i} className="pk-winner-tag">
                   🏆 {w.name} wins ${w.amount}
-                  {w.hand && <span className="pk-winner-hand"> — {w.hand.name}</span>}
+                  {w.hand && (
+                    <span className="pk-winner-hand"> — {w.hand.name}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -280,12 +335,18 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
         {/* Action buttons */}
         {isMyTurn && !isShowdown && !isWaiting && (
           <div className="pk-action-bar">
-            <button className="pk-btn pk-btn-fold" onClick={() => onAction("fold")}>
+            <button
+              className="pk-btn pk-btn-fold"
+              onClick={() => onAction("fold")}
+            >
               FOLD
             </button>
 
             {canCheck ? (
-              <button className="pk-btn pk-btn-check" onClick={() => onAction("check")}>
+              <button
+                className="pk-btn pk-btn-check"
+                onClick={() => onAction("check")}
+              >
                 CHECK
               </button>
             ) : (
@@ -325,11 +386,21 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
         {isShowdown && (
           <div className="pk-action-bar">
             {isHost ? (
-              <button className="pk-btn pk-btn-check" onClick={onNewHand} style={{ fontSize: "0.8rem", padding: "14px 30px" }}>
+              <button
+                className="pk-btn pk-btn-check"
+                onClick={onNewHand}
+                style={{ fontSize: "0.8rem", padding: "14px 30px" }}
+              >
                 DEAL NEXT HAND
               </button>
             ) : (
-              <div style={{ fontFamily: "'Press Start 2P'", fontSize: "0.6rem", color: "var(--retro-yellow)" }}>
+              <div
+                style={{
+                  fontFamily: "'Press Start 2P'",
+                  fontSize: "0.6rem",
+                  color: "var(--retro-yellow)",
+                }}
+              >
                 Waiting for host to deal...
               </div>
             )}
@@ -339,7 +410,13 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
         {/* Waiting */}
         {isWaiting && (
           <div className="pk-action-bar">
-            <div style={{ fontFamily: "'Press Start 2P'", fontSize: "0.6rem", color: "var(--text-secondary)" }}>
+            <div
+              style={{
+                fontFamily: "'Press Start 2P'",
+                fontSize: "0.6rem",
+                color: "var(--text-secondary)",
+              }}
+            >
               Waiting for players...
             </div>
           </div>
@@ -349,7 +426,8 @@ export default function PokerGame({ gameState, playerId, onAction, onNewHand, on
         {!isMyTurn && !isShowdown && !isWaiting && me && !me.folded && (
           <div className="pk-action-bar">
             <div className="pk-waiting-turn">
-              Waiting for {gameState.players[gameState.currentPlayerIndex]?.name || "..."}
+              Waiting for{" "}
+              {gameState.players[gameState.currentPlayerIndex]?.name || "..."}
             </div>
           </div>
         )}

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useScreenShake } from "../hooks/useScreenShake";
 import { useAchievements } from "../hooks/useAchievements";
@@ -150,7 +149,6 @@ export default function Blackjack() {
   } = useWallet();
 
   // Fun feature hooks
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { triggerShake } = useScreenShake();
   const {
@@ -278,7 +276,6 @@ export default function Blackjack() {
           });
 
           // Fun features on win
-          playSound("win");
           triggerConfetti({ intensity: winCount >= 2 ? "high" : "medium" });
           incrementWinStreak();
           incrementSessionWins();
@@ -290,12 +287,10 @@ export default function Blackjack() {
           }
         } else if (pushCount > 0 && lossCount === 0) {
           setMsg({ text: "PUSH", type: "neutral" });
-          playSound("button");
         } else {
           setMsg({ text: "DEALER WINS", type: "bad" });
 
           // Fun features on loss
-          playSound("lose");
           triggerShake("medium");
           resetWinStreak();
           recordBet("blackjack", totalBets, "loss");
@@ -307,7 +302,6 @@ export default function Blackjack() {
     },
     [
       walletAddWinnings,
-      playSound,
       triggerConfetti,
       triggerShake,
       unlockAchievement,
@@ -397,7 +391,6 @@ export default function Blackjack() {
     }
 
     // Play sounds and check achievements
-    playSound("chip");
     if (stagedBet >= 100) {
       unlockAchievement("high_roller");
     }
@@ -425,9 +418,6 @@ export default function Blackjack() {
     const pScore = calculateScore(pHand.cards);
     const dScore = calculateScore(dHand);
 
-    // Play deal sound
-    setTimeout(() => playSound("deal"), 200);
-
     // Natural blackjack
     if (pScore === 21) {
       const bjHand: PlayerHand = { ...pHand, status: "blackjack" };
@@ -451,14 +441,7 @@ export default function Blackjack() {
     setPlayerHands([pHand]);
     handsRef.current = [pHand];
     setGameState("PLAYING");
-  }, [
-    stagedBet,
-    busy,
-    walletPlaceBet,
-    settleRound,
-    playSound,
-    unlockAchievement,
-  ]);
+  }, [stagedBet, busy, walletPlaceBet, settleRound, unlockAchievement]);
 
   // ─── Hit ──────────────────────────────────────────────
 
@@ -466,8 +449,6 @@ export default function Blackjack() {
     if (gameState !== "PLAYING" || busy) return;
     const hand = playerHands[currentHandIndex];
     if (!hand || hand.status !== "playing") return;
-
-    playSound("deal");
 
     const card = deck[deck.length - 1];
     const newDeck = deck.slice(0, -1);
@@ -484,13 +465,11 @@ export default function Blackjack() {
       handsRef.current = updated;
       flash("BUST!", "bad");
       triggerShake("light");
-      playSound("lose");
       advanceHand(updated, currentHandIndex);
     } else if (score === 21) {
       updated[currentHandIndex] = { ...hand, cards: newCards, status: "stood" };
       setPlayerHands(updated);
       handsRef.current = updated;
-      playSound("button");
       advanceHand(updated, currentHandIndex);
     } else {
       updated[currentHandIndex] = { ...hand, cards: newCards };
@@ -505,7 +484,6 @@ export default function Blackjack() {
     deck,
     flash,
     advanceHand,
-    playSound,
     triggerShake,
   ]);
 
@@ -1625,15 +1603,26 @@ function HowToPlay() {
 
   return (
     <div className="instructions" ref={containerRef}>
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
-          <li>Place your bet, then cards are dealt — 2 to you, 2 to the dealer</li>
-          <li><strong>Hit</strong> to draw another card, <strong>Stand</strong> to keep your hand</li>
-          <li><strong>Double Down:</strong> Double your bet and receive exactly one more card</li>
+          <li>
+            Place your bet, then cards are dealt — 2 to you, 2 to the dealer
+          </li>
+          <li>
+            <strong>Hit</strong> to draw another card, <strong>Stand</strong> to
+            keep your hand
+          </li>
+          <li>
+            <strong>Double Down:</strong> Double your bet and receive exactly
+            one more card
+          </li>
           <li>Get as close to 21 as possible without going over (bust)</li>
           <li>Dealer must hit until 17. Closest to 21 wins!</li>
         </ol>

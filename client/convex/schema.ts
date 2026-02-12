@@ -29,7 +29,6 @@ export default defineSchema({
       bgAnimation: v.optional(v.boolean()),
       highContrast: v.optional(v.boolean()),
       reduceMotion: v.optional(v.boolean()),
-      soundEnabled: v.optional(v.boolean()),
     }),
     // Daily bonus tracking
     lastDailyBonusDate: v.optional(v.number()),
@@ -47,6 +46,10 @@ export default defineSchema({
     equippedTheme: v.optional(v.string()),
     equippedCardBack: v.optional(v.string()),
     equippedEmoji: v.optional(v.string()),
+
+    // Friend tipping limits
+    lastTipDate: v.optional(v.number()),
+    tipSentToday: v.optional(v.number()),
   }).index("by_username", ["username"]),
 
   // Weekly leaderboards (Sunday to Saturday)
@@ -82,6 +85,8 @@ export default defineSchema({
       v.literal("win"),
       v.literal("cashout"),
       v.literal("deposit"),
+      v.literal("purchase"),
+      v.literal("transfer"),
       v.literal("admin_adjustment"),
     ),
     amount: v.number(),
@@ -123,7 +128,20 @@ export default defineSchema({
     isActive: v.boolean(),
     takenAt: v.number(),
     dueAt: v.number(),
+    // Optional per-loan penalty rate (defaults to 10% if missing)
+    penaltyRate: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_active", ["userId", "isActive"]),
+
+  // Notifications
+  notifications: defineTable({
+    userId: v.id("users"),
+    kind: v.string(),
+    message: v.string(),
+    createdAt: v.number(),
+    read: v.boolean(),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_user_read", ["userId", "read", "createdAt"]),
 });

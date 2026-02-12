@@ -1,8 +1,11 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useWallet } from "../hooks/useWallet";
 import { useEconomy } from "../hooks/useEconomy";
 import { useSessionStats } from "../hooks/useSessionStats";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 // Wrap the usage in a try/catch since SessionStatsProvider might not always exist
 function SafeSessionStats() {
@@ -31,8 +34,116 @@ export default function Stats() {
   const { playerStats } = useEconomy();
   const session = SafeSessionStats();
   const { achievements } = useAchievements();
+  const [graphRange, setGraphRange] = useState<"daily" | "weekly">("daily");
+
+  const txns = useQuery(
+    api.wallet.getTransactions,
+    user ? { userId: user.userId, limit: 500 } : "skip",
+  );
 
   const stats = playerStats;
+
+  const themeId = user?.settings?.theme ?? "default";
+  const themeName: Record<string, string> = {
+    default: "Arcade",
+    blackwhite: "B&W",
+    dracula: "Dracula",
+    monokai: "Monokai",
+    nord: "Nord",
+    solarized: "Solarized",
+    synthwave: "Synthwave",
+    gruvbox: "Gruvbox",
+    ocean: "Ocean",
+    sunset: "Sunset",
+    forest: "Forest",
+    candy: "Candy",
+    neon: "Neon",
+  };
+
+  const cardBackName: Record<string, string> = {
+    default: "Default",
+    cardback_neon_grid: "Neon Grid",
+    cardback_cyber_circuit: "Cyber Circuit",
+    cardback_arcade_sun: "Arcade Sun",
+    cardback_holo_diamond: "Holo Diamond",
+    cardback_royal_flush: "Royal Flush",
+    cardback_glitch_wave: "Glitch Wave",
+    cardback_void_vortex: "Void Vortex",
+    cardback_gold_vault: "Gold Vault",
+  };
+
+  const bankrollPoints = useMemo(() => {
+    if (!txns || txns.length === 0)
+      return [] as { label: string; balance: number }[];
+
+    // txns are desc; compute series oldest->newest
+    const ordered = [...txns].sort(
+      (a: any, b: any) => a.timestamp - b.timestamp,
+    );
+    const buckets = new Map<string, number>();
+
+    for (const t of ordered as any[]) {
+      const d = new Date(t.timestamp);
+      let key = "";
+      let label = "";
+      if (graphRange === "weekly") {
+        // Week bucket: YYYY-WW
+        const tmp = new Date(d);
+        tmp.setHours(0, 0, 0, 0);
+        // Sunday-start week
+        const day = tmp.getDay();
+        tmp.setDate(tmp.getDate() - day);
+        key = tmp.toISOString().slice(0, 10);
+        label = tmp.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        });
+      } else {
+        key = d.toISOString().slice(0, 10);
+        label = d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      // balanceAfter represents ending balance after this transaction
+      buckets.set(key, t.balanceAfter);
+      // Store label on same key by overwriting in a parallel map via encoding
+      (buckets as any).__labels = (buckets as any).__labels || new Map();
+      (buckets as any).__labels.set(key, label);
+    }
+
+    const labelsMap: Map<string, string> = (buckets as any).__labels;
+    const entries = Array.from(buckets.entries()).map(([key, bal]) => ({
+      key,
+      label: labelsMap.get(key) ?? key,
+      balance: bal,
+    }));
+    entries.sort((a, b) => (a.key < b.key ? -1 : 1));
+    return entries.slice(-30).map(({ label, balance }) => ({ label, balance }));
+  }, [txns, graphRange]);
+
+  const bankrollSvg = useMemo(() => {
+    if (bankrollPoints.length < 2) return null;
+    const w = 520;
+    const h = 140;
+    const pad = 10;
+    const vals = bankrollPoints.map((p) => p.balance);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = Math.max(1, max - min);
+
+    const xStep = (w - pad * 2) / (bankrollPoints.length - 1);
+    const pts = bankrollPoints
+      .map((p, i) => {
+        const x = pad + i * xStep;
+        const y = pad + (h - pad * 2) * (1 - (p.balance - min) / range);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+
+    return { w, h, pts, min, max };
+  }, [bankrollPoints]);
 
   return (
     <>
@@ -229,7 +340,7 @@ export default function Stats() {
               }}
             >
               {achievements.slice(0, 12).map((a: any) => (
-                  <span
+                <span
                   key={a}
                   style={{
                     background: "rgba(255,215,0,0.1)",
@@ -253,19 +364,81 @@ export default function Stats() {
             </div>
           </div>
 
+          {/* Bankroll Graph */}
+          <div className="stats-card">
+            <h3>📈 Bankroll</h3>
+            <div className="stats-row" style={{ marginBottom: 10 }}>
+              <span className="stats-label">Range</span>
+              <select
+                value={graphRange}
+                onChange={(e) => setGraphRange(e.target.value as any)}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "2px solid rgba(255,255,255,0.2)",
+                  color: "#fff",
+                  padding: "8px 10px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.5rem",
+                }}
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+            </div>
+
+            {!bankrollSvg ? (
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.6rem" }}>
+                Not enough history yet.
+              </p>
+            ) : (
+              <div style={{ width: "100%", overflowX: "auto" }}>
+                <svg
+                  width={bankrollSvg.w}
+                  height={bankrollSvg.h}
+                  viewBox={`0 0 ${bankrollSvg.w} ${bankrollSvg.h}`}
+                  style={{
+                    background: "rgba(0,0,0,0.25)",
+                    border: "2px solid rgba(255,255,255,0.15)",
+                  }}
+                >
+                  <polyline
+                    fill="none"
+                    stroke="var(--retro-cyan)"
+                    strokeWidth="3"
+                    points={bankrollSvg.pts}
+                  />
+                </svg>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginTop: 8,
+                    fontSize: "0.45rem",
+                    color: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  <span>${bankrollSvg.min.toLocaleString()}</span>
+                  <span>${bankrollSvg.max.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Equipped Items Card */}
           <div className="stats-card">
             <h3>🎒 Equipped Items</h3>
             <div className="stats-row">
               <span className="stats-label">Theme</span>
               <span className="stats-value">
-                {stats?.equippedTheme?.replace("theme_", "") ?? "Default"}
+                {themeName[themeId] ?? themeId}
               </span>
             </div>
             <div className="stats-row">
               <span className="stats-label">Card Back</span>
               <span className="stats-value">
-                {stats?.equippedCardBack?.replace("cardback_", "") ?? "Default"}
+                {cardBackName[stats?.equippedCardBack ?? "default"] ??
+                  stats?.equippedCardBack ??
+                  "Default"}
               </span>
             </div>
             <div className="stats-row">

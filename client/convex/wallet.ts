@@ -1,6 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+const DAILY_TIP_LIMIT = 1000;
+
+function startOfDay(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 // Get user's wallet balance
 export const getWallet = query({
   args: {
@@ -269,6 +277,79 @@ export const updateWallet = mutation({
       wallet: newWallet,
       success: true,
     };
+  },
+});
+
+// Tip a friend (peer-to-peer transfer)
+export const tipFriend = mutation({
+  args: {
+    userId: v.id("users"),
+    targetUserId: v.id("users"),
+    amount: v.number(),
+  },
+  handler: async (ctx, { userId, targetUserId, amount }) => {
+    if (userId === targetUserId) throw new Error("Cannot tip yourself");
+    if (!Number.isFinite(amount) || amount <= 0)
+      throw new Error("Amount must be positive");
+    const amt = Math.round(amount * 100) / 100;
+
+    const from = await ctx.db.get(userId);
+    const to = await ctx.db.get(targetUserId);
+    if (!from || !to) throw new Error("User not found");
+
+    const isFriend = (from.friends ?? []).includes(targetUserId);
+    if (!isFriend) throw new Error("You can only tip friends");
+    if (from.wallet < amt) throw new Error("Insufficient funds");
+
+    const now = Date.now();
+    const today = startOfDay(now);
+    const lastTip = startOfDay(from.lastTipDate ?? 0);
+    const sentToday = lastTip === today ? (from.tipSentToday ?? 0) : 0;
+    if (sentToday + amt > DAILY_TIP_LIMIT)
+      throw new Error(`Daily tip limit is $${DAILY_TIP_LIMIT}`);
+
+    const fromNew = Math.round((from.wallet - amt) * 100) / 100;
+    const toNew = Math.round((to.wallet + amt) * 100) / 100;
+
+    await ctx.db.patch(userId, {
+      wallet: fromNew,
+      lastTipDate: now,
+      tipSentToday: sentToday + amt,
+    });
+    await ctx.db.patch(targetUserId, { wallet: toNew });
+
+    await ctx.db.insert("transactions", {
+      userId,
+      type: "transfer",
+      amount: amt,
+      balanceBefore: from.wallet,
+      balanceAfter: fromNew,
+      game: "Friends",
+      description: `Tipped ${to.username} $${amt}`,
+      timestamp: now,
+    });
+
+    await ctx.db.insert("transactions", {
+      userId: targetUserId,
+      type: "transfer",
+      amount: amt,
+      balanceBefore: to.wallet,
+      balanceAfter: toNew,
+      game: "Friends",
+      description: `Received tip from ${from.username} $${amt}`,
+      timestamp: now,
+    });
+
+    // Notification for receiver
+    await ctx.db.insert("notifications", {
+      userId: targetUserId,
+      kind: "tip_received",
+      message: `💸 ${from.username} tipped you $${amt}`,
+      createdAt: now,
+      read: false,
+    });
+
+    return { success: true, fromWallet: fromNew, toWallet: toNew };
   },
 });
 

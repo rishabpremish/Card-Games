@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
 import { useAuth } from "../hooks/useAuth";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
@@ -116,7 +115,6 @@ export default function Baccarat() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
   const { user } = useAuth();
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const {
     unlockAchievement,
@@ -171,11 +169,9 @@ export default function Baccarat() {
       setIsDealing(true);
       setMessage("");
       setWinner(null);
-      playSound("chip");
       if (stagedBet >= 100) unlockAchievement("high_roller");
       const currentShoe = checkReshuffle(shoe);
       setTimeout(() => {
-        playSound("deal");
         dealInitialCards(currentShoe);
       }, 500);
     } catch {
@@ -274,7 +270,6 @@ export default function Baccarat() {
         incrementTieWins();
       }
       setResultType("win");
-      playSound("win");
       triggerConfetti({ intensity: gw === "tie" ? "high" : "medium" });
       incrementWinStreak();
       incrementSessionWins();
@@ -287,7 +282,6 @@ export default function Baccarat() {
         `${gw.charAt(0).toUpperCase() + gw.slice(1)} wins. -$${stagedBet}`,
       );
       setResultType("lose");
-      playSound("lose");
       resetWinStreak();
       recordBet("baccarat", stagedBet, "loss");
     }
@@ -698,7 +692,14 @@ export default function Baccarat() {
           <button
             className="dev-tools-toggle"
             onClick={() => setShowDevPanel(!showDevPanel)}
-            style={{ position: "fixed", bottom: 20, right: 20, top: "auto", left: "auto", zIndex: 100 }}
+            style={{
+              position: "fixed",
+              bottom: 20,
+              right: 20,
+              top: "auto",
+              left: "auto",
+              zIndex: 100,
+            }}
           >
             DEV
           </button>
@@ -753,17 +754,26 @@ function HowToPlay() {
 
   return (
     <div className="instructions" ref={containerRef}>
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
-          <li>Bet on <strong>Player</strong>, <strong>Banker</strong>, or <strong>Tie</strong></li>
+          <li>
+            Bet on <strong>Player</strong>, <strong>Banker</strong>, or{" "}
+            <strong>Tie</strong>
+          </li>
           <li>Two cards are dealt to each side; values are totaled (mod 10)</li>
           <li>A third card may be drawn based on standard baccarat rules</li>
           <li>The hand closest to 9 wins</li>
-          <li><strong>Player</strong> pays 1:1 • <strong>Banker</strong> pays 0.95:1 • <strong>Tie</strong> pays 8:1</li>
+          <li>
+            <strong>Player</strong> pays 1:1 • <strong>Banker</strong> pays
+            0.95:1 • <strong>Tie</strong> pays 8:1
+          </li>
         </ol>
         <p className="note">
           Face cards and 10s are worth 0. Aces are worth 1.

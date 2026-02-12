@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useEconomy } from "../hooks/useEconomy";
 import { useAuth } from "../hooks/useAuth";
@@ -8,6 +9,7 @@ export default function FriendsPanel() {
   const { user } = useAuth();
   const { friends, friendRequests, sendFriendRequest, acceptFriendRequest } =
     useEconomy();
+  const tipFriend = useMutation(api.wallet.tipFriend);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
@@ -36,6 +38,26 @@ export default function FriendsPanel() {
       await acceptFriendRequest(fromId);
     } catch (e: any) {
       console.error(e);
+    }
+    setBusy(false);
+  };
+
+  const handleTip = async (friendId: any) => {
+    if (!user) return;
+    const raw = prompt("Tip amount? (Daily limit $1000)", "10");
+    if (!raw) return;
+    const amount = Number(raw);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setMsg("Enter a valid amount");
+      return;
+    }
+    setBusy(true);
+    setMsg(null);
+    try {
+      await tipFriend({ userId: user.userId, targetUserId: friendId, amount });
+      setMsg("Tip sent! 💸");
+    } catch (e: any) {
+      setMsg(e.message || "Failed");
     }
     setBusy(false);
   };
@@ -113,10 +135,7 @@ export default function FriendsPanel() {
           >
             👥 Friends
           </h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="retro-close-btn"
-          >
+          <button onClick={() => setIsOpen(false)} className="retro-close-btn">
             ✕
           </button>
         </div>
@@ -304,6 +323,22 @@ export default function FriendsPanel() {
               <span style={{ color: "#00ff88", fontSize: "0.44rem" }}>
                 ${f.wallet?.toLocaleString()}
               </span>
+              <button
+                onClick={() => handleTip(f.id)}
+                disabled={busy}
+                style={{
+                  background: "rgba(0,255,136,0.15)",
+                  border: "1px solid #00ff88",
+                  color: "#00ff88",
+                  padding: "4px 8px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.32rem",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  borderRadius: "3px",
+                }}
+              >
+                TIP
+              </button>
             </div>
           </div>
         ))}

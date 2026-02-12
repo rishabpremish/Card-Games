@@ -3,18 +3,16 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../hooks/useAuth";
 import { useConfetti } from "../hooks/useConfetti";
-import { useSound } from "../hooks/useSound";
 
 export default function DailyBonus() {
   const { user } = useAuth();
   const { triggerConfetti } = useConfetti();
-  const { playSound } = useSound();
   const [showModal, setShowModal] = useState(false);
   const [claimedToday, setClaimedToday] = useState(false);
 
   const bonusStatus = useQuery(
     api.auth.checkDailyBonus,
-    user ? { userId: user.userId } : "skip"
+    user ? { userId: user.userId } : "skip",
   );
 
   const claimBonus = useMutation(api.auth.claimDailyBonus);
@@ -32,7 +30,6 @@ export default function DailyBonus() {
       await claimBonus({ userId: user.userId });
       setClaimedToday(true);
       setShowModal(false);
-      playSound("win");
       triggerConfetti({ intensity: "medium" });
     } catch (error) {
       console.error("Failed to claim bonus:", error);
@@ -92,14 +89,43 @@ export default function DailyBonus() {
               textAlign: "center",
             }}
           >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "10px",
+              }}
+            >
+              <div />
+              <button
+                onClick={() => setShowModal(false)}
+                className="retro-close-btn"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
             <div style={{ fontSize: "3rem", marginBottom: "10px" }}>🎁</div>
-            <h2 style={{ fontFamily: "'Press Start 2P', cursive", color: "var(--retro-cyan)", marginBottom: "15px" }}>
+            <h2
+              style={{
+                fontFamily: "'Press Start 2P', cursive",
+                color: "var(--retro-cyan)",
+                marginBottom: "15px",
+              }}
+            >
               Daily Bonus
             </h2>
 
             {canClaim ? (
               <>
-                <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.2rem", marginBottom: "20px" }}>
+                <p
+                  style={{
+                    fontFamily: "'VT323', monospace",
+                    fontSize: "1.2rem",
+                    marginBottom: "20px",
+                  }}
+                >
                   Come back every day for bigger rewards!
                 </p>
 
@@ -112,21 +138,36 @@ export default function DailyBonus() {
                     border: "2px solid var(--retro-yellow)",
                   }}
                 >
-                  <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem", color: "var(--text-secondary)" }}>
+                  <div
+                    style={{
+                      fontFamily: "'Press Start 2P', cursive",
+                      fontSize: "0.6rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
                     Current Streak
                   </div>
                   <div
                     style={{
                       fontFamily: "'Press Start 2P', cursive",
                       fontSize: "1.5rem",
-                      color: streak >= 7 ? "var(--retro-orange)" : "var(--retro-yellow)",
+                      color:
+                        streak >= 7
+                          ? "var(--retro-orange)"
+                          : "var(--retro-yellow)",
                       marginTop: "10px",
                     }}
                   >
                     Day {streak + 1}
                   </div>
                   {streak >= 7 && (
-                    <div style={{ fontFamily: "'VT323', monospace", color: "var(--retro-orange)", marginTop: "5px" }}>
+                    <div
+                      style={{
+                        fontFamily: "'VT323', monospace",
+                        color: "var(--retro-orange)",
+                        marginTop: "5px",
+                      }}
+                    >
                       🔥 Max streak bonus!
                     </div>
                   )}
@@ -134,7 +175,14 @@ export default function DailyBonus() {
 
                 {/* Reward Preview */}
                 <div style={{ marginBottom: "20px" }}>
-                  <span style={{ fontFamily: "'VT323', monospace", fontSize: "1rem" }}>Today's Reward: </span>
+                  <span
+                    style={{
+                      fontFamily: "'VT323', monospace",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Today's Reward:{" "}
+                  </span>
                   <span
                     style={{
                       fontFamily: "'Press Start 2P', cursive",
@@ -164,7 +212,13 @@ export default function DailyBonus() {
               </>
             ) : (
               <>
-                <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.2rem", marginBottom: "20px" }}>
+                <p
+                  style={{
+                    fontFamily: "'VT323', monospace",
+                    fontSize: "1.2rem",
+                    marginBottom: "20px",
+                  }}
+                >
                   You've already claimed today's bonus!
                 </p>
                 <div
@@ -174,7 +228,13 @@ export default function DailyBonus() {
                     marginBottom: "20px",
                   }}
                 >
-                  <div style={{ fontFamily: "'Press Start 2P', cursive", fontSize: "0.6rem", color: "var(--text-secondary)" }}>
+                  <div
+                    style={{
+                      fontFamily: "'Press Start 2P', cursive",
+                      fontSize: "0.6rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
                     Current Streak
                   </div>
                   <div
@@ -188,7 +248,13 @@ export default function DailyBonus() {
                     Day {streak}
                   </div>
                 </div>
-                <p style={{ fontFamily: "'VT323', monospace", fontSize: "1rem", color: "var(--text-secondary)" }}>
+                <p
+                  style={{
+                    fontFamily: "'VT323', monospace",
+                    fontSize: "1rem",
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Come back tomorrow for more!
                 </p>
               </>

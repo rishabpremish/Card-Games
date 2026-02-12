@@ -40,6 +40,8 @@ export function useEconomy() {
   const claimRewardMutation = useMutation(api.economy.claimChallengeReward);
   const takeLoanMutation = useMutation(api.economy.takeLoan);
   const repayLoanMutation = useMutation(api.economy.repayLoan);
+  const extendLoanMutation = useMutation(api.economy.extendLoan);
+  const reduceLoanPenaltyMutation = useMutation(api.economy.reduceLoanPenalty);
   const sendFriendReqMutation = useMutation(api.economy.sendFriendRequest);
   const acceptFriendReqMutation = useMutation(api.economy.acceptFriendRequest);
 
@@ -65,6 +67,11 @@ export function useEconomy() {
     takeLoanMutation({ userId: uid(), amount });
   const repayLoan = (loanId: Id<"loans">, amount: number) =>
     repayLoanMutation({ userId: uid(), loanId, amount });
+
+  const extendLoan = (loanId: Id<"loans">) =>
+    extendLoanMutation({ userId: uid(), loanId });
+  const reduceLoanPenalty = (loanId: Id<"loans">) =>
+    reduceLoanPenaltyMutation({ userId: uid(), loanId });
 
   const sendFriendRequest = (targetUserId: Id<"users">) =>
     sendFriendReqMutation({ userId: uid(), targetUserId });
@@ -116,6 +123,8 @@ export function useEconomy() {
     // loans
     takeLoan,
     repayLoan,
+    extendLoan,
+    reduceLoanPenalty,
 
     // friends
     sendFriendRequest,

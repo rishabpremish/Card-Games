@@ -259,11 +259,22 @@ export const updateChallengeProgress = mutation({
         shouldUpdate = true;
 
       if (shouldUpdate) {
+        const wasCompleted = ch.completed === true;
         const newProgress = Math.min(ch.progress + amount, ch.target);
         await ctx.db.patch(ch._id, {
           progress: newProgress,
           completed: newProgress >= ch.target,
         });
+
+        if (!wasCompleted && newProgress >= ch.target) {
+          await ctx.db.insert("notifications", {
+            userId,
+            kind: "challenge_completed",
+            message: `✅ Challenge completed: ${ch.title}`,
+            createdAt: Date.now(),
+            read: false,
+          });
+        }
       }
     }
   },
@@ -291,7 +302,6 @@ export const claimChallengeReward = mutation({
     return { reward: challenge.reward, rewardType: challenge.rewardType };
   },
 });
-
 
 // ═══════════════════════════════════
 //  LOANS
@@ -431,6 +441,25 @@ export const acceptFriendRequest = mutation({
       await ctx.db.patch(fromUserId, { friends: [...otherFriends, userId] });
     }
 
+    const now = Date.now();
+    // Notify requester that their request was accepted
+    await ctx.db.insert("notifications", {
+      userId: fromUserId,
+      kind: "friend_accepted",
+      message: `🤝 ${user.username} accepted your friend request`,
+      createdAt: now,
+      read: false,
+    });
+
+    // Notify acceptor as confirmation
+    await ctx.db.insert("notifications", {
+      userId,
+      kind: "friend_added",
+      message: `🤝 You are now friends with ${other?.username ?? "a player"}`,
+      createdAt: now,
+      read: false,
+    });
+
     return { success: true };
   },
 });
@@ -477,8 +506,8 @@ export const getFriends = query({
 //  OVERDUE LOAN PENALTIES
 // ═══════════════════════════════════
 
-// Internal mutation: deduct 10% of account balance for each overdue loan daily
-const OVERDUE_LOAN_PENALTY_RATE = 0.1;
+// Internal mutation: deduct a % of account balance for each overdue loan daily
+const DEFAULT_OVERDUE_LOAN_PENALTY_RATE = 0.1;
 
 export const processOverdueLoans = internalMutation({
   handler: async (ctx) => {
@@ -492,7 +521,12 @@ export const processOverdueLoans = internalMutation({
       const user = await ctx.db.get(loan.userId);
       if (!user || user.wallet <= 0) continue;
 
-      const penalty = Math.round(user.wallet * OVERDUE_LOAN_PENALTY_RATE);
+      const rate =
+        typeof loan.penaltyRate === "number"
+          ? loan.penaltyRate
+          : DEFAULT_OVERDUE_LOAN_PENALTY_RATE;
+
+      const penalty = Math.round(user.wallet * rate);
       if (penalty <= 0) continue;
 
       const newWallet = Math.max(0, user.wallet - penalty);
@@ -504,9 +538,111 @@ export const processOverdueLoans = internalMutation({
         amount: -penalty,
         balanceBefore: user.wallet,
         balanceAfter: newWallet,
-        description: `Overdue loan penalty (10% of balance)`,
+        description: `Overdue loan penalty (${Math.round(rate * 100)}% of balance)`,
         timestamp: now,
       });
+
+      await ctx.db.insert("notifications", {
+        userId: user._id,
+        kind: "loan_overdue",
+        message: `⚠️ Overdue loan penalty: -$${penalty} (${Math.round(rate * 100)}%)`,
+        createdAt: now,
+        read: false,
+      });
     }
+  },
+});
+
+// Extend a loan's due date by 7 days for a fee
+export const extendLoan = mutation({
+  args: { userId: v.id("users"), loanId: v.id("loans") },
+  handler: async (ctx, { userId, loanId }) => {
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const loan = await ctx.db.get(loanId);
+    if (!loan || loan.userId !== userId || !loan.isActive)
+      throw new Error("Loan not found");
+
+    const remaining = loan.totalOwed - loan.repaid;
+    const fee = Math.max(25, Math.round(remaining * 0.05));
+    if (user.wallet < fee) throw new Error("Insufficient funds");
+
+    const newWallet = Math.round((user.wallet - fee) * 100) / 100;
+    const newDueAt = loan.dueAt + 7 * 24 * 60 * 60 * 1000;
+
+    await ctx.db.patch(userId, { wallet: newWallet });
+    await ctx.db.patch(loanId, { dueAt: newDueAt });
+
+    await ctx.db.insert("transactions", {
+      userId,
+      type: "admin_adjustment" as const,
+      amount: -fee,
+      balanceBefore: user.wallet,
+      balanceAfter: newWallet,
+      game: "Loans",
+      description: "Loan extension fee (+7 days)",
+      timestamp: Date.now(),
+    });
+
+    await ctx.db.insert("notifications", {
+      userId,
+      kind: "loan_extended",
+      message: `📅 Loan extended 7 days (fee -$${fee})`,
+      createdAt: Date.now(),
+      read: false,
+    });
+
+    return { success: true, fee, dueAt: newDueAt, wallet: newWallet };
+  },
+});
+
+// Reduce the daily overdue penalty rate for a fee
+export const reduceLoanPenalty = mutation({
+  args: { userId: v.id("users"), loanId: v.id("loans") },
+  handler: async (ctx, { userId, loanId }) => {
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    const loan = await ctx.db.get(loanId);
+    if (!loan || loan.userId !== userId || !loan.isActive)
+      throw new Error("Loan not found");
+
+    const currentRate =
+      typeof loan.penaltyRate === "number"
+        ? loan.penaltyRate
+        : DEFAULT_OVERDUE_LOAN_PENALTY_RATE;
+
+    if (currentRate <= 0.05) throw new Error("Penalty already reduced");
+
+    const remaining = loan.totalOwed - loan.repaid;
+    const fee = Math.max(75, Math.round(remaining * 0.1));
+    if (user.wallet < fee) throw new Error("Insufficient funds");
+
+    const newWallet = Math.round((user.wallet - fee) * 100) / 100;
+
+    await ctx.db.patch(userId, { wallet: newWallet });
+    await ctx.db.patch(loanId, { penaltyRate: 0.05 });
+
+    await ctx.db.insert("transactions", {
+      userId,
+      type: "admin_adjustment" as const,
+      amount: -fee,
+      balanceBefore: user.wallet,
+      balanceAfter: newWallet,
+      game: "Loans",
+      description: "Reduced overdue loan penalty to 5%",
+      timestamp: Date.now(),
+    });
+
+    await ctx.db.insert("notifications", {
+      userId,
+      kind: "loan_penalty_reduced",
+      message: `🛡️ Overdue penalty reduced to 5% (fee -$${fee})`,
+      createdAt: Date.now(),
+      read: false,
+    });
+
+    return { success: true, fee, penaltyRate: 0.05, wallet: newWallet };
   },
 });

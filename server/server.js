@@ -26,11 +26,11 @@ const MIME = {
 // ── Locate built client files ──
 // Try multiple possible locations for client/dist
 const candidates = [
-  join(__dirname, "..", "client", "dist"),          // from server/ → ../client/dist
-  join(process.cwd(), "..", "client", "dist"),      // from cwd (server/) → ../client/dist
-  join(process.cwd(), "client", "dist"),            // from repo root → client/dist
-  resolve("client", "dist"),                        // resolve from cwd
-  resolve("..", "client", "dist"),                   // resolve up one level
+  join(__dirname, "..", "client", "dist"), // from server/ → ../client/dist
+  join(process.cwd(), "..", "client", "dist"), // from cwd (server/) → ../client/dist
+  join(process.cwd(), "client", "dist"), // from repo root → client/dist
+  resolve("client", "dist"), // resolve from cwd
+  resolve("..", "client", "dist"), // resolve up one level
 ];
 
 let CLIENT_DIST = candidates[0]; // default fallback
@@ -42,8 +42,13 @@ console.log("  cwd:", process.cwd());
 for (const candidate of candidates) {
   const idx = join(candidate, "index.html");
   const found = existsSync(idx);
-  console.log(`  ${found ? "✓" : "✗"} ${candidate} ${found ? "(index.html found)" : ""}`);
-  if (found && CLIENT_DIST === candidates[0] || found && !existsSync(join(CLIENT_DIST, "index.html"))) {
+  console.log(
+    `  ${found ? "✓" : "✗"} ${candidate} ${found ? "(index.html found)" : ""}`,
+  );
+  if (
+    (found && CLIENT_DIST === candidates[0]) ||
+    (found && !existsSync(join(CLIENT_DIST, "index.html")))
+  ) {
     CLIENT_DIST = candidate;
   }
 }
@@ -62,11 +67,21 @@ if (existsSync(indexPath)) {
   try {
     const parentDir = join(CLIENT_DIST, "..");
     if (existsSync(parentDir)) {
-      console.warn("  Contents of", parentDir, ":", readdirSync(parentDir).join(", "));
+      console.warn(
+        "  Contents of",
+        parentDir,
+        ":",
+        readdirSync(parentDir).join(", "),
+      );
     }
     const grandparent = join(CLIENT_DIST, "..", "..");
     if (existsSync(grandparent)) {
-      console.warn("  Contents of", grandparent, ":", readdirSync(grandparent).join(", "));
+      console.warn(
+        "  Contents of",
+        grandparent,
+        ":",
+        readdirSync(grandparent).join(", "),
+      );
     }
   } catch (e) {
     console.warn("  Could not list directories:", e.message);
@@ -84,13 +99,18 @@ const httpServer = createServer((req, res) => {
   // Parse the URL to strip query strings and decode percent-encoding
   let pathname;
   try {
-    pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
+    pathname = decodeURIComponent(
+      new URL(req.url, "http://localhost").pathname,
+    );
   } catch {
     pathname = req.url;
   }
 
   // Try to serve static file from client/dist
-  const filePath = join(CLIENT_DIST, pathname === "/" ? "index.html" : pathname);
+  const filePath = join(
+    CLIENT_DIST,
+    pathname === "/" ? "index.html" : pathname,
+  );
 
   // Security: prevent directory traversal
   if (!filePath.startsWith(CLIENT_DIST)) {
@@ -139,6 +159,12 @@ const VALUES = [
 ];
 const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
+
+// House profit model: pot rake
+// 5% rake, capped at $5, only when pot reaches $40+ (2 big blinds)
+const RAKE_PERCENT = 0.05;
+const RAKE_CAP = 5;
+const RAKE_MIN_POT = BIG_BLIND * 2;
 
 const HAND_RANKS = {
   ROYAL_FLUSH: 10,
@@ -361,6 +387,7 @@ function createRoom(hostId, hostName, buyIn) {
     winners: null,
     handNumber: 0,
     actionLog: [],
+    totalRake: 0,
   };
   rooms.set(code, room);
   return room;
@@ -746,6 +773,18 @@ function endHand(room) {
     return;
   }
 
+  // Apply pot rake (house profit) before awarding pot
+  // Only rake if at least two players contributed to the pot.
+  const contributors = room.players.filter((p) => (p.totalBet || 0) > 0);
+  if (room.pot >= RAKE_MIN_POT && contributors.length >= 2) {
+    const rake = Math.min(RAKE_CAP, Math.floor(room.pot * RAKE_PERCENT));
+    if (rake > 0) {
+      room.pot -= rake;
+      room.totalRake = (room.totalRake || 0) + rake;
+      room.actionLog.push({ type: "rake", amount: rake });
+    }
+  }
+
   if (active.length === 1) {
     active[0].chips += room.pot;
     room.winners = [
@@ -784,92 +823,92 @@ function endHand(room) {
         amount: room.pot,
       });
     } else {
-    // Evaluate hands
-    const evaluated = evaluable.map((p) => ({
-      player: p,
-      hand: evaluateHand([...p.cards, ...room.communityCards]),
-    }));
-    evaluated.sort((a, b) => {
-      if (b.hand.rank !== a.hand.rank) return b.hand.rank - a.hand.rank;
-      return cmpHigh(b.hand.highCards, a.hand.highCards);
-    });
-
-    // Side pot logic
-    const allInAmounts = active
-      .filter((p) => p.isAllIn)
-      .map((p) => p.totalBet)
-      .sort((a, b) => a - b);
-    const levels = [...new Set([...allInAmounts, Infinity])];
-
-    let remaining = room.pot;
-    room.winners = [];
-    let distributed = 0;
-
-    for (const level of levels) {
-      if (remaining <= 0) break;
-
-      // Players eligible at this level: those whose totalBet reaches this level
-      const eligible = evaluated.filter(
-        (e) => !e.player.isAllIn || e.player.totalBet >= level,
-      );
-
-      if (eligible.length === 0) continue;
-
-      // Calculate pot for this level
-      let potForLevel = 0;
-      const prevLevel = levels[levels.indexOf(level) - 1] || 0;
-      for (const p of room.players) {
-        if (!p.folded || p.totalBet > 0) {
-          potForLevel +=
-            Math.min(p.totalBet, level) - Math.min(p.totalBet, prevLevel);
-        }
-      }
-
-      if (potForLevel <= 0) continue;
-
-      // Find winner(s) among eligible
-      const best = eligible[0];
-      const winners = eligible.filter(
-        (e) =>
-          e.hand.rank === best.hand.rank &&
-          cmpHigh(e.hand.highCards, best.hand.highCards) === 0,
-      );
-
-      const share = Math.floor(potForLevel / winners.length);
-      for (const w of winners) {
-        w.player.chips += share;
-        distributed += share;
-        const existing = room.winners.find((x) => x.playerId === w.player.id);
-        if (existing) {
-          existing.amount += share;
-        } else {
-          room.winners.push({
-            playerId: w.player.id,
-            name: w.player.name,
-            amount: share,
-            hand: w.hand,
-          });
-        }
-      }
-      remaining -= potForLevel;
-    }
-
-    // Any remainder due to rounding goes to first winner
-    const leftover = room.pot - distributed;
-    if (leftover > 0 && room.winners.length > 0) {
-      room.winners[0].amount += leftover;
-      const wp = active.find((p) => p.id === room.winners[0].playerId);
-      if (wp) wp.chips += leftover;
-    }
-
-    for (const w of room.winners) {
-      room.actionLog.push({
-        type: "win",
-        player: w.name,
-        amount: w.amount,
-        hand: w.hand?.name,
+      // Evaluate hands
+      const evaluated = evaluable.map((p) => ({
+        player: p,
+        hand: evaluateHand([...p.cards, ...room.communityCards]),
+      }));
+      evaluated.sort((a, b) => {
+        if (b.hand.rank !== a.hand.rank) return b.hand.rank - a.hand.rank;
+        return cmpHigh(b.hand.highCards, a.hand.highCards);
       });
-    }
+
+      // Side pot logic
+      const allInAmounts = active
+        .filter((p) => p.isAllIn)
+        .map((p) => p.totalBet)
+        .sort((a, b) => a - b);
+      const levels = [...new Set([...allInAmounts, Infinity])];
+
+      let remaining = room.pot;
+      room.winners = [];
+      let distributed = 0;
+
+      for (const level of levels) {
+        if (remaining <= 0) break;
+
+        // Players eligible at this level: those whose totalBet reaches this level
+        const eligible = evaluated.filter(
+          (e) => !e.player.isAllIn || e.player.totalBet >= level,
+        );
+
+        if (eligible.length === 0) continue;
+
+        // Calculate pot for this level
+        let potForLevel = 0;
+        const prevLevel = levels[levels.indexOf(level) - 1] || 0;
+        for (const p of room.players) {
+          if (!p.folded || p.totalBet > 0) {
+            potForLevel +=
+              Math.min(p.totalBet, level) - Math.min(p.totalBet, prevLevel);
+          }
+        }
+
+        if (potForLevel <= 0) continue;
+
+        // Find winner(s) among eligible
+        const best = eligible[0];
+        const winners = eligible.filter(
+          (e) =>
+            e.hand.rank === best.hand.rank &&
+            cmpHigh(e.hand.highCards, best.hand.highCards) === 0,
+        );
+
+        const share = Math.floor(potForLevel / winners.length);
+        for (const w of winners) {
+          w.player.chips += share;
+          distributed += share;
+          const existing = room.winners.find((x) => x.playerId === w.player.id);
+          if (existing) {
+            existing.amount += share;
+          } else {
+            room.winners.push({
+              playerId: w.player.id,
+              name: w.player.name,
+              amount: share,
+              hand: w.hand,
+            });
+          }
+        }
+        remaining -= potForLevel;
+      }
+
+      // Any remainder due to rounding goes to first winner
+      const leftover = room.pot - distributed;
+      if (leftover > 0 && room.winners.length > 0) {
+        room.winners[0].amount += leftover;
+        const wp = active.find((p) => p.id === room.winners[0].playerId);
+        if (wp) wp.chips += leftover;
+      }
+
+      for (const w of room.winners) {
+        room.actionLog.push({
+          type: "win",
+          player: w.name,
+          amount: w.amount,
+          hand: w.hand?.name,
+        });
+      }
     } // end evaluable else
   }
 

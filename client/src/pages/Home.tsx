@@ -11,9 +11,13 @@ import LoanPanel from "../components/LoanPanel";
 import FriendsPanel from "../components/FriendsPanel";
 import AchievementsPanel from "../components/AchievementsPanel";
 import SessionStatsPanel from "../components/SessionStatsPanel";
+import { useEconomy } from "../hooks/useEconomy";
+import NotificationsPanel from "../components/NotificationsPanel";
 
 function QuickMenu() {
   const [open, setOpen] = useState(false);
+  const { activeLoans } = useEconomy();
+  const hasActiveLoan = (activeLoans?.length ?? 0) > 0;
   return (
     <div
       style={{
@@ -37,6 +41,7 @@ function QuickMenu() {
             animation: "qmSlideUp 0.2s ease-out",
           }}
         >
+          <NotificationsPanel />
           <ChallengesPanel />
           <LoanPanel />
           <FriendsPanel />
@@ -61,9 +66,25 @@ function QuickMenu() {
           boxShadow: "3px 3px 0 rgba(0,255,255,0.3)",
           transition: "transform 0.15s",
           transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          position: "relative",
         }}
       >
         ▲
+        {hasActiveLoan && !open && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-6px",
+              right: "-6px",
+              width: "14px",
+              height: "14px",
+              borderRadius: "50%",
+              background: "#ff0000",
+              border: "2px solid #ff4444",
+              boxShadow: "0 0 6px rgba(255,0,0,0.6)",
+            }}
+          />
+        )}
       </button>
       <style>{`
         @keyframes qmSlideUp {
@@ -130,6 +151,9 @@ export default function Home() {
           <Link to="/higher-lower" className="game-link">
             Higher or Lower
           </Link>
+          <Link to="/poker" className="game-link">
+            🃏 Poker
+          </Link>
           <Link to="/blackjack" className="game-link">
             Blackjack
           </Link>
@@ -160,6 +184,9 @@ export default function Home() {
           </Link>
           <Link to="/leaderboard" className="game-link">
             🏆 Leaderboard
+          </Link>
+          <Link to="/shop" className="game-link">
+            🛒 Shop
           </Link>
           {user?.isAdmin && (
             <Link

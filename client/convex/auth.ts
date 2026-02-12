@@ -209,7 +209,6 @@ export const updateSettings = mutation({
       bgAnimation: v.optional(v.boolean()),
       highContrast: v.optional(v.boolean()),
       reduceMotion: v.optional(v.boolean()),
-      soundEnabled: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {
@@ -241,7 +240,7 @@ export const unlockAchievement = mutation({
     }
 
     const currentAchievements = (user.achievements as string[]) || [];
-    
+
     if (!currentAchievements.includes(args.achievementId)) {
       await ctx.db.patch(args.userId, {
         achievements: [...currentAchievements, args.achievementId],

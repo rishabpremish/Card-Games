@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
@@ -81,7 +80,6 @@ function CardSlot() {
 export default function War() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const { incrementWinStreak, resetWinStreak, incrementSessionWins } =
     useAchievements();
@@ -127,7 +125,6 @@ export default function War() {
       return;
     }
 
-    playSound("deal");
     const d = ensureDeck();
     const pc = d[0],
       dc = d[1];
@@ -175,7 +172,6 @@ export default function War() {
       return;
     }
 
-    playSound("deal");
     setPhase("war");
     const d = ensureDeck();
     // Burn 3 cards each, then deal 1 each
@@ -207,7 +203,6 @@ export default function War() {
     const refund = Math.floor(stagedBet / 2);
     setMessage(`Surrendered. -$${stagedBet - refund}`);
     setResultType("lose");
-    playSound("lose");
     resetWinStreak();
     recordBet("war", stagedBet, "loss");
     setHistory((h) => [...h, "L"]);
@@ -219,7 +214,6 @@ export default function War() {
   const win = async (msg: string) => {
     setMessage(msg + ` +$${stagedBet}`);
     setResultType("win");
-    playSound("win");
     triggerConfetti({ intensity: "medium" });
     incrementWinStreak();
     incrementSessionWins();
@@ -234,7 +228,6 @@ export default function War() {
   const winWar = async (msg: string, amount: number) => {
     setMessage(msg + ` +$${amount - stagedBet * 2}`);
     setResultType("win");
-    playSound("win");
     triggerConfetti({ intensity: "high" });
     incrementWinStreak();
     incrementSessionWins();
@@ -249,7 +242,6 @@ export default function War() {
   const lose = (msg: string) => {
     setMessage(msg + ` -$${stagedBet}`);
     setResultType("lose");
-    playSound("lose");
     resetWinStreak();
     recordBet("war", stagedBet, "loss");
     setHistory((h) => [...h, "L"]);
@@ -259,7 +251,6 @@ export default function War() {
   const loseWar = (msg: string) => {
     setMessage(msg + ` -$${stagedBet * 2}`);
     setResultType("lose");
-    playSound("lose");
     resetWinStreak();
     recordBet("war", stagedBet * 2, "loss");
     setHistory((h) => [...h, "L"]);
@@ -588,9 +579,7 @@ export default function War() {
       {history.length > 0 && (
         <div className="war-hist">
           {history.slice(-30).map((r, i) => (
-            <div key={i} className={`war-hdot ${r}`}>
-              {r}
-            </div>
+            <div key={i} className={`war-hdot ${r}`} />
           ))}
         </div>
       )}
@@ -617,17 +606,28 @@ function HowToPlay() {
 
   return (
     <div className="instructions" ref={containerRef}>
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
         <h3>Rules</h3>
         <ol>
-          <li>Place your bet and press <strong>DEAL</strong></li>
+          <li>
+            Place your bet and press <strong>DEAL</strong>
+          </li>
           <li>You and the dealer each get one card</li>
           <li>Higher card wins! You get 2x your bet</li>
-          <li>On a <strong>tie</strong>, you can <strong>Go to War</strong> (double your bet) or <strong>Surrender</strong> (lose half)</li>
-          <li>In War, three cards are burned, then another card each — higher wins 3x</li>
+          <li>
+            On a <strong>tie</strong>, you can <strong>Go to War</strong>{" "}
+            (double your bet) or <strong>Surrender</strong> (lose half)
+          </li>
+          <li>
+            In War, three cards are burned, then another card each — higher wins
+            3x
+          </li>
         </ol>
         <p className="note">
           Card ranks: 2 (low) through Ace (high). Suit doesn't matter.

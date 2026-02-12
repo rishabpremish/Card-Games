@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
-import { useSound } from "../hooks/useSound";
 import { useConfetti } from "../hooks/useConfetti";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
@@ -103,7 +102,6 @@ function evaluateBet(bet: PlacedBet, result: number): number {
 export default function Roulette() {
   const navigate = useNavigate();
   const { wallet, placeBet: placeBetMutation, addWinnings } = useWallet();
-  const { playSound } = useSound();
   const { triggerConfetti } = useConfetti();
   const {
     unlockAchievement,
@@ -129,6 +127,12 @@ export default function Roulette() {
 
   const addBet = (kind: BetKind, number?: number) => {
     if (spinning) return;
+    // Starting a new turn: clear any prior result number displayed above the chips
+    if (result !== null) {
+      setResult(null);
+      setAnimNumber(null);
+      setHistory([]);
+    }
     if (selectedChip > availBet) return;
     const existing = bets.findIndex(
       (b) => b.kind === kind && b.number === number,
@@ -165,7 +169,6 @@ export default function Roulette() {
     setMessage("");
     setResult(null);
     setHistory([]);
-    playSound("chip");
 
     const finalResult = Math.floor(Math.random() * 37);
 
@@ -196,7 +199,6 @@ export default function Roulette() {
               `${colorEmoji} ${finalResult}! Won $${totalWin.toFixed(2)} (+$${profit.toFixed(2)})`,
             );
             setResultType("win");
-            playSound("win");
             triggerConfetti({
               intensity: totalWin >= totalBet * 10 ? "high" : "medium",
             });
@@ -208,13 +210,19 @@ export default function Roulette() {
           } else {
             setMessage(`${colorEmoji} ${finalResult}. Lost $${totalBet}`);
             setResultType("lose");
-            playSound("lose");
             resetWinStreak();
             recordBet("roulette", totalBet, "loss");
           }
 
           setSpinning(false);
           setBets([]);
+
+          // Clear the displayed number after the turn finishes
+          setTimeout(() => {
+            setResult(null);
+            setAnimNumber(null);
+            setHistory([]);
+          }, 2500);
         }
       },
       60 + count * 3,
@@ -531,7 +539,10 @@ function HowToPlay() {
 
   return (
     <div className="instructions" ref={containerRef}>
-      <button className="instructions-toggle" onClick={() => setVisible(!visible)}>
+      <button
+        className="instructions-toggle"
+        onClick={() => setVisible(!visible)}
+      >
         How to Play
       </button>
       <div className={`instructions-content ${visible ? "visible" : ""}`}>
@@ -539,9 +550,16 @@ function HowToPlay() {
         <ol>
           <li>Select a chip value, then click the board to place bets</li>
           <li>Bet on numbers (0–36), colors (Red/Black), ranges, or dozens</li>
-          <li>Press <strong>SPIN</strong> to spin the wheel</li>
-          <li><strong>Number bet:</strong> Pays 36x</li>
-          <li><strong>Color/Odd/Even:</strong> Pays 2x • <strong>Dozens:</strong> Pays 3x</li>
+          <li>
+            Press <strong>SPIN</strong> to spin the wheel
+          </li>
+          <li>
+            <strong>Number bet:</strong> Pays 36x
+          </li>
+          <li>
+            <strong>Color/Odd/Even:</strong> Pays 2x • <strong>Dozens:</strong>{" "}
+            Pays 3x
+          </li>
         </ol>
         <p className="note">
           You can place multiple bets before spinning. Green (0) pays 36x!
