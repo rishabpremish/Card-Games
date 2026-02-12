@@ -159,6 +159,13 @@ const VALUES = [
 ];
 const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
+const TURN_TIMEOUT_MS = 25000;
+const RECONNECT_WINDOW_MS = 45000;
+const SPECTATOR_DELAY_MS = 2500;
+const BIG_POT_THRESHOLD = 200;
+const RUN_IT_TWICE_FEE_PERCENT = 0.01;
+const INSURANCE_FEE_PERCENT = 0.05;
+const INSURANCE_PAYOUT_RATIO = 0.5;
 
 // House profit model: pot rake
 // 5% rake, capped at $5, only when pot reaches $40+ (2 big blinds)
@@ -184,6 +191,24 @@ const HAND_RANKS = {
 // ============================================
 const rooms = new Map();
 const playerSockets = new Map();
+const disconnectTimers = new Map();
+const turnTimers = new Map();
+
+function clearDisconnectTimer(playerId) {
+  const t = disconnectTimers.get(playerId);
+  if (t) {
+    clearTimeout(t);
+    disconnectTimers.delete(playerId);
+  }
+}
+
+function clearTurnTimer(roomCode) {
+  const t = turnTimers.get(roomCode);
+  if (t) {
+    clearTimeout(t);
+    turnTimers.delete(roomCode);
+  }
+}
 
 function generateRoomCode() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -195,6 +220,12 @@ function generateRoomCode() {
 let _pid = 0;
 function generatePlayerId() {
   return "p_" + ++_pid + "_" + Math.random().toString(36).slice(2, 8);
+}
+
+function generateReconnectKey() {
+  return (
+    "rk_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36)
+  );
 }
 
 // ============================================
@@ -356,12 +387,14 @@ function cmpHigh(a, b) {
 // ============================================
 function createRoom(hostId, hostName, buyIn) {
   const code = generateRoomCode();
+  const now = Date.now();
   const room = {
     code,
     hostId,
     players: [
       {
         id: hostId,
+        reconnectKey: generateReconnectKey(),
         name: hostName,
         chips: buyIn,
         cards: [],
@@ -372,8 +405,17 @@ function createRoom(hostId, hostName, buyIn) {
         isConnected: true,
         seatIndex: 0,
         buyIn,
+        autoInsurance: false,
+        runItTwiceOptIn: false,
+        insurancePayout: 0,
+        lastActiveAt: now,
       },
     ],
+    spectators: [],
+    roomOptions: {
+      runItTwiceEnabled: true,
+      insuranceEnabled: true,
+    },
     gameState: "waiting",
     deck: [],
     communityCards: [],
@@ -406,6 +448,7 @@ function joinRoom(roomCode, playerId, playerName, buyIn) {
 
   room.players.push({
     id: playerId,
+    reconnectKey: generateReconnectKey(),
     name: playerName,
     chips: buyIn,
     cards: [],
@@ -416,8 +459,44 @@ function joinRoom(roomCode, playerId, playerName, buyIn) {
     isConnected: true,
     seatIndex: seat,
     buyIn,
+    autoInsurance: false,
+    runItTwiceOptIn: false,
+    insurancePayout: 0,
+    lastActiveAt: Date.now(),
   });
   return { success: true, room };
+}
+
+function spectateRoom(roomCode, spectatorId, spectatorName = "Spectator") {
+  const room = rooms.get(roomCode);
+  if (!room) return { error: "Room not found" };
+
+  const existing = room.spectators.find((s) => s.id === spectatorId);
+  if (existing) {
+    existing.isConnected = true;
+    existing.name = spectatorName || existing.name;
+    return { success: true, room };
+  }
+
+  room.spectators.push({
+    id: spectatorId,
+    name: spectatorName,
+    isConnected: true,
+    joinedAt: Date.now(),
+  });
+  return { success: true, room };
+}
+
+function reconnectPlayer(roomCode, reconnectKey) {
+  const room = rooms.get(roomCode);
+  if (!room) return { error: "Room not found" };
+  const player = room.players.find((p) => p.reconnectKey === reconnectKey);
+  if (!player) return { error: "Reconnect token invalid" };
+
+  player.isConnected = true;
+  player.lastActiveAt = Date.now();
+  clearDisconnectTimer(player.id);
+  return { success: true, room, player };
 }
 
 function leaveRoom(roomCode, playerId) {
@@ -426,6 +505,7 @@ function leaveRoom(roomCode, playerId) {
 
   const idx = room.players.findIndex((p) => p.id === playerId);
   if (idx === -1) return null;
+  clearDisconnectTimer(playerId);
 
   const player = room.players[idx];
   const cashOutAmount = player.chips;
@@ -433,6 +513,7 @@ function leaveRoom(roomCode, playerId) {
   if (room.gameState === "waiting" || room.gameState === "showdown") {
     room.players.splice(idx, 1);
     if (room.players.length === 0) {
+      clearTurnTimer(roomCode);
       rooms.delete(roomCode);
       return { roomDeleted: true, cashOutAmount };
     }
@@ -456,6 +537,15 @@ function leaveRoom(roomCode, playerId) {
     }
   }
   return { room, cashOutAmount };
+}
+
+function leaveSpectator(roomCode, spectatorId) {
+  const room = rooms.get(roomCode);
+  if (!room) return null;
+  const idx = room.spectators.findIndex((s) => s.id === spectatorId);
+  if (idx === -1) return null;
+  room.spectators.splice(idx, 1);
+  return { room };
 }
 
 function startGame(room) {
@@ -492,6 +582,8 @@ function startNewHand(room) {
     p.totalBet = 0;
     p.folded = p.chips <= 0;
     p.isAllIn = false;
+    p.runItTwiceOptIn = false;
+    p.insurancePayout = 0;
   }
 
   // Move dealer
@@ -534,6 +626,7 @@ function startNewHand(room) {
   });
 
   skipIfCantAct(room);
+  scheduleTurnTimeout(room);
 }
 
 function nextActiveIndex(room, fromIndex) {
@@ -577,6 +670,46 @@ function skipIfCantAct(room) {
   }
 }
 
+function scheduleTurnTimeout(room) {
+  clearTurnTimer(room.code);
+  if (room.gameState === "waiting" || room.gameState === "showdown") return;
+
+  const current = room.players[room.currentPlayerIndex];
+  if (!current || current.folded || current.isAllIn) return;
+
+  room.turnDeadline = Date.now() + TURN_TIMEOUT_MS;
+  const timer = setTimeout(() => {
+    const freshRoom = rooms.get(room.code);
+    if (!freshRoom) return;
+    if (
+      freshRoom.gameState === "waiting" ||
+      freshRoom.gameState === "showdown"
+    ) {
+      return;
+    }
+
+    const p = freshRoom.players[freshRoom.currentPlayerIndex];
+    if (!p || p.folded || p.isAllIn) {
+      scheduleTurnTimeout(freshRoom);
+      return;
+    }
+
+    freshRoom.actionLog.push({ type: "timeout", player: p.name });
+    handlePlayerAction(freshRoom, p.id, "fold", 0);
+    broadcastRoom(freshRoom, (pid, isSpectator) => ({
+      type: "GAME_UPDATE",
+      gameState: publicState(
+        freshRoom,
+        pid,
+        isSpectator ? "spectator" : "player",
+      ),
+      lastAction: { playerId: p.id, action: "timeout" },
+    }));
+  }, TURN_TIMEOUT_MS);
+
+  turnTimers.set(room.code, timer);
+}
+
 // ============================================
 // PLAYER ACTIONS
 // ============================================
@@ -588,6 +721,7 @@ function handlePlayerAction(room, playerId, action, amount = 0) {
     return { error: "No active hand" };
 
   const player = room.players[idx];
+  player.lastActiveAt = Date.now();
   if (player.folded || player.isAllIn) return { error: "Cannot act" };
 
   switch (action) {
@@ -687,6 +821,12 @@ function handlePlayerAction(room, playerId, action, amount = 0) {
     advanceToNextPlayer(room);
   }
 
+  if (room.gameState === "waiting" || room.gameState === "showdown") {
+    clearTurnTimer(room.code);
+  } else {
+    scheduleTurnTimeout(room);
+  }
+
   return { success: true };
 }
 
@@ -754,6 +894,7 @@ function advanceGameState(room) {
 // END HAND & POT DISTRIBUTION
 // ============================================
 function endHand(room) {
+  clearTurnTimer(room.code);
   room.gameState = "showdown";
 
   // Deal remaining community cards for all-in situations
@@ -783,6 +924,84 @@ function endHand(room) {
       room.totalRake = (room.totalRake || 0) + rake;
       room.actionLog.push({ type: "rake", amount: rake });
     }
+  }
+
+  const potAfterRake = room.pot;
+
+  // Optional Run It Twice for heads-up all-in pots
+  if (
+    room.roomOptions?.runItTwiceEnabled &&
+    active.length === 2 &&
+    active.every((p) => p.isAllIn || p.chips === 0) &&
+    active.every((p) => p.runItTwiceOptIn) &&
+    potAfterRake >= BIG_POT_THRESHOLD
+  ) {
+    const runTwiceFee = Math.max(
+      1,
+      Math.floor(potAfterRake * RUN_IT_TWICE_FEE_PERCENT),
+    );
+    room.pot = Math.max(0, potAfterRake - runTwiceFee);
+    room.actionLog.push({ type: "run_it_twice_fee", amount: runTwiceFee });
+
+    const baseBoard = [...room.communityCards];
+    const drawDeck = shuffleDeck([...(room.deck || [])]);
+    const board1 = [...baseBoard];
+    const board2 = [...baseBoard];
+    while (board1.length < 5 && drawDeck.length) board1.push(drawDeck.pop());
+    while (board2.length < 5 && drawDeck.length) board2.push(drawDeck.pop());
+    room.communityCards = board2;
+
+    const half1 = Math.floor(room.pot / 2);
+    const half2 = room.pot - half1;
+    const winAcc = new Map();
+
+    const awardBoard = (board, boardPot, boardNo) => {
+      const evaluated = active.map((p) => ({
+        player: p,
+        hand: evaluateHand([...(p.cards || []), ...board]),
+      }));
+      evaluated.sort((a, b) => {
+        if (b.hand.rank !== a.hand.rank) return b.hand.rank - a.hand.rank;
+        return cmpHigh(b.hand.highCards, a.hand.highCards);
+      });
+      const best = evaluated[0];
+      const winners = evaluated.filter(
+        (e) =>
+          e.hand.rank === best.hand.rank &&
+          cmpHigh(e.hand.highCards, best.hand.highCards) === 0,
+      );
+      const share = Math.floor(boardPot / winners.length);
+      const remainder = boardPot - share * winners.length;
+      winners.forEach((w, index) => {
+        const amount = share + (index === 0 ? remainder : 0);
+        w.player.chips += amount;
+        const prev = winAcc.get(w.player.id) || {
+          playerId: w.player.id,
+          name: w.player.name,
+          amount: 0,
+          hand: w.hand,
+        };
+        prev.amount += amount;
+        winAcc.set(w.player.id, prev);
+      });
+      room.actionLog.push({ type: "run_it_twice_board", amount: boardNo });
+    };
+
+    awardBoard(board1, half1, 1);
+    awardBoard(board2, half2, 2);
+
+    room.winners = Array.from(winAcc.values());
+    for (const w of room.winners) {
+      room.actionLog.push({
+        type: "win",
+        player: w.name,
+        amount: w.amount,
+        hand: w.hand?.name,
+      });
+    }
+
+    room.pot = 0;
+    return;
   }
 
   if (active.length === 1) {
@@ -912,6 +1131,26 @@ function endHand(room) {
     } // end evaluable else
   }
 
+  // Optional insurance payout for losing insured players in big pots
+  if (room.roomOptions?.insuranceEnabled && potAfterRake >= BIG_POT_THRESHOLD) {
+    const winnerIds = new Set((room.winners || []).map((w) => w.playerId));
+    for (const p of room.players) {
+      if (!p.autoInsurance || p.totalBet <= 0 || winnerIds.has(p.id)) continue;
+      const grossCover = Math.floor(p.totalBet * INSURANCE_PAYOUT_RATIO);
+      const fee = Math.ceil(grossCover * INSURANCE_FEE_PERCENT);
+      const payout = Math.max(0, grossCover - fee);
+      if (payout > 0) {
+        p.chips += payout;
+        p.insurancePayout = payout;
+        room.actionLog.push({
+          type: "insurance",
+          player: p.name,
+          amount: payout,
+        });
+      }
+    }
+  }
+
   room.pot = 0;
 }
 
@@ -925,15 +1164,29 @@ function sendTo(playerId, msg) {
 
 function broadcastRoom(room, msgFn) {
   for (const p of room.players) {
-    sendTo(p.id, typeof msgFn === "function" ? msgFn(p.id) : msgFn);
+    sendTo(p.id, typeof msgFn === "function" ? msgFn(p.id, false) : msgFn);
+  }
+
+  for (const s of room.spectators || []) {
+    if (!s.isConnected) continue;
+    const msg = typeof msgFn === "function" ? msgFn(s.id, true) : msgFn;
+    setTimeout(() => {
+      sendTo(s.id, msg);
+    }, SPECTATOR_DELAY_MS);
   }
 }
 
-function publicState(room, forPlayerId) {
+function publicState(room, forPlayerId, viewerType = "player") {
   const isShowdown = room.gameState === "showdown";
+  const isSpectator = viewerType === "spectator";
   return {
     roomCode: room.code,
     hostId: room.hostId,
+    isSpectator,
+    spectatorCount: (room.spectators || []).filter((s) => s.isConnected).length,
+    roomOptions: room.roomOptions,
+    turnDeadline: room.turnDeadline || null,
+    turnTimeoutMs: TURN_TIMEOUT_MS,
     gameState: room.gameState,
     communityCards: room.communityCards,
     pot: room.pot,
@@ -955,9 +1208,11 @@ function publicState(room, forPlayerId) {
       folded: p.folded,
       isAllIn: p.isAllIn,
       isConnected: p.isConnected,
+      autoInsurance: !!p.autoInsurance,
+      runItTwiceOptIn: !!p.runItTwiceOptIn,
       seatIndex: p.seatIndex,
       cards:
-        p.id === forPlayerId || (isShowdown && !p.folded)
+        !isSpectator && (p.id === forPlayerId || (isShowdown && !p.folded))
           ? p.cards
           : p.cards.map(() => null),
       isCurrentPlayer:
@@ -974,15 +1229,60 @@ function publicState(room, forPlayerId) {
 wss.on("connection", (ws) => {
   let playerId = null;
   let currentRoomCode = null;
+  let isSpectator = false;
 
   ws.on("message", (data) => {
     try {
       const msg = JSON.parse(data);
 
       switch (msg.type) {
+        case "RECONNECT": {
+          const roomCode = (msg.roomCode || "").toUpperCase();
+          const reconnectKey = msg.reconnectKey || "";
+          if (!roomCode || !reconnectKey) {
+            ws.send(
+              JSON.stringify({
+                type: "ERROR",
+                error: "Missing reconnect credentials",
+              }),
+            );
+            return;
+          }
+          const result = reconnectPlayer(roomCode, reconnectKey);
+          if (result.error) {
+            ws.send(JSON.stringify({ type: "ERROR", error: result.error }));
+            return;
+          }
+
+          playerId = result.player.id;
+          currentRoomCode = roomCode;
+          isSpectator = false;
+          playerSockets.set(playerId, ws);
+          ws.send(
+            JSON.stringify({
+              type: "RECONNECTED",
+              playerId,
+              roomCode,
+              reconnectKey: result.player.reconnectKey,
+              gameState: publicState(result.room, playerId, "player"),
+            }),
+          );
+          broadcastRoom(result.room, (pid, forSpectator) => ({
+            type: "PLAYER_RECONNECTED",
+            playerId,
+            gameState: publicState(
+              result.room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
+          }));
+          break;
+        }
+
         case "CREATE_ROOM": {
           playerId = generatePlayerId();
           playerSockets.set(playerId, ws);
+          isSpectator = false;
           const buyIn = msg.buyIn || 1000;
           const room = createRoom(playerId, msg.playerName || "Player", buyIn);
           currentRoomCode = room.code;
@@ -990,8 +1290,9 @@ wss.on("connection", (ws) => {
             JSON.stringify({
               type: "ROOM_CREATED",
               playerId,
+              reconnectKey: room.players[0].reconnectKey,
               roomCode: room.code,
-              gameState: publicState(room, playerId),
+              gameState: publicState(room, playerId, "player"),
             }),
           );
           break;
@@ -1000,6 +1301,7 @@ wss.on("connection", (ws) => {
         case "JOIN_ROOM": {
           playerId = generatePlayerId();
           playerSockets.set(playerId, ws);
+          isSpectator = false;
           const buyIn = msg.buyIn || 1000;
           const result = joinRoom(
             (msg.roomCode || "").toUpperCase(),
@@ -1019,13 +1321,67 @@ wss.on("connection", (ws) => {
             JSON.stringify({
               type: "ROOM_JOINED",
               playerId,
+              reconnectKey: room.players.find((p) => p.id === playerId)
+                ?.reconnectKey,
               roomCode: currentRoomCode,
-              gameState: publicState(room, playerId),
+              gameState: publicState(room, playerId, "player"),
             }),
           );
-          broadcastRoom(room, (pid) => ({
+          broadcastRoom(room, (pid, forSpectator) => ({
             type: "PLAYER_JOINED",
-            gameState: publicState(room, pid),
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
+          }));
+          break;
+        }
+
+        case "SPECTATE_ROOM": {
+          const roomCode = (msg.roomCode || "").toUpperCase();
+          if (!roomCode) {
+            ws.send(
+              JSON.stringify({ type: "ERROR", error: "Room code required" }),
+            );
+            return;
+          }
+          const spectatorId = "s_" + generatePlayerId();
+          playerSockets.set(spectatorId, ws);
+          playerId = spectatorId;
+          currentRoomCode = roomCode;
+          isSpectator = true;
+
+          const result = spectateRoom(
+            roomCode,
+            spectatorId,
+            msg.playerName || "Spectator",
+          );
+          if (result.error) {
+            ws.send(JSON.stringify({ type: "ERROR", error: result.error }));
+            playerSockets.delete(spectatorId);
+            playerId = null;
+            currentRoomCode = null;
+            isSpectator = false;
+            return;
+          }
+
+          ws.send(
+            JSON.stringify({
+              type: "ROOM_SPECTATING",
+              spectatorId,
+              roomCode,
+              gameState: publicState(result.room, spectatorId, "spectator"),
+            }),
+          );
+
+          broadcastRoom(result.room, (pid, forSpectator) => ({
+            type: "SPECTATOR_JOINED",
+            gameState: publicState(
+              result.room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
           }));
           break;
         }
@@ -1044,9 +1400,13 @@ wss.on("connection", (ws) => {
             ws.send(JSON.stringify({ type: "ERROR", error: result.error }));
             return;
           }
-          broadcastRoom(room, (pid) => ({
+          broadcastRoom(room, (pid, forSpectator) => ({
             type: "GAME_STARTED",
-            gameState: publicState(room, pid),
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
           }));
           break;
         }
@@ -1064,10 +1424,60 @@ wss.on("connection", (ws) => {
             ws.send(JSON.stringify({ type: "ERROR", error: result.error }));
             return;
           }
-          broadcastRoom(room, (pid) => ({
+          broadcastRoom(room, (pid, forSpectator) => ({
             type: "GAME_UPDATE",
-            gameState: publicState(room, pid),
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
             lastAction: { playerId, action: msg.action, amount: msg.amount },
+          }));
+          break;
+        }
+
+        case "SET_PLAYER_OPTIONS": {
+          const room = rooms.get(currentRoomCode);
+          if (!room || isSpectator) return;
+          const player = room.players.find((p) => p.id === playerId);
+          if (!player) return;
+
+          if (typeof msg.autoInsurance === "boolean") {
+            player.autoInsurance = msg.autoInsurance;
+          }
+          if (typeof msg.runItTwiceOptIn === "boolean") {
+            player.runItTwiceOptIn = msg.runItTwiceOptIn;
+          }
+
+          broadcastRoom(room, (pid, forSpectator) => ({
+            type: "GAME_UPDATE",
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
+          }));
+          break;
+        }
+
+        case "UPDATE_ROOM_OPTIONS": {
+          const room = rooms.get(currentRoomCode);
+          if (!room || room.hostId !== playerId || isSpectator) return;
+
+          if (typeof msg.runItTwiceEnabled === "boolean") {
+            room.roomOptions.runItTwiceEnabled = msg.runItTwiceEnabled;
+          }
+          if (typeof msg.insuranceEnabled === "boolean") {
+            room.roomOptions.insuranceEnabled = msg.insuranceEnabled;
+          }
+
+          broadcastRoom(room, (pid, forSpectator) => ({
+            type: "GAME_UPDATE",
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
           }));
           break;
         }
@@ -1091,16 +1501,22 @@ wss.on("connection", (ws) => {
             return;
           }
           startNewHand(room);
-          broadcastRoom(room, (pid) => ({
+          broadcastRoom(room, (pid, forSpectator) => ({
             type: "GAME_UPDATE",
-            gameState: publicState(room, pid),
+            gameState: publicState(
+              room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
           }));
           break;
         }
 
         case "LEAVE_ROOM": {
           if (!currentRoomCode) return;
-          const result = leaveRoom(currentRoomCode, playerId);
+          const result = isSpectator
+            ? leaveSpectator(currentRoomCode, playerId)
+            : leaveRoom(currentRoomCode, playerId);
           ws.send(
             JSON.stringify({
               type: "LEFT_ROOM",
@@ -1108,10 +1524,14 @@ wss.on("connection", (ws) => {
             }),
           );
           if (result && result.room) {
-            broadcastRoom(result.room, (pid) => ({
+            broadcastRoom(result.room, (pid, forSpectator) => ({
               type: "PLAYER_LEFT",
               leftPlayerId: playerId,
-              gameState: publicState(result.room, pid),
+              gameState: publicState(
+                result.room,
+                pid,
+                forSpectator ? "spectator" : "player",
+              ),
             }));
           }
           currentRoomCode = null;
@@ -1130,16 +1550,63 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     if (playerId) {
       playerSockets.delete(playerId);
-      if (currentRoomCode) {
-        const result = leaveRoom(currentRoomCode, playerId);
-        if (result && result.room) {
-          broadcastRoom(result.room, (pid) => ({
-            type: "PLAYER_DISCONNECTED",
+      if (!currentRoomCode) return;
+
+      if (isSpectator) {
+        const result = leaveSpectator(currentRoomCode, playerId);
+        if (result?.room) {
+          broadcastRoom(result.room, (pid, forSpectator) => ({
+            type: "SPECTATOR_LEFT",
             leftPlayerId: playerId,
-            gameState: publicState(result.room, pid),
+            gameState: publicState(
+              result.room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
           }));
         }
+        return;
       }
+
+      const room = rooms.get(currentRoomCode);
+      const player = room?.players.find((p) => p.id === playerId);
+      if (!room || !player) return;
+
+      player.isConnected = false;
+      player.folded = player.folded || room.gameState !== "waiting";
+
+      const idx = room.players.findIndex((p) => p.id === playerId);
+      if (idx === room.currentPlayerIndex && room.gameState !== "waiting") {
+        handlePlayerAction(room, playerId, "fold", 0);
+      }
+
+      broadcastRoom(room, (pid, forSpectator) => ({
+        type: "PLAYER_DISCONNECTED",
+        leftPlayerId: playerId,
+        reconnectWindowMs: RECONNECT_WINDOW_MS,
+        gameState: publicState(
+          room,
+          pid,
+          forSpectator ? "spectator" : "player",
+        ),
+      }));
+
+      clearDisconnectTimer(playerId);
+      const timer = setTimeout(() => {
+        const result = leaveRoom(currentRoomCode, playerId);
+        if (result?.room) {
+          broadcastRoom(result.room, (pid, forSpectator) => ({
+            type: "PLAYER_LEFT",
+            leftPlayerId: playerId,
+            gameState: publicState(
+              result.room,
+              pid,
+              forSpectator ? "spectator" : "player",
+            ),
+          }));
+        }
+      }, RECONNECT_WINDOW_MS);
+      disconnectTimers.set(playerId, timer);
     }
   });
 });

@@ -9,6 +9,31 @@ function startOfDay(ts: number): number {
   return d.getTime();
 }
 
+async function settlePreviousPendingRound(
+  ctx: any,
+  userId: any,
+  game: string,
+  settledAt: number,
+) {
+  const pending = await ctx.db
+    .query("matchHistory")
+    .withIndex("by_user_game_and_time", (q: any) =>
+      q.eq("userId", userId).eq("game", game),
+    )
+    .order("desc")
+    .take(1);
+
+  const last = pending[0];
+  if (!last || last.outcome !== "pending") return;
+
+  await ctx.db.patch(last._id, {
+    payout: 0,
+    net: -last.bet,
+    outcome: "loss",
+    settledAt,
+  });
+}
+
 // Get user's wallet balance
 export const getWallet = query({
   args: {
@@ -56,6 +81,8 @@ export const placeBet = mutation({
       newWallet = 0;
     }
 
+    const now = Date.now();
+
     // Update wallet
     await ctx.db.patch(args.userId, {
       wallet: newWallet,
@@ -69,8 +96,21 @@ export const placeBet = mutation({
       balanceBefore: user.wallet,
       balanceAfter: newWallet,
       game: args.game,
-      timestamp: Date.now(),
+      timestamp: now,
     });
+
+    if (args.game !== "Poker") {
+      await settlePreviousPendingRound(ctx, args.userId, args.game, now);
+      await ctx.db.insert("matchHistory", {
+        userId: args.userId,
+        game: args.game,
+        bet: args.amount,
+        payout: 0,
+        net: -args.amount,
+        outcome: "pending",
+        timestamp: now,
+      });
+    }
 
     // ── Economy auto-tracking ──
     // Track total wagered for VIP tiers
@@ -94,13 +134,13 @@ export const placeBet = mutation({
     await ctx.db.patch(args.userId, vipPatch);
 
     // Update challenge progress (wager + play)
-    const now = Date.now();
+    const challengeNow = Date.now();
     const challenges = await ctx.db
       .query("challenges")
       .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
       .collect();
     for (const ch of challenges) {
-      if (ch.completed || ch.expiresAt <= now) continue;
+      if (ch.completed || ch.expiresAt <= challengeNow) continue;
       let inc = 0;
       if (ch.challengeId.includes("wager")) inc = args.amount;
       else if (ch.challengeId.includes("play")) inc = 1;
@@ -136,6 +176,8 @@ export const addWinnings = mutation({
       throw new Error("User not found");
     }
 
+    const now = Date.now();
+
     const newWallet = Math.round((user.wallet + args.amount) * 100) / 100;
 
     // Update wallet
@@ -152,8 +194,50 @@ export const addWinnings = mutation({
       balanceAfter: newWallet,
       game: args.game,
       description: args.description,
-      timestamp: Date.now(),
+      timestamp: now,
     });
+
+    const isPokerCashout =
+      args.game === "Poker" &&
+      (args.description ?? "").toLowerCase().includes("cash out");
+
+    if (!isPokerCashout) {
+      const recent = await ctx.db
+        .query("matchHistory")
+        .withIndex("by_user_game_and_time", (q: any) =>
+          q.eq("userId", args.userId).eq("game", args.game),
+        )
+        .order("desc")
+        .take(1);
+      const pendingRound = recent[0];
+
+      if (pendingRound && pendingRound.outcome === "pending") {
+        const net = args.amount - pendingRound.bet;
+        const outcome = net > 0 ? "win" : net < 0 ? "loss" : ("push" as const);
+        await ctx.db.patch(pendingRound._id, {
+          payout: args.amount,
+          net,
+          outcome,
+          settledAt: now,
+          metadata: {
+            ...(pendingRound.metadata ?? {}),
+            notes: args.description,
+          },
+        });
+      } else {
+        await ctx.db.insert("matchHistory", {
+          userId: args.userId,
+          game: args.game,
+          bet: 0,
+          payout: args.amount,
+          net: args.amount,
+          outcome: args.amount > 0 ? "win" : "push",
+          timestamp: now,
+          settledAt: now,
+          metadata: { notes: args.description },
+        });
+      }
+    }
 
     // ── Economy auto-tracking on win ──
     if (args.amount > 0) {
@@ -169,13 +253,13 @@ export const addWinnings = mutation({
       await ctx.db.patch(args.userId, { xp: newXP, level });
 
       // Update win challenges
-      const now = Date.now();
+      const challengeNow = Date.now();
       const challenges = await ctx.db
         .query("challenges")
         .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
         .collect();
       for (const ch of challenges) {
-        if (ch.completed || ch.expiresAt <= now) continue;
+        if (ch.completed || ch.expiresAt <= challengeNow) continue;
         let inc = 0;
         if (ch.challengeId.includes("win") && !ch.challengeId.includes("big"))
           inc = 1;
@@ -369,5 +453,66 @@ export const getTransactions = query({
       .take(limit);
 
     return transactions;
+  },
+});
+
+export const getMatchHistory = query({
+  args: {
+    userId: v.id("users"),
+    game: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(50, args.limit || 50);
+    const rows = await ctx.db
+      .query("matchHistory")
+      .withIndex("by_user_and_time", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(200);
+
+    const filtered = rows.filter(
+      (r) => r.outcome !== "pending" && (!args.game || r.game === args.game),
+    );
+    return filtered.slice(0, limit);
+  },
+});
+
+export const recordMatchRound = mutation({
+  args: {
+    userId: v.id("users"),
+    game: v.string(),
+    bet: v.number(),
+    payout: v.number(),
+    timestamp: v.optional(v.number()),
+    metadata: v.optional(
+      v.object({
+        roomCode: v.optional(v.string()),
+        notes: v.optional(v.string()),
+        handNumber: v.optional(v.number()),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const ts = args.timestamp ?? Date.now();
+    const bet = Math.max(0, Math.round(args.bet * 100) / 100);
+    const payout = Math.max(0, Math.round(args.payout * 100) / 100);
+    const net = Math.round((payout - bet) * 100) / 100;
+    const outcome = net > 0 ? "win" : net < 0 ? "loss" : "push";
+
+    await settlePreviousPendingRound(ctx, args.userId, args.game, ts);
+
+    const id = await ctx.db.insert("matchHistory", {
+      userId: args.userId,
+      game: args.game,
+      bet,
+      payout,
+      net,
+      outcome,
+      timestamp: ts,
+      settledAt: ts,
+      metadata: args.metadata,
+    });
+
+    return { success: true, id };
   },
 });

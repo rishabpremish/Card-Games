@@ -6,7 +6,12 @@ import type { PokerGameState } from "./usePoker";
 interface Props {
   onCreateRoom: (name: string, buyIn: number) => void;
   onJoinRoom: (code: string, name: string, buyIn: number) => void;
+  onSpectateRoom: (code: string, name?: string) => void;
   onStartGame: () => void;
+  onUpdateRoomOptions: (opts: {
+    runItTwiceEnabled?: boolean;
+    insuranceEnabled?: boolean;
+  }) => void;
   onLeaveRoom: () => void;
   screen: "lobby" | "room" | "game";
   roomCode: string | null;
@@ -19,7 +24,9 @@ interface Props {
 export default function PokerLobby({
   onCreateRoom,
   onJoinRoom,
+  onSpectateRoom,
   onStartGame,
+  onUpdateRoomOptions,
   onLeaveRoom,
   screen,
   roomCode,
@@ -32,6 +39,7 @@ export default function PokerLobby({
   const { wallet, username } = useWallet();
 
   const [joinCode, setJoinCode] = useState("");
+  const [spectateCode, setSpectateCode] = useState("");
   const [buyIn, setBuyIn] = useState(100);
 
   const playerName = username || "Player";
@@ -113,6 +121,61 @@ export default function PokerLobby({
               </span>
             </p>
           </div>
+
+          {isHost && (
+            <div
+              style={{
+                marginTop: 18,
+                borderTop: "1px dashed rgba(255,255,255,0.2)",
+                paddingTop: 12,
+              }}
+            >
+              <h4
+                style={{
+                  color: "var(--retro-cyan)",
+                  fontFamily: "'Press Start 2P'",
+                  fontSize: "0.55rem",
+                  margin: "0 0 10px",
+                }}
+              >
+                Cash Game Options
+              </h4>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  className="action-btn btn-double"
+                  style={{ fontSize: "0.45rem", padding: "8px 10px" }}
+                  onClick={() =>
+                    onUpdateRoomOptions({
+                      runItTwiceEnabled: !(
+                        gameState.roomOptions?.runItTwiceEnabled ?? true
+                      ),
+                    })
+                  }
+                >
+                  Run It Twice:{" "}
+                  {(gameState.roomOptions?.runItTwiceEnabled ?? true)
+                    ? "ON"
+                    : "OFF"}
+                </button>
+                <button
+                  className="action-btn btn-double"
+                  style={{ fontSize: "0.45rem", padding: "8px 10px" }}
+                  onClick={() =>
+                    onUpdateRoomOptions({
+                      insuranceEnabled: !(
+                        gameState.roomOptions?.insuranceEnabled ?? true
+                      ),
+                    })
+                  }
+                >
+                  Insurance:{" "}
+                  {(gameState.roomOptions?.insuranceEnabled ?? true)
+                    ? "ON"
+                    : "OFF"}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="lobby-buttons">
             {isHost && (
@@ -247,6 +310,31 @@ export default function PokerLobby({
             }
           >
             JOIN ROOM
+          </button>
+        </div>
+
+        <div className="lobby-section">
+          <label className="lobby-label">Spectate Room</label>
+          <input
+            className="lobby-input"
+            type="text"
+            maxLength={4}
+            placeholder="ABCD"
+            value={spectateCode}
+            onChange={(e) => setSpectateCode(e.target.value.toUpperCase())}
+          />
+          <button
+            className="action-btn btn-stand"
+            style={{
+              width: "100%",
+              fontSize: "0.65rem",
+              padding: "12px",
+              marginTop: 10,
+            }}
+            onClick={() => onSpectateRoom(spectateCode, playerName)}
+            disabled={!isConnected || spectateCode.length < 4}
+          >
+            WATCH TABLE
           </button>
         </div>
       </div>

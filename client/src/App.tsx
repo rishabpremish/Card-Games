@@ -15,6 +15,7 @@ import Stats from "./pages/Stats";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
 import Shop from "./pages/Shop";
+import Profile from "./pages/Profile";
 import PokerPage from "./poker/PokerPage";
 import "./styles.css";
 import "./auth.css";
@@ -70,6 +71,7 @@ function App() {
         <Route path="/stats" element={<Stats />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/shop" element={<Shop />} />
+        <Route path="/profile/:username" element={<Profile />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </BrowserRouter>

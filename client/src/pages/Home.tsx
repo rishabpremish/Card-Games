@@ -188,6 +188,12 @@ export default function Home() {
           <Link to="/shop" className="game-link">
             🛒 Shop
           </Link>
+          <Link
+            to={`/profile/${user?.username ?? "player"}`}
+            className="game-link"
+          >
+            👤 Public Profile
+          </Link>
           {user?.isAdmin && (
             <Link
               to="/admin"

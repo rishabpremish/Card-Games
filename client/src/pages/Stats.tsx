@@ -30,7 +30,7 @@ const VIP_EMOJI: Record<string, string> = {
 export default function Stats() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { wallet: balance } = useWallet();
+  const { wallet: balance, matchHistory } = useWallet();
   const { playerStats } = useEconomy();
   const session = SafeSessionStats();
   const { achievements } = useAchievements();
@@ -461,6 +461,79 @@ export default function Stats() {
                 {stats?.ownedItems?.length ?? 0}
               </span>
             </div>
+          </div>
+
+          {/* Match History Card */}
+          <div className="stats-card" style={{ gridColumn: "1 / -1" }}>
+            <h3>🧾 Match History (Last 50)</h3>
+            {(matchHistory ?? []).length === 0 ? (
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.5)",
+                  fontSize: "0.6rem",
+                  margin: 0,
+                }}
+              >
+                No completed rounds yet.
+              </p>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1.2fr 0.8fr 0.8fr 0.8fr 1.6fr",
+                    gap: 8,
+                    fontSize: "0.5rem",
+                    color: "rgba(255,255,255,0.55)",
+                    borderBottom: "1px solid rgba(255,255,255,0.15)",
+                    paddingBottom: 6,
+                  }}
+                >
+                  <span>Game</span>
+                  <span>Bet</span>
+                  <span>Outcome</span>
+                  <span>Net</span>
+                  <span>Time</span>
+                </div>
+                {(matchHistory ?? []).slice(0, 50).map((row: any) => (
+                  <div
+                    key={row._id}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1.2fr 0.8fr 0.8fr 0.8fr 1.6fr",
+                      gap: 8,
+                      fontSize: "0.53rem",
+                      borderBottom: "1px dashed rgba(255,255,255,0.08)",
+                      paddingBottom: 6,
+                    }}
+                  >
+                    <span>{row.game}</span>
+                    <span>${row.bet}</span>
+                    <span
+                      style={{
+                        textTransform: "uppercase",
+                        color:
+                          row.outcome === "win"
+                            ? "#00ff88"
+                            : row.outcome === "loss"
+                              ? "#ff4444"
+                              : "#ffd700",
+                      }}
+                    >
+                      {row.outcome}
+                    </span>
+                    <span
+                      style={{ color: row.net >= 0 ? "#00ff88" : "#ff4444" }}
+                    >
+                      {row.net >= 0 ? "+" : ""}${row.net}
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.65)" }}>
+                      {new Date(row.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

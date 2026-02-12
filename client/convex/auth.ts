@@ -100,6 +100,8 @@ export const register = mutation({
     const userId = await ctx.db.insert("users", {
       username: args.username.toLowerCase(),
       passwordHash,
+      avatar: "🎲",
+      bio: "",
       wallet: 500, // Starting balance
       createdAt: now,
       lastLogin: now,
@@ -122,6 +124,8 @@ export const register = mutation({
     return {
       userId,
       username: args.username.toLowerCase(),
+      avatar: "🎲",
+      bio: "",
       wallet: 500,
     };
   },
@@ -162,6 +166,8 @@ export const login = mutation({
     return {
       userId: user._id,
       username: user.username,
+      avatar: user.avatar ?? "🎲",
+      bio: user.bio ?? "",
       wallet: currentWallet,
       settings: user.settings,
       isAdmin: user.isAdmin || false,
@@ -187,6 +193,8 @@ export const getCurrentUser = query({
     return {
       userId: user._id,
       username: user.username,
+      avatar: user.avatar ?? "🎲",
+      bio: user.bio ?? "",
       wallet: currentWallet,
       settings: user.settings,
       isAdmin: user.isAdmin || false,
@@ -223,6 +231,64 @@ export const updateSettings = mutation({
     });
 
     return { success: true };
+  },
+});
+
+export const updateProfile = mutation({
+  args: {
+    userId: v.id("users"),
+    avatar: v.optional(v.string()),
+    bio: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    const avatar = (args.avatar ?? user.avatar ?? "🎲").trim().slice(0, 8);
+    const bio = (args.bio ?? user.bio ?? "").trim().slice(0, 220);
+
+    await ctx.db.patch(args.userId, { avatar, bio });
+    return { success: true, avatar, bio };
+  },
+});
+
+export const getPublicProfile = query({
+  args: { username: v.string() },
+  handler: async (ctx, { username }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", username.toLowerCase()))
+      .first();
+    if (!user) return null;
+
+    const txns = await ctx.db
+      .query("transactions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(120);
+
+    const history = await ctx.db
+      .query("matchHistory")
+      .withIndex("by_user_and_time", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(10);
+
+    const bankrollMini = txns
+      .slice()
+      .reverse()
+      .map((t) => ({ timestamp: t.timestamp, balance: t.balanceAfter }))
+      .slice(-24);
+
+    return {
+      username: user.username,
+      avatar: user.avatar ?? "🎲",
+      bio: user.bio ?? "",
+      wallet: user.wallet,
+      vipTier: user.vipTier ?? "bronze",
+      level: user.level ?? 1,
+      bankrollMini,
+      recentResults: history.filter((h) => h.outcome !== "pending"),
+    };
   },
 });
 

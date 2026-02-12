@@ -38,6 +38,14 @@ function formatAction(entry: {
       return `House rake: $${entry.amount ?? 0}`;
     case "street":
       return `── ${entry.street} ──`;
+    case "timeout":
+      return `${entry.player} timed out (auto-fold)`;
+    case "insurance":
+      return `${entry.player} insurance payout $${entry.amount}`;
+    case "run_it_twice_fee":
+      return `Run It Twice fee: $${entry.amount}`;
+    case "run_it_twice_board":
+      return `Run It Twice board ${entry.amount}`;
     default:
       return "";
   }
@@ -151,6 +159,10 @@ interface Props {
   gameState: PokerGameState;
   playerId: string;
   onAction: (action: string, amount?: number) => void;
+  onSetOptions: (opts: {
+    autoInsurance?: boolean;
+    runItTwiceOptIn?: boolean;
+  }) => void;
   onNewHand: () => void;
   onLeave: () => void;
 }
@@ -159,6 +171,7 @@ export default function PokerGame({
   gameState,
   playerId,
   onAction,
+  onSetOptions,
   onNewHand,
   onLeave,
 }: Props) {
@@ -168,6 +181,7 @@ export default function PokerGame({
 
   const me = gameState.players.find((p) => p.id === playerId);
   const isHost = gameState.hostId === playerId;
+  const isSpectator = !!gameState.isSpectator;
   const isMyTurn = me?.isCurrentPlayer && !me.folded && !me.isAllIn;
   const isShowdown = gameState.gameState === "showdown";
   const isWaiting = gameState.gameState === "waiting";
@@ -288,6 +302,18 @@ export default function PokerGame({
           <div className="pk-pot">
             <div className="pk-pot-label">POT</div>
             <div className="pk-pot-amount">${gameState.pot}</div>
+            {gameState.turnDeadline && !isShowdown && (
+              <div
+                style={{ fontSize: "0.45rem", color: "var(--text-secondary)" }}
+              >
+                Turn ends in{" "}
+                {Math.max(
+                  0,
+                  Math.ceil((gameState.turnDeadline - Date.now()) / 1000),
+                )}
+                s
+              </div>
+            )}
           </div>
 
           {/* Winners */}
@@ -332,8 +358,42 @@ export default function PokerGame({
           </div>
         )}
 
+        {isSpectator && (
+          <div
+            style={{
+              fontFamily: "'Press Start 2P'",
+              fontSize: "0.55rem",
+              color: "var(--retro-cyan)",
+            }}
+          >
+            Spectating with delay • Hole cards hidden • Viewers{" "}
+            {gameState.spectatorCount ?? 0}
+          </div>
+        )}
+
+        {!isSpectator && me && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              className="pk-btn pk-btn-check"
+              style={{ fontSize: "0.45rem", padding: "8px 10px" }}
+              onClick={() => onSetOptions({ autoInsurance: !me.autoInsurance })}
+            >
+              Insurance {me.autoInsurance ? "ON" : "OFF"}
+            </button>
+            <button
+              className="pk-btn pk-btn-check"
+              style={{ fontSize: "0.45rem", padding: "8px 10px" }}
+              onClick={() =>
+                onSetOptions({ runItTwiceOptIn: !me.runItTwiceOptIn })
+              }
+            >
+              Run It Twice {me.runItTwiceOptIn ? "YES" : "NO"}
+            </button>
+          </div>
+        )}
+
         {/* Action buttons */}
-        {isMyTurn && !isShowdown && !isWaiting && (
+        {isMyTurn && !isShowdown && !isWaiting && !isSpectator && (
           <div className="pk-action-bar">
             <button
               className="pk-btn pk-btn-fold"

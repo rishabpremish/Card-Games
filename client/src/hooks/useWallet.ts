@@ -14,6 +14,12 @@ export function useWallet() {
   const addWinningsMutation = useMutation(api.wallet.addWinnings);
   const cashOutMutation = useMutation(api.wallet.cashOut);
   const updateWalletMutation = useMutation(api.wallet.updateWallet);
+  const recordMatchRoundMutation = useMutation(api.wallet.recordMatchRound);
+
+  const matchHistoryQuery = useQuery(
+    api.wallet.getMatchHistory,
+    user ? { userId: user.userId, limit: 50 } : "skip",
+  );
 
   const placeBet = async (amount: number, game: string) => {
     if (!user) {
@@ -88,6 +94,22 @@ export function useWallet() {
     }
   };
 
+  const recordMatchRound = async (
+    game: string,
+    bet: number,
+    payout: number,
+    metadata?: { roomCode?: string; notes?: string; handNumber?: number },
+  ) => {
+    if (!user) throw new Error("User not logged in");
+    return await recordMatchRoundMutation({
+      userId: user.userId,
+      game,
+      bet,
+      payout,
+      metadata,
+    });
+  };
+
   return {
     wallet: walletQuery?.wallet ?? (user?.wallet || 0),
     username: walletQuery?.username ?? (user?.username || ""),
@@ -95,6 +117,8 @@ export function useWallet() {
     addWinnings,
     cashOut,
     updateWallet,
+    recordMatchRound,
+    matchHistory: matchHistoryQuery ?? [],
     isLoading: walletQuery === undefined && !!user,
   };
 }

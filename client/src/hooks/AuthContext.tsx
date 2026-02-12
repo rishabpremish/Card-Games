@@ -12,6 +12,8 @@ import type { Id } from "../../convex/_generated/dataModel";
 interface User {
   userId: Id<"users">;
   username: string;
+  avatar?: string;
+  bio?: string;
   wallet: number;
   settings: any;
   isAdmin: boolean;

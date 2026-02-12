@@ -6,6 +6,8 @@ export default defineSchema({
   users: defineTable({
     username: v.string(),
     passwordHash: v.string(),
+    avatar: v.optional(v.string()),
+    bio: v.optional(v.string()),
     wallet: v.number(),
     createdAt: v.number(),
     lastLogin: v.number(),
@@ -144,4 +146,30 @@ export default defineSchema({
   })
     .index("by_user", ["userId", "createdAt"])
     .index("by_user_read", ["userId", "read", "createdAt"]),
+
+  // Per-round match history
+  matchHistory: defineTable({
+    userId: v.id("users"),
+    game: v.string(),
+    bet: v.number(),
+    payout: v.number(),
+    net: v.number(),
+    outcome: v.union(
+      v.literal("win"),
+      v.literal("loss"),
+      v.literal("push"),
+      v.literal("pending"),
+    ),
+    timestamp: v.number(),
+    settledAt: v.optional(v.number()),
+    metadata: v.optional(
+      v.object({
+        roomCode: v.optional(v.string()),
+        notes: v.optional(v.string()),
+        handNumber: v.optional(v.number()),
+      }),
+    ),
+  })
+    .index("by_user_and_time", ["userId", "timestamp"])
+    .index("by_user_game_and_time", ["userId", "game", "timestamp"]),
 });
