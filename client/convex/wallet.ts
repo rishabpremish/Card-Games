@@ -464,16 +464,48 @@ export const getMatchHistory = query({
   },
   handler: async (ctx, args) => {
     const limit = Math.min(50, args.limit || 50);
-    const rows = await ctx.db
-      .query("matchHistory")
-      .withIndex("by_user_and_time", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(200);
 
-    const filtered = rows.filter(
-      (r) => r.outcome !== "pending" && (!args.game || r.game === args.game),
+    if (args.game) {
+      const rows = await ctx.db
+        .query("matchHistory")
+        .withIndex("by_user_game_and_time", (q) =>
+          q.eq("userId", args.userId).eq("game", args.game as string),
+        )
+        .order("desc")
+        .take(Math.max(limit * 3, 50));
+
+      return rows.filter((r) => r.outcome !== "pending").slice(0, limit);
+    }
+
+    const knownGames = [
+      "Blackjack",
+      "Baccarat",
+      "Craps",
+      "Roulette",
+      "Slots",
+      "War",
+      "Higher-Lower",
+      "War - Surrender Refund",
+      "Poker",
+    ];
+
+    const perGameRows = await Promise.all(
+      knownGames.map((game) =>
+        ctx.db
+          .query("matchHistory")
+          .withIndex("by_user_game_and_time", (q) =>
+            q.eq("userId", args.userId).eq("game", game),
+          )
+          .order("desc")
+          .take(Math.max(limit, 20)),
+      ),
     );
-    return filtered.slice(0, limit);
+
+    return perGameRows
+      .flat()
+      .filter((r) => r.outcome !== "pending")
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
   },
 });
 
