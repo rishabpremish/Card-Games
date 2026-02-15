@@ -8,6 +8,7 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { applyThemeToDocument } from "../lib/themeShop";
 
 interface User {
   userId: Id<"users">;
@@ -53,17 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const updateSettingsMutation = useMutation(api.auth.updateSettings);
 
-  const applyTheme = (themeName: string | undefined) => {
-    const classes = document.body.className
-      .split(" ")
-      .filter((c) => !c.startsWith("theme-"));
-    document.body.className = classes.join(" ");
-
-    if (themeName && themeName !== "default") {
-      document.body.classList.add(`theme-${themeName}`);
-    }
-  };
-
   const toggleBodyClass = (
     className: string,
     shouldAdd: boolean | undefined,
@@ -83,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
         setPendingValidation(true); // need Convex to confirm user still exists
-      } catch (e) {
+      } catch {
         localStorage.removeItem("convex_user");
       }
     }
@@ -119,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Apply theme and visual toggles whenever user settings change
   useEffect(() => {
     if (user?.settings) {
-      applyTheme(user.settings.theme);
+      applyThemeToDocument(user.settings.theme);
       toggleBodyClass("no-scanlines", user.settings.scanlines === false);
       toggleBodyClass("no-vignette", user.settings.vignette === false);
       toggleBodyClass("no-bg-animation", user.settings.bgAnimation === false);

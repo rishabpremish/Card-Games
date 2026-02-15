@@ -598,14 +598,15 @@ export default function HigherLowerGame() {
   const lastDrawTimeRef = useRef(0);
 
   // Restore saved game state from sessionStorage if available
-  const savedState = useRef(() => {
+  const [restored] = useState(() => {
     try {
       const saved = sessionStorage.getItem("hlGameState");
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch (error) {
+      console.error("Failed to restore HigherLower game state", error);
+    }
     return null;
   });
-  const restored = savedState.current();
 
   // Game state
   const [deck, setDeck] = useState<Card[]>(restored?.deck ?? []);
@@ -1294,9 +1295,14 @@ export default function HigherLowerGame() {
 
   return (
     <div className="game-container">
-      {/* Home Button */}
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      {/* Back Button */}
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       {/* Background decoration */}
@@ -1518,6 +1524,7 @@ export default function HigherLowerGame() {
         <>
           <button
             className="dev-tools-toggle"
+            style={{ top: "86px" }}
             onClick={() => setShowDevPanel(!showDevPanel)}
           >
             🛠️ DEV

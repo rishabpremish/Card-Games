@@ -39,6 +39,14 @@ for (const [sym, weight] of Object.entries(SYMBOL_WEIGHTS)) {
 
 // About 1 win every 3–4 spins.
 const HIT_FREQUENCY = 0.28;
+const EARLY_WIN_PLAN_KEY = "slots_early_win_plan_v1";
+
+type EarlyWinPlan = {
+  shouldWin: boolean;
+  targetSpin: number;
+  spins: number;
+  resolved: boolean;
+};
 
 function shuffled<T>(items: T[]): T[] {
   const arr = [...items];
@@ -53,7 +61,61 @@ function getRandomSymbol(): string {
   return WEIGHTED_REEL[Math.floor(Math.random() * WEIGHTED_REEL.length)];
 }
 
-function generateFinalResults(): string[] {
+function generateBigWinResults(): string[] {
+  const highSymbols = ["⭐", "💎"];
+  const main = highSymbols[Math.floor(Math.random() * highSymbols.length)];
+  const filler = shuffled(
+    Object.keys(SYMBOL_WEIGHTS).filter((s) => s !== main),
+  )[0];
+  return shuffled([main, main, main, main, filler]);
+}
+
+function readEarlyWinPlan(): EarlyWinPlan | null {
+  try {
+    const raw = sessionStorage.getItem(EARLY_WIN_PLAN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as EarlyWinPlan;
+    if (
+      typeof parsed?.shouldWin !== "boolean" ||
+      typeof parsed?.targetSpin !== "number" ||
+      typeof parsed?.spins !== "number" ||
+      typeof parsed?.resolved !== "boolean"
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeEarlyWinPlan(plan: EarlyWinPlan) {
+  try {
+    sessionStorage.setItem(EARLY_WIN_PLAN_KEY, JSON.stringify(plan));
+  } catch {
+    // no-op
+  }
+}
+
+function getEarlyWinPlan(): EarlyWinPlan {
+  const existing = readEarlyWinPlan();
+  if (existing) return existing;
+
+  const created: EarlyWinPlan = {
+    shouldWin: Math.random() < 0.5,
+    targetSpin: Math.floor(Math.random() * 3) + 1,
+    spins: 0,
+    resolved: false,
+  };
+  writeEarlyWinPlan(created);
+  return created;
+}
+
+function generateFinalResults(forceBigWin: boolean = false): string[] {
+  if (forceBigWin) {
+    return generateBigWinResults();
+  }
+
   const shouldHit = Math.random() < HIT_FREQUENCY;
 
   // Force a clean loss by ensuring all 5 symbols are unique.
@@ -135,8 +197,26 @@ export default function Slots() {
     setMessage("");
     setWinAmount(0);
 
+    const plan = getEarlyWinPlan();
+    const nextSpinNumber = plan.spins + 1;
+    let forceBigWin = false;
+
+    if (
+      !plan.resolved &&
+      plan.shouldWin &&
+      nextSpinNumber === plan.targetSpin
+    ) {
+      forceBigWin = true;
+      plan.resolved = true;
+    } else if (!plan.resolved && !plan.shouldWin && nextSpinNumber >= 3) {
+      plan.resolved = true;
+    }
+
+    plan.spins = nextSpinNumber;
+    writeEarlyWinPlan(plan);
+
     // Generate final results
-    const finalResults = generateFinalResults();
+    const finalResults = generateFinalResults(forceBigWin);
 
     // Animate reels
     const animDuration = [600, 900, 1200, 1500, 1800];
@@ -197,7 +277,9 @@ export default function Slots() {
         if (bestMultiplier >= 200) unlockAchievement("jackpot_winner");
         try {
           await addWinnings(win, "Slots");
-        } catch {}
+        } catch (error) {
+          console.error("Failed to add Slots winnings", error);
+        }
       } else {
         setMessage(`No match. -$${stagedBet}`);
         setResultType("lose");
@@ -235,8 +317,13 @@ export default function Slots() {
 
   return (
     <div className="slots-page">
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       <style>{`
@@ -254,7 +341,8 @@ export default function Slots() {
           font-family: 'Press Start 2P', cursive;
           font-size: clamp(1.2rem,4vw,2.4rem);
           color: var(--retro-yellow);
-          text-shadow: 3px 3px 0 var(--retro-magenta); margin: 0;
+          text-shadow: 3px 3px 0 var(--retro-magenta);
+          margin: 0 0 clamp(12px,2.4vh,22px);
         }
 
         .slots-stats {
@@ -304,10 +392,36 @@ export default function Slots() {
         .slots-msg.lose { color: var(--retro-red); border-color: var(--retro-red); }
         @keyframes msgPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+        .slots-paytable-wrap {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          min-height: 32px;
+          margin-top: 2px;
+        }
+
+        .slots-paytable-toggle {
+          background: none;
+          border: 2px solid rgba(255,255,255,0.2);
+          color: var(--text-secondary);
+          font-family: 'Press Start 2P', cursive;
+          font-size: clamp(0.4rem, 1vw, 0.55rem);
+          padding: 4px 12px;
+          cursor: pointer;
+          height: 28px;
+        }
+
         .slots-paytable {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 50%;
+          transform: translateX(-50%);
           display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
           font-family: 'VT323', monospace; font-size: clamp(0.9rem,1.8vw,1.2rem);
           color: var(--text-secondary);
+          width: min(100%, 760px);
+          z-index: 5;
         }
         .slots-pay-item { background: rgba(0,0,0,0.3); padding: 2px 8px; border: 1px solid rgba(255,255,255,0.1); }
 
@@ -413,31 +527,25 @@ export default function Slots() {
 
         {message && <div className={`slots-msg ${resultType}`}>{message}</div>}
 
-        <button
-          onClick={() => setShowPaytable((prev) => !prev)}
-          style={{
-            background: "none",
-            border: "2px solid rgba(255,255,255,0.2)",
-            color: "var(--text-secondary)",
-            fontFamily: "'Press Start 2P', cursive",
-            fontSize: "clamp(0.4rem, 1vw, 0.55rem)",
-            padding: "4px 12px",
-            cursor: "pointer",
-          }}
-        >
-          {showPaytable ? "▲ Hide Payouts" : "▼ Payouts"}
-        </button>
-        {showPaytable && (
-          <div className="slots-paytable">
-            {Object.entries(PAYOUTS)
-              .reverse()
-              .map(([sym, pays]) => (
-                <div key={sym} className="slots-pay-item">
-                  {sym} x3={pays[3]} x4={pays[4]}
-                </div>
-              ))}
-          </div>
-        )}
+        <div className="slots-paytable-wrap">
+          <button
+            className="slots-paytable-toggle"
+            onClick={() => setShowPaytable((prev) => !prev)}
+          >
+            {showPaytable ? "▲ Hide Payouts" : "▼ Payouts"}
+          </button>
+          {showPaytable && (
+            <div className="slots-paytable">
+              {Object.entries(PAYOUTS)
+                .reverse()
+                .map(([sym, pays]) => (
+                  <div key={sym} className="slots-pay-item">
+                    {sym} x3={pays[3]} x4={pays[4]}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="slots-controls">

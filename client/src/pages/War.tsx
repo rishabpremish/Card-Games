@@ -208,7 +208,9 @@ export default function War() {
     setHistory((h) => [...h, "L"]);
     setPhase("result");
     if (refund > 0)
-      addWinnings(refund, "War - Surrender Refund").catch(() => {});
+      addWinnings(refund, "War - Surrender Refund").catch((error) => {
+        console.error("Failed to process War surrender refund", error);
+      });
   };
 
   const win = async (msg: string) => {
@@ -222,7 +224,9 @@ export default function War() {
     setPhase("result");
     try {
       await addWinnings(stagedBet * 2, "War");
-    } catch {}
+    } catch (error) {
+      console.error("Failed to add War winnings", error);
+    }
   };
 
   const winWar = async (msg: string, amount: number) => {
@@ -236,7 +240,9 @@ export default function War() {
     setPhase("result");
     try {
       await addWinnings(amount, "War");
-    } catch {}
+    } catch (error) {
+      console.error("Failed to add War winnings", error);
+    }
   };
 
   const lose = (msg: string) => {
@@ -271,8 +277,13 @@ export default function War() {
 
   return (
     <div className="war-page">
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       <style>{`

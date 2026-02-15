@@ -3,10 +3,11 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../hooks/useAuth";
 import { useAchievements } from "../hooks/useAchievements";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Leaderboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { achievements, winStreak } = useAchievements();
   const [selectedWeek, setSelectedWeek] = useState<string>("current");
   const [showAchievements, setShowAchievements] = useState(false);
@@ -30,6 +31,22 @@ export default function Leaderboard() {
           (lb) => String(lb.weekStart) === selectedWeek,
         );
 
+  const displayEntries = displayLeaderboard?.entries
+    ? [...displayLeaderboard.entries]
+        .sort((a: any, b: any) => {
+          const rankA =
+            typeof a.rank === "number" ? a.rank : Number.MAX_SAFE_INTEGER;
+          const rankB =
+            typeof b.rank === "number" ? b.rank : Number.MAX_SAFE_INTEGER;
+          if (rankA !== rankB) return rankA - rankB;
+          if (typeof b.balance === "number" && typeof a.balance === "number") {
+            return b.balance - a.balance;
+          }
+          return 0;
+        })
+        .slice(0, 10)
+    : [];
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
       month: "short",
@@ -48,9 +65,15 @@ export default function Leaderboard() {
   return (
     <div className="leaderboard-page">
       <div className="leaderboard-header">
-        <Link to="/" className="back-button">
-          ← Back to Home
-        </Link>
+        <button
+          type="button"
+          className="back-button"
+          onClick={() =>
+            window.history.length > 1 ? navigate(-1) : navigate("/")
+          }
+        >
+          ← Back
+        </button>
         <h1 className="leaderboard-title">🏆 Leaderboard</h1>
         <button
           onClick={() => setShowAchievements(!showAchievements)}
@@ -193,47 +216,43 @@ export default function Leaderboard() {
       <div className="leaderboard-container">
         {!displayLeaderboard ? (
           <div className="loading-message">Loading leaderboard...</div>
-        ) : displayLeaderboard.entries.length === 0 ? (
+        ) : displayEntries.length === 0 ? (
           <div className="empty-message">
             No players on the leaderboard yet. Be the first!
           </div>
         ) : (
           <div className="leaderboard-list">
-            {displayLeaderboard.entries
-              .slice(0, 10)
-              .map((entry: any, index: number) => {
-                const rank = entry.rank ?? index + 1;
-                const isCurrentUser = user?.userId === entry.userId;
+            {displayEntries.map((entry: any, index: number) => {
+              const rank = entry.rank ?? index + 1;
+              const isCurrentUser = user?.userId === entry.userId;
 
-                return (
-                  <div
-                    key={entry.userId}
-                    className={`leaderboard-entry ${isCurrentUser ? "current-user" : ""} ${rank <= 3 ? `top-${rank}` : ""}`}
-                  >
-                    <div className="rank">{getRankEmoji(rank)}</div>
-                    <div className="player-info">
-                      <span className="username">
-                        {entry.username}
-                        {entry.level > 1 && (
-                          <span
-                            style={{
-                              color: "var(--retro-cyan)",
-                              fontSize: "0.4rem",
-                              marginLeft: "6px",
-                            }}
-                          >
-                            Lv{entry.level}
-                          </span>
-                        )}
-                        {isCurrentUser && (
-                          <span className="you-badge">YOU</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="balance">${entry.balance.toFixed(2)}</div>
+              return (
+                <div
+                  key={entry.userId}
+                  className={`leaderboard-entry ${isCurrentUser ? "current-user" : ""} ${rank <= 3 ? `top-${rank}` : ""}`}
+                >
+                  <div className="rank">{getRankEmoji(rank)}</div>
+                  <div className="player-info">
+                    <span className="username">
+                      {entry.username}
+                      {entry.level > 1 && (
+                        <span
+                          style={{
+                            color: "var(--retro-cyan)",
+                            fontSize: "0.4rem",
+                            marginLeft: "6px",
+                          }}
+                        >
+                          Lv{entry.level}
+                        </span>
+                      )}
+                      {isCurrentUser && <span className="you-badge">YOU</span>}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="balance">${entry.balance.toFixed(2)}</div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

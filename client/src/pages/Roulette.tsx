@@ -115,11 +115,6 @@ export default function Roulette() {
   const [bets, setBets] = useState<PlacedBet[]>([]);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<number | null>(null);
-  const [message, setMessage] = useState("");
-  const [resultType, setResultType] = useState<"win" | "lose" | "neutral">(
-    "neutral",
-  );
-  const [history, setHistory] = useState<number[]>([]);
   const [animNumber, setAnimNumber] = useState<number | null>(null);
 
   const totalBet = bets.reduce((s, b) => s + b.amount, 0);
@@ -131,7 +126,6 @@ export default function Roulette() {
     if (result !== null) {
       setResult(null);
       setAnimNumber(null);
-      setHistory([]);
     }
     if (selectedChip > availBet) return;
     const existing = bets.findIndex(
@@ -151,7 +145,6 @@ export default function Roulette() {
   const clearBets = () => {
     if (!spinning) {
       setBets([]);
-      setMessage("");
     }
   };
 
@@ -161,14 +154,11 @@ export default function Roulette() {
     try {
       await placeBetMutation(totalBet, "Roulette");
     } catch {
-      setMessage("Failed to place bet");
       return;
     }
 
     setSpinning(true);
-    setMessage("");
     setResult(null);
-    setHistory([]);
 
     const finalResult = Math.floor(Math.random() * 37);
 
@@ -183,22 +173,12 @@ export default function Roulette() {
           clearInterval(iv);
           setAnimNumber(finalResult);
           setResult(finalResult);
-          setHistory((prev) => [...prev, finalResult]);
 
           // Evaluate all bets
           let totalWin = 0;
           for (const bet of bets) totalWin += evaluateBet(bet, finalResult);
 
-          const color = getColor(finalResult);
-          const colorEmoji =
-            color === "red" ? "🔴" : color === "black" ? "⚫" : "🟢";
-
           if (totalWin > 0) {
-            const profit = totalWin - totalBet;
-            setMessage(
-              `${colorEmoji} ${finalResult}! Won $${totalWin.toFixed(2)} (+$${profit.toFixed(2)})`,
-            );
-            setResultType("win");
             triggerConfetti({
               intensity: totalWin >= totalBet * 10 ? "high" : "medium",
             });
@@ -208,8 +188,6 @@ export default function Roulette() {
             if (finalResult === 0) unlockAchievement("green_zero");
             addWinnings(totalWin, "Roulette").catch(() => {});
           } else {
-            setMessage(`${colorEmoji} ${finalResult}. Lost $${totalBet}`);
-            setResultType("lose");
             resetWinStreak();
             recordBet("roulette", totalBet, "loss");
           }
@@ -221,7 +199,6 @@ export default function Roulette() {
           setTimeout(() => {
             setResult(null);
             setAnimNumber(null);
-            setHistory([]);
           }, 2500);
         }
       },
@@ -237,8 +214,13 @@ export default function Roulette() {
 
   return (
     <div className="rou-page">
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       <style>{`
@@ -280,13 +262,6 @@ export default function Roulette() {
         .rou-number.rn-green { color: var(--retro-green); border-color: var(--retro-green); background: rgba(0,255,0,0.12); }
         .rou-spinning { animation: spinPulse 0.2s ease-in-out infinite alternate; }
         @keyframes spinPulse { 0% { transform:scale(1); } 100% { transform:scale(1.08); } }
-
-        .rou-msg {
-          font-family: 'Press Start 2P'; font-size: clamp(0.65rem,1.6vw,0.9rem);
-          margin-top: 8px; text-align: center;
-        }
-        .rou-msg.win { color: var(--retro-green); }
-        .rou-msg.lose { color: var(--retro-red); }
 
         /* Board */
         .rou-board-wrap {
@@ -334,18 +309,6 @@ export default function Roulette() {
         .rou-obtn.ob-black { border-color: #888; }
         .rou-obtn.ob-green { border-color: var(--retro-green); color: var(--retro-green); }
 
-        /* History */
-        .rou-hist { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; flex-shrink: 0; padding: 3px 0; }
-        .rou-hdot {
-          width: clamp(22px,3.2vw,30px); height: clamp(22px,3.2vw,30px);
-          border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.32rem,0.8vw,0.42rem); color: white;
-          text-shadow: 1px 1px 0 #000;
-        }
-        .rou-hdot.h-red { background: #cc0033; }
-        .rou-hdot.h-black { background: #333; border: 1px solid #666; }
-        .rou-hdot.h-green { background: #006600; }
-
         /* Chips & controls */
         .rou-controls {
           flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
@@ -365,7 +328,7 @@ export default function Roulette() {
         .rc:hover { transform: translateY(-5px); }
         .rc:active { transform: translateY(0); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
         .rc.sel { box-shadow: 0 0 10px rgba(255,255,0,0.7); transform: translateY(-4px) scale(1.1); }
-        .rc.v1 { background: #666; border-color: #999; } .rc.v5 { background: var(--retro-blue); border-color: #88ccff; }
+        .rc.v1 { background: #d6e3f0; border-color: #f4fbff; color: #0b1220; text-shadow: none; } .rc.v5 { background: var(--retro-blue); border-color: #88ccff; }
         .rc.v10 { background: var(--retro-green); border-color: #88ff88; } .rc.v25 { background: var(--retro-red); border-color: #ff8888; }
         .rc.v100 { background: var(--retro-purple); border-color: #dcb3ff; } .rc.v500 { background: #cc6600; border-color: #ff9933; }
 
@@ -412,14 +375,11 @@ export default function Roulette() {
       </div>
 
       <div className="rou-result">
-        {(spinning || result !== null) && (
-          <div
-            className={`rou-number rn-${getColor(animNumber ?? result ?? 0)} ${spinning ? "rou-spinning" : ""}`}
-          >
-            {animNumber ?? result ?? "—"}
-          </div>
-        )}
-        {message && <div className={`rou-msg ${resultType}`}>{message}</div>}
+        <div
+          className={`rou-number rn-${getColor(animNumber ?? result ?? 0)} ${spinning ? "rou-spinning" : ""}`}
+        >
+          {(animNumber ?? result ?? 0).toString().padStart(2, "0")}
+        </div>
       </div>
 
       <div className="rou-board-wrap">
@@ -476,16 +436,6 @@ export default function Roulette() {
           </div>
         </div>
       </div>
-
-      {history.length > 0 && (
-        <div className="rou-hist">
-          {history.slice(-20).map((n, i) => (
-            <div key={i} className={`rou-hdot h-${getColor(n)}`}>
-              {n}
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="rou-controls">
         <div className="rou-chips">

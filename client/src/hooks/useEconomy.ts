@@ -93,8 +93,6 @@ export function useEconomy() {
   // Convenience: call after every win
   const trackWin = async (winAmount: number) => {
     try {
-      const xpGain = Math.max(5, Math.round(winAmount / 10));
-      await addXP(xpGain);
       await updateChallengeProgress("win", 1);
       if (winAmount >= 200) await updateChallengeProgress("big_win", winAmount);
     } catch {

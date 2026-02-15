@@ -279,6 +279,32 @@ export const getPublicProfile = query({
       .map((t) => ({ timestamp: t.timestamp, balance: t.balanceAfter }))
       .slice(-24);
 
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const weekStart = now - 6 * oneDayMs;
+    const ascendingTxns = txns.slice().reverse();
+    const beforeWeek = ascendingTxns.filter((t) => t.timestamp < weekStart);
+    const baselineBalance = beforeWeek.length
+      ? beforeWeek[beforeWeek.length - 1].balanceAfter
+      : 500;
+    const weekTxns = ascendingTxns.filter((t) => t.timestamp >= weekStart);
+
+    let rollingBalance = baselineBalance;
+    const bankrollWeekly = Array.from({ length: 7 }, (_, dayIndex) => {
+      const dayStart = weekStart + dayIndex * oneDayMs;
+      const dayEnd = dayStart + oneDayMs;
+      const dayTxns = weekTxns.filter(
+        (t) => t.timestamp >= dayStart && t.timestamp < dayEnd,
+      );
+      if (dayTxns.length) {
+        rollingBalance = dayTxns[dayTxns.length - 1].balanceAfter;
+      }
+      return {
+        timestamp: dayEnd,
+        balance: rollingBalance,
+      };
+    });
+
     return {
       username: user.username,
       avatar: user.avatar ?? "🎲",
@@ -286,6 +312,7 @@ export const getPublicProfile = query({
       wallet: user.wallet,
       vipTier: user.vipTier ?? "bronze",
       level: user.level ?? 1,
+      bankrollWeekly,
       bankrollMini,
       recentResults: history.filter((h) => h.outcome !== "pending"),
     };

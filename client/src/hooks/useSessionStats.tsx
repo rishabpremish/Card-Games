@@ -10,10 +10,10 @@ interface GameSessionStats {
   higherLower: { wagered: number; won: number; lost: number };
   blackjack: { wagered: number; won: number; lost: number };
   baccarat: { wagered: number; won: number; lost: number };
-  slots: { wagered: number; won: number; lost: number };
-  roulette: { wagered: number; won: number; lost: number };
   craps: { wagered: number; won: number; lost: number };
   war: { wagered: number; won: number; lost: number };
+  slots: { wagered: number; won: number; lost: number };
+  roulette: { wagered: number; won: number; lost: number };
 }
 
 interface SessionStatsContextType {
@@ -26,10 +26,10 @@ interface SessionStatsContextType {
     higherLower: number;
     blackjack: number;
     baccarat: number;
-    slots: number;
-    roulette: number;
     craps: number;
     war: number;
+    slots: number;
+    roulette: number;
   };
   biggestWin: number;
   recordBet: (
@@ -46,10 +46,10 @@ const initialStats: GameSessionStats = {
   higherLower: { wagered: 0, won: 0, lost: 0 },
   blackjack: { wagered: 0, won: 0, lost: 0 },
   baccarat: { wagered: 0, won: 0, lost: 0 },
-  slots: { wagered: 0, won: 0, lost: 0 },
-  roulette: { wagered: 0, won: 0, lost: 0 },
   craps: { wagered: 0, won: 0, lost: 0 },
   war: { wagered: 0, won: 0, lost: 0 },
+  slots: { wagered: 0, won: 0, lost: 0 },
+  roulette: { wagered: 0, won: 0, lost: 0 },
 };
 
 export function SessionStatsProvider({ children }: { children: ReactNode }) {
@@ -58,10 +58,10 @@ export function SessionStatsProvider({ children }: { children: ReactNode }) {
     higherLower: 0,
     blackjack: 0,
     baccarat: 0,
-    slots: 0,
-    roulette: 0,
     craps: 0,
     war: 0,
+    slots: 0,
+    roulette: 0,
   });
   const [biggestWin, setBiggestWin] = useState(0);
 
@@ -95,10 +95,10 @@ export function SessionStatsProvider({ children }: { children: ReactNode }) {
       higherLower: 0,
       blackjack: 0,
       baccarat: 0,
-      slots: 0,
-      roulette: 0,
       craps: 0,
       war: 0,
+      slots: 0,
+      roulette: 0,
     });
     setBiggestWin(0);
   }, []);

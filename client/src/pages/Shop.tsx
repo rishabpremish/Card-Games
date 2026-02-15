@@ -1,14 +1,24 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../hooks/useAuth";
 import { useWallet } from "../hooks/useWallet";
 import { useEconomy } from "../hooks/useEconomy";
 
-type ShopFilter = "cardback";
+type ShopFilter = "cardback" | "theme";
+
+const DEFAULT_THEME_PREVIEW = [
+  "#0f0f23",
+  "#00fff7",
+  "#ff00ff",
+  "#ffd700",
+  "#00ff00",
+  "#f8f8f2",
+];
 
 export default function Shop() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { wallet } = useWallet();
   const { playerStats } = useEconomy();
@@ -27,6 +37,8 @@ export default function Shop() {
   );
 
   const equippedCardBack = playerStats?.equippedCardBack ?? "default";
+  const equippedTheme =
+    playerStats?.equippedTheme ?? user?.settings?.theme ?? "default";
 
   const items = useMemo(() => {
     if (!catalog) return [];
@@ -113,6 +125,19 @@ export default function Shop() {
           gap: 14px;
           align-items: center;
         }
+        .theme-preview {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 4px;
+          width: 88px;
+          height: 52px;
+          border: 2px solid rgba(255,255,255,0.2);
+          background: rgba(0,0,0,0.24);
+          padding: 4px;
+        }
+        .theme-preview span {
+          border-radius: 1px;
+        }
         .shop-item-name {
           font-size: 0.7rem;
           color: var(--retro-cyan);
@@ -156,9 +181,15 @@ export default function Shop() {
       `}</style>
 
       <div className="shop-header">
-        <Link to="/" className="back-button">
-          ← Back to Home
-        </Link>
+        <button
+          type="button"
+          className="back-button"
+          onClick={() =>
+            window.history.length > 1 ? navigate(-1) : navigate("/")
+          }
+        >
+          ← Back
+        </button>
         <h1 className="shop-title">🛒 Shop</h1>
         <div className="shop-balance">
           Balance
@@ -175,41 +206,82 @@ export default function Shop() {
           onChange={(e) => setFilter(e.target.value as ShopFilter)}
         >
           <option value="cardback">Card Backs</option>
+          <option value="theme">Themes</option>
         </select>
       </div>
 
       <div className="shop-grid">
-        {/* Default (free) */}
-        <div className="shop-card">
-          <div className="shop-row">
-            <div
-              className={`cardback-preview ${equippedCardBack === "default" ? "cardback-equipped" : ""}`}
-            />
-            <div style={{ flex: 1 }}>
-              <h3 className="shop-item-name">Default</h3>
-              <p className="shop-item-desc">The classic back you start with.</p>
-              <div className="shop-price">Price: $0</div>
-              <div className="shop-actions">
-                <button
-                  className={`shop-btn equip ${equippedCardBack === "default" ? "on" : ""}`}
-                  onClick={() => handleEquip("default")}
-                  disabled={busyItem !== null}
-                >
-                  {equippedCardBack === "default" ? "EQUIPPED" : "EQUIP"}
-                </button>
+        {filter === "cardback" ? (
+          <div className="shop-card">
+            <div className="shop-row">
+              <div
+                className={`cardback-preview ${equippedCardBack === "default" ? "cardback-equipped" : ""}`}
+              />
+              <div style={{ flex: 1 }}>
+                <h3 className="shop-item-name">Default</h3>
+                <p className="shop-item-desc">
+                  The classic back you start with.
+                </p>
+                <div className="shop-price">Price: $0</div>
+                <div className="shop-actions">
+                  <button
+                    className={`shop-btn equip ${equippedCardBack === "default" ? "on" : ""}`}
+                    onClick={() => handleEquip("default")}
+                    disabled={busyItem !== null}
+                  >
+                    {equippedCardBack === "default" ? "EQUIPPED" : "EQUIP"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="shop-card">
+            <div className="shop-row">
+              <div className="theme-preview">
+                {DEFAULT_THEME_PREVIEW.map((color, idx) => (
+                  <span key={idx} style={{ background: color }} />
+                ))}
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 className="shop-item-name">Default Arcade</h3>
+                <p className="shop-item-desc">Original app theme.</p>
+                <div className="shop-price">Price: $0</div>
+                <div className="shop-actions">
+                  <button
+                    className={`shop-btn equip ${equippedTheme === "default" ? "on" : ""}`}
+                    onClick={() => handleEquip("theme_default")}
+                    disabled={busyItem !== null}
+                  >
+                    {equippedTheme === "default" ? "EQUIPPED" : "EQUIP"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {items.map((item) => {
           const isOwned = owned.has(item.id);
-          const isEquipped = equippedCardBack === item.id;
+          const isEquipped =
+            filter === "theme"
+              ? equippedTheme === item.id
+              : equippedCardBack === item.id;
           const canAfford = wallet >= item.price;
+          const previewColors =
+            ((item as any).previewColors as string[] | undefined) ?? [];
           return (
             <div className="shop-card" key={item.id}>
               <div className="shop-row">
-                <div className={`cardback-preview ${item.id}`} />
+                {filter === "theme" ? (
+                  <div className="theme-preview">
+                    {(previewColors ?? []).map((color, idx) => (
+                      <span key={idx} style={{ background: color }} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`cardback-preview ${item.id}`} />
+                )}
                 <div style={{ flex: 1 }}>
                   <h3 className="shop-item-name">{item.name}</h3>
                   <p className="shop-item-desc">{item.description}</p>

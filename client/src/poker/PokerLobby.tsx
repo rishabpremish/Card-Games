@@ -52,10 +52,14 @@ export default function PokerLobby({
           className="home-btn"
           onClick={() => {
             onLeaveRoom();
-            navigate("/");
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate("/");
+            }
           }}
         >
-          🏠 HOME
+          ← BACK
         </button>
         <div className="bg-decoration" />
 
@@ -217,8 +221,13 @@ export default function PokerLobby({
   // Lobby screen
   return (
     <div className="game-container poker-lobby">
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
       <div className="bg-decoration" />
 

@@ -13,8 +13,6 @@ export type AchievementId =
   | "session_winner"
   | "jackpot_winner"
   | "green_zero"
-  | "craps_natural"
-  | "war_survivor"
   | "slots_master";
 
 export interface Achievement {
@@ -123,20 +121,6 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: "Win on 0 in Roulette",
     icon: "🟢",
     rarity: "epic",
-  },
-  {
-    id: "craps_natural",
-    name: "Natural Winner",
-    description: "Roll a natural 7 or 11 on come-out",
-    icon: "🎲",
-    rarity: "common",
-  },
-  {
-    id: "war_survivor",
-    name: "War Survivor",
-    description: "Win a War (tie) battle",
-    icon: "⚔️",
-    rarity: "rare",
   },
   {
     id: "slots_master",

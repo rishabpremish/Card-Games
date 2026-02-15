@@ -241,17 +241,6 @@ export const addWinnings = mutation({
 
     // ── Economy auto-tracking on win ──
     if (args.amount > 0) {
-      // Award XP (roughly 1 XP per $10 won, minimum 5)
-      const xpGain = Math.max(5, Math.round(args.amount / 10));
-      const newXP = (user.xp ?? 0) + xpGain;
-      let level = 1,
-        remaining = newXP;
-      while (remaining >= level * 100) {
-        remaining -= level * 100;
-        level++;
-      }
-      await ctx.db.patch(args.userId, { xp: newXP, level });
-
       // Update win challenges
       const challengeNow = Date.now();
       const challenges = await ctx.db
@@ -480,12 +469,9 @@ export const getMatchHistory = query({
     const knownGames = [
       "Blackjack",
       "Baccarat",
-      "Craps",
       "Roulette",
       "Slots",
-      "War",
       "Higher-Lower",
-      "War - Surrender Refund",
       "Poker",
     ];
 

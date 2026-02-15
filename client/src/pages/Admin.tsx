@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../hooks/useAuth";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -87,9 +87,15 @@ export default function Admin() {
   return (
     <div className="admin-page">
       <div className="admin-header">
-        <Link to="/" className="back-button">
-          ← Back to Home
-        </Link>
+        <button
+          type="button"
+          className="back-button"
+          onClick={() =>
+            window.history.length > 1 ? navigate(-1) : navigate("/")
+          }
+        >
+          ← Back
+        </button>
         <h1 className="admin-title">🔧 Admin Panel</h1>
       </div>
 

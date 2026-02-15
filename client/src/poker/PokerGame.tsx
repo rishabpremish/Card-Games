@@ -178,6 +178,7 @@ export default function PokerGame({
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showLog, setShowLog] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const me = gameState.players.find((p) => p.id === playerId);
   const isHost = gameState.hostId === playerId;
@@ -212,6 +213,13 @@ export default function PokerGame({
     }
   }, [isMyTurn, minRaiseTotal, me?.chips, me?.bet]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
   // Auto-scroll action log
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -309,7 +317,7 @@ export default function PokerGame({
                 Turn ends in{" "}
                 {Math.max(
                   0,
-                  Math.ceil((gameState.turnDeadline - Date.now()) / 1000),
+                    Math.ceil((gameState.turnDeadline - nowMs) / 1000),
                 )}
                 s
               </div>

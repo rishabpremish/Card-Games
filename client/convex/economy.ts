@@ -296,7 +296,9 @@ export const claimChallengeReward = mutation({
     if (challenge.rewardType === "money") {
       await ctx.db.patch(userId, { wallet: user.wallet + challenge.reward });
     } else {
-      await ctx.db.patch(userId, { xp: (user.xp ?? 0) + challenge.reward });
+      const newXP = (user.xp ?? 0) + challenge.reward;
+      const newLevel = getLevelFromXP(newXP).level;
+      await ctx.db.patch(userId, { xp: newXP, level: newLevel });
     }
 
     return { reward: challenge.reward, rewardType: challenge.rewardType };

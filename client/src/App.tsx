@@ -9,8 +9,6 @@ import Blackjack from "./pages/Blackjack";
 import Baccarat from "./pages/Baccarat";
 import Slots from "./pages/Slots";
 import Roulette from "./pages/Roulette";
-import Craps from "./pages/Craps";
-import War from "./pages/War";
 import Stats from "./pages/Stats";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
@@ -66,8 +64,6 @@ function App() {
         <Route path="/baccarat" element={<Baccarat />} />
         <Route path="/slots" element={<Slots />} />
         <Route path="/roulette" element={<Roulette />} />
-        <Route path="/craps" element={<Craps />} />
-        <Route path="/war" element={<War />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/shop" element={<Shop />} />

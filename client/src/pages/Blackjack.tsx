@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
 import { useConfetti } from "../hooks/useConfetti";
-import { useScreenShake } from "../hooks/useScreenShake";
 import { useAchievements } from "../hooks/useAchievements";
 import { useSessionStats } from "../hooks/useSessionStats";
 
@@ -150,7 +149,6 @@ export default function Blackjack() {
 
   // Fun feature hooks
   const { triggerConfetti } = useConfetti();
-  const { triggerShake } = useScreenShake();
   const {
     unlockAchievement,
     incrementWinStreak,
@@ -291,7 +289,6 @@ export default function Blackjack() {
           setMsg({ text: "DEALER WINS", type: "bad" });
 
           // Fun features on loss
-          triggerShake("medium");
           resetWinStreak();
           recordBet("blackjack", totalBets, "loss");
         }
@@ -303,7 +300,6 @@ export default function Blackjack() {
     [
       walletAddWinnings,
       triggerConfetti,
-      triggerShake,
       unlockAchievement,
       incrementWinStreak,
       resetWinStreak,
@@ -464,7 +460,6 @@ export default function Blackjack() {
       setPlayerHands(updated);
       handsRef.current = updated;
       flash("BUST!", "bad");
-      triggerShake("light");
       advanceHand(updated, currentHandIndex);
     } else if (score === 21) {
       updated[currentHandIndex] = { ...hand, cards: newCards, status: "stood" };
@@ -484,7 +479,6 @@ export default function Blackjack() {
     deck,
     flash,
     advanceHand,
-    triggerShake,
   ]);
 
   // ─── Stand ────────────────────────────────────────────
@@ -670,9 +664,14 @@ export default function Blackjack() {
 
   return (
     <div className="game-container blackjack-game">
-      {/* Home Button */}
-      <button className="home-btn bj-home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      {/* Back Button */}
+      <button
+        className="home-btn bj-home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
       <div className="bg-decoration" />
 
@@ -983,9 +982,9 @@ export default function Blackjack() {
       {/* Blackjack Styles */}
       <style>{`
         .blackjack-game {
-          --bj-card-w: clamp(68px, 11vw, 130px);
-          --bj-card-h: clamp(96px, 15.5vw, 182px);
-          --bj-card-overlap: clamp(-48px, -6vw, -26px);
+          --bj-card-w: clamp(64px, min(9.2vw, 10.2vh), 116px);
+          --bj-card-h: calc(var(--bj-card-w) * 1.42);
+          --bj-card-overlap: clamp(-30px, calc(var(--bj-card-w) * -0.24), -14px);
           --bj-chip: clamp(44px, 7vw, 76px);
           max-width: 1250px;
           margin: 0 auto;
@@ -1045,7 +1044,9 @@ export default function Blackjack() {
         .hand-container {
           display: flex;
           justify-content: center;
+          align-items: center;
           margin: clamp(2px, 0.6vh, 6px) 0;
+          min-height: var(--bj-card-h);
           min-width: min(200px, 80vw);
           transition: all 0.3s;
         }
@@ -1098,6 +1099,7 @@ export default function Blackjack() {
           transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           margin-left: var(--bj-card-overlap);
           transform-origin: center bottom;
+          flex: 0 0 auto;
         }
 
         .bj-card .card-front {

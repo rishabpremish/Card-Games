@@ -87,18 +87,18 @@ function shouldReshuffle(shoe: Card[]): boolean {
 function BacCard({ card }: { card: Card }) {
   return (
     <div className="bac-card">
-      <div className={`card-front ${card.isRed ? "red" : "black"}`}>
-        <div className="card-corner top">
-          <span className="card-value">{card.value}</span>
-          <span className="card-suit-small">{card.suit}</span>
+      <div className={`bac-card-front ${card.isRed ? "red" : "black"}`}>
+        <div className="bac-card-corner top">
+          <span className="bac-card-value">{card.value}</span>
+          <span className="bac-card-suit-small">{card.suit}</span>
         </div>
-        <span className="card-center">{card.suit}</span>
-        <div className="card-corner bottom">
-          <span className="card-value">{card.value}</span>
-          <span className="card-suit-small">{card.suit}</span>
+        <span className="bac-card-center">{card.suit}</span>
+        <div className="bac-card-corner bottom">
+          <span className="bac-card-value">{card.value}</span>
+          <span className="bac-card-suit-small">{card.suit}</span>
         </div>
       </div>
-      <div className="card-back" />
+      <div className="bac-card-back" />
     </div>
   );
 }
@@ -106,7 +106,7 @@ function BacCard({ card }: { card: Card }) {
 function CardSlot() {
   return (
     <div className="bac-card-slot">
-      <div className="card-back" />
+      <div className="bac-card-back" />
     </div>
   );
 }
@@ -140,7 +140,6 @@ export default function Baccarat() {
     "neutral",
   );
   const [isDealing, setIsDealing] = useState(false);
-  const [history, setHistory] = useState<("P" | "B" | "T")[]>([]);
   const [showDevPanel, setShowDevPanel] = useState(false);
 
   useEffect(() => {
@@ -249,10 +248,6 @@ export default function Baccarat() {
     else gw = "tie";
     setWinner(gw);
     setGamePhase("complete");
-    setHistory((h) => [
-      ...h,
-      gw === "player" ? "P" : gw === "banker" ? "B" : "T",
-    ]);
 
     if (selectedBet === gw) {
       let winAmount = 0;
@@ -276,7 +271,9 @@ export default function Baccarat() {
       recordBet("baccarat", stagedBet, "win");
       try {
         await addWinnings(winAmount, "Baccarat");
-      } catch {}
+      } catch (error) {
+        console.error("Failed to add Baccarat winnings", error);
+      }
     } else {
       setMessage(
         `${gw.charAt(0).toUpperCase() + gw.slice(1)} wins. -$${stagedBet}`,
@@ -306,8 +303,13 @@ export default function Baccarat() {
   return (
     <div className="bac-page">
       <div className="bg-decoration" />
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       <style>{`
@@ -382,41 +384,71 @@ export default function Baccarat() {
         .bac-score.ws { border-color: var(--retro-green); color: var(--retro-green); }
         .bac-vs { font-family: 'Press Start 2P'; font-size: clamp(0.78rem,1.8vw,1.1rem); color: var(--retro-magenta); align-self: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 
-        /* Cards — reuse global card-front / card-back / card-corner etc. */
+        /* Cards */
         .bac-card {
           width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
           position: relative;
           animation: bacSlide 0.3s ease-out;
         }
         @keyframes bacSlide { from { opacity:0; transform:translateY(-16px) scale(0.92); } to { opacity:1; transform:translateY(0) scale(1); } }
-        .bac-card .card-front,
-        .bac-card .card-back {
+        .bac-card .bac-card-front,
+        .bac-card .bac-card-back {
           width: 100%; height: 100%; position: absolute; top: 0; left: 0;
         }
-        .bac-card .card-front {
+        .bac-card .bac-card-front {
           background-color: var(--card-white);
           display: flex; flex-direction: column; justify-content: space-between;
           padding: 6px; border: 4px solid var(--card-black);
           box-shadow: 4px 4px 0px rgba(0,0,0,0.5); z-index: 2;
         }
-        .bac-card .card-front::before {
+        .bac-card .bac-card-front.red { color: var(--card-red); }
+        .bac-card .bac-card-front.black { color: var(--card-black); }
+        .bac-card .bac-card-front::before {
           content: ''; position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
           border: 2px solid rgba(0,0,0,0.15); pointer-events: none;
         }
-        .bac-card .card-back {
+        .bac-card .bac-card-back {
           background: var(--bg-card);
           border: 4px solid var(--retro-purple);
           box-shadow: 4px 4px 0px rgba(153,102,255,0.4);
           display: flex; align-items: center; justify-content: center; overflow: hidden; z-index: 1;
         }
-        .bac-card .card-back::before {
+        .bac-card .bac-card-back::before {
           content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
           background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
           background-size: 16px 16px; opacity: 0.3;
         }
-        .bac-card .card-back::after {
+        .bac-card .bac-card-back::after {
           content: ''; width: 30px; height: 30px;
           border: 4px solid var(--retro-magenta); position: relative; z-index: 1;
+        }
+        .bac-card-corner {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          line-height: 1;
+          z-index: 1;
+        }
+        .bac-card-corner.top { align-self: flex-start; }
+        .bac-card-corner.bottom {
+          align-self: flex-end;
+          transform: rotate(180deg);
+        }
+        .bac-card-value {
+          font-family: 'Press Start 2P', cursive;
+          font-size: clamp(0.52rem,1.1vw,0.72rem);
+          font-weight: normal;
+        }
+        .bac-card-suit-small {
+          font-size: clamp(0.82rem,1.6vw,1.08rem);
+          margin-top: 1px;
+        }
+        .bac-card-center {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: clamp(2rem,4.4vw,2.95rem);
         }
         .bac-card-slot {
           width: clamp(66px,13.5vw,108px); height: clamp(92px,19vw,152px);
@@ -424,18 +456,18 @@ export default function Baccarat() {
           position: relative; overflow: hidden;
           box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
         }
-        .bac-card-slot .card-back {
+        .bac-card-slot .bac-card-back {
           width: 100%; height: 100%; position: absolute; top: 0; left: 0;
           background: var(--bg-card);
           border: none;
           display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        .bac-card-slot .card-back::before {
+        .bac-card-slot .bac-card-back::before {
           content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
           background: repeating-conic-gradient(var(--retro-purple) 0deg 90deg, var(--bg-card) 90deg 180deg);
           background-size: 12px 12px; opacity: 0.15;
         }
-        .bac-card-slot .card-back::after {
+        .bac-card-slot .bac-card-back::after {
           content: ''; width: 20px; height: 20px;
           border: 3px solid var(--retro-magenta); position: relative; z-index: 1; opacity: 0.4;
         }
@@ -519,18 +551,6 @@ export default function Baccarat() {
         .bac-btn-sm.go { border-color: var(--retro-green); color: var(--retro-green); }
         .bac-btn-sm.go:hover:not(:disabled) { background: var(--retro-green); color: black; }
         .bac-btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* History */
-        .bac-hist { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; flex-shrink: 0; padding: 3px 0; position: relative; z-index: 1; }
-        .bac-hdot {
-          width: clamp(18px,2.8vw,26px); height: clamp(18px,2.8vw,26px); border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-family: 'Press Start 2P'; font-size: clamp(0.34rem,0.85vw,0.46rem);
-          color: white; text-shadow: 1px 1px 0 #000;
-        }
-        .bac-hdot.P { background: var(--retro-blue); }
-        .bac-hdot.B { background: var(--retro-red); }
-        .bac-hdot.T { background: var(--retro-green); }
 
         @media (max-width: 600px) {
           .bac-hands { flex-direction: column; align-items: center; gap: 8px; }
@@ -674,16 +694,6 @@ export default function Baccarat() {
               DEAL
             </button>
           </div>
-        </div>
-      )}
-
-      {history.length > 0 && (
-        <div className="bac-hist">
-          {history.slice(-30).map((r, i) => (
-            <div key={i} className={`bac-hdot ${r}`}>
-              {r}
-            </div>
-          ))}
         </div>
       )}
 

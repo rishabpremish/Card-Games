@@ -19,16 +19,18 @@ export default function Profile() {
   const [bioDraft, setBioDraft] = useState("");
 
   const points = useMemo(() => {
-    const data = profile?.bankrollMini ?? [];
+    const data = profile?.bankrollWeekly ?? profile?.bankrollMini ?? [];
     if (data.length < 2) return null;
-    const width = 360;
-    const height = 90;
-    const pad = 8;
+
+    const width = 900;
+    const height = 220;
+    const pad = 10;
     const values = data.map((d: any) => d.balance);
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = Math.max(1, max - min);
     const step = (width - pad * 2) / (data.length - 1);
+
     const pts = data
       .map((d: any, i: number) => {
         const x = pad + i * step;
@@ -36,14 +38,23 @@ export default function Profile() {
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(" ");
-    return { width, height, pts, min, max };
-  }, [profile?.bankrollMini]);
+
+    return { width, height, pts };
+  }, [profile?.bankrollWeekly, profile?.bankrollMini]);
+
+  const goBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate("/");
+  };
 
   if (profile === null) {
     return (
       <div className="game-container" style={{ paddingTop: 80 }}>
-        <button className="home-btn" onClick={() => navigate("/")}>
-          🏠 HOME
+        <button className="home-btn" onClick={goBack}>
+          ← BACK
         </button>
         <div
           className="retro-card"
@@ -59,14 +70,15 @@ export default function Profile() {
   if (!profile) {
     return (
       <div className="game-container" style={{ paddingTop: 80 }}>
-        <button className="home-btn" onClick={() => navigate("/")}>
-          🏠 HOME
+        <button className="home-btn" onClick={goBack}>
+          ← BACK
         </button>
         <div
           style={{
             textAlign: "center",
             color: "var(--retro-cyan)",
             marginTop: 80,
+            fontSize: "clamp(0.95rem, 0.85rem + 0.2vw, 1.15rem)",
           }}
         >
           Loading profile...
@@ -91,23 +103,35 @@ export default function Profile() {
   return (
     <div
       className="game-container"
-      style={{ minHeight: "100vh", padding: "80px 20px 20px" }}
+      style={{
+        maxWidth: "none",
+        width: "100%",
+        minHeight: "100vh",
+        padding: "80px 2.5vw 20px",
+      }}
     >
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button className="home-btn" onClick={goBack}>
+        ← BACK
       </button>
 
-      <div className="lobby-card" style={{ maxWidth: 920, margin: "0 auto" }}>
+      <div
+        style={{
+          width: "100%",
+          minHeight: "calc(100vh - 110px)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "180px 1fr",
-            gap: 18,
+            gridTemplateColumns: "clamp(200px, 24vw, 300px) minmax(0, 1fr)",
+            gap: 22,
             alignItems: "start",
           }}
         >
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 72, lineHeight: 1.1 }}>
+            <div style={{ fontSize: "clamp(70px, 9vw, 100px)", lineHeight: 1.1 }}>
               {profile.avatar || "🎲"}
             </div>
             <div
@@ -115,7 +139,7 @@ export default function Profile() {
                 color: "var(--retro-yellow)",
                 marginTop: 8,
                 fontFamily: "'Press Start 2P'",
-                fontSize: "0.55rem",
+                fontSize: "clamp(0.78rem, 0.7rem + 0.25vw, 0.98rem)",
               }}
             >
               @{profile.username}
@@ -123,7 +147,7 @@ export default function Profile() {
             <div
               style={{
                 marginTop: 8,
-                fontSize: "0.5rem",
+                fontSize: "clamp(0.78rem, 0.7rem + 0.2vw, 0.95rem)",
                 color: "var(--text-secondary)",
               }}
             >
@@ -136,17 +160,18 @@ export default function Profile() {
               style={{
                 margin: 0,
                 color: "var(--retro-cyan)",
-                fontSize: "1rem",
+                fontSize: "clamp(1.2rem, 1.08rem + 0.35vw, 1.45rem)",
               }}
             >
               Public Profile
             </h2>
             <p
               style={{
-                marginTop: 10,
+                marginTop: 12,
                 color: "var(--text-primary)",
                 fontFamily: "'VT323'",
-                fontSize: "1.15rem",
+                fontSize: "clamp(1.4rem, 1.2rem + 0.4vw, 1.75rem)",
+                lineHeight: 1.35,
               }}
             >
               {profile.bio || "No bio set yet."}
@@ -155,34 +180,58 @@ export default function Profile() {
             {isOwn && (
               <div
                 style={{
-                  marginTop: 12,
+                  marginTop: 14,
                   borderTop: "1px dashed rgba(255,255,255,0.25)",
-                  paddingTop: 12,
+                  paddingTop: 14,
                 }}
               >
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "120px 1fr",
-                    gap: 8,
+                    gridTemplateColumns: "140px minmax(0, 1fr)",
+                    gap: 10,
                     alignItems: "center",
                   }}
                 >
-                  <label className="lobby-label" style={{ margin: 0 }}>
+                  <label
+                    className="lobby-label"
+                    style={{
+                      margin: 0,
+                      fontSize: "clamp(0.78rem, 0.7rem + 0.2vw, 0.95rem)",
+                    }}
+                  >
                     Avatar
                   </label>
                   <input
                     className="lobby-input"
+                    style={{
+                      fontSize: "clamp(1rem, 0.92rem + 0.25vw, 1.2rem)",
+                      letterSpacing: "0.05em",
+                      textTransform: "none",
+                      textAlign: "left",
+                    }}
                     maxLength={8}
                     placeholder="🎲"
                     value={avatarDraft}
                     onChange={(e) => setAvatarDraft(e.target.value)}
                   />
-                  <label className="lobby-label" style={{ margin: 0 }}>
+                  <label
+                    className="lobby-label"
+                    style={{
+                      margin: 0,
+                      fontSize: "clamp(0.78rem, 0.7rem + 0.2vw, 0.95rem)",
+                    }}
+                  >
                     Bio
                   </label>
                   <input
                     className="lobby-input"
+                    style={{
+                      fontSize: "clamp(0.98rem, 0.9rem + 0.24vw, 1.15rem)",
+                      letterSpacing: "0.03em",
+                      textTransform: "none",
+                      textAlign: "left",
+                    }}
                     maxLength={220}
                     placeholder="Tell players about your style"
                     value={bioDraft}
@@ -191,7 +240,10 @@ export default function Profile() {
                 </div>
                 <button
                   className="action-btn btn-hit"
-                  style={{ marginTop: 10, fontSize: "0.6rem" }}
+                  style={{
+                    marginTop: 12,
+                    fontSize: "clamp(0.85rem, 0.78rem + 0.2vw, 1rem)",
+                  }}
                   onClick={saveProfile}
                 >
                   SAVE PROFILE
@@ -203,25 +255,29 @@ export default function Profile() {
 
         <div
           style={{
-            marginTop: 18,
+            marginTop: 20,
             borderTop: "1px solid rgba(255,255,255,0.16)",
-            paddingTop: 14,
+            paddingTop: 16,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <h3
             style={{
               color: "var(--retro-yellow)",
-              fontSize: "0.65rem",
-              marginBottom: 8,
+              fontSize: "clamp(0.95rem, 0.86rem + 0.24vw, 1.1rem)",
+              marginBottom: 10,
             }}
           >
-            Bankroll Mini Graph
+            Weekly Bankroll Graph
           </h3>
           {points ? (
             <svg
-              width={points.width}
-              height={points.height}
+              width="100%"
+              height="clamp(220px, 34vh, 420px)"
               viewBox={`0 0 ${points.width} ${points.height}`}
+              preserveAspectRatio="xMidYMid meet"
             >
               <polyline
                 fill="none"
@@ -232,7 +288,10 @@ export default function Profile() {
             </svg>
           ) : (
             <div
-              style={{ color: "var(--text-secondary)", fontSize: "0.55rem" }}
+              style={{
+                color: "var(--text-secondary)",
+                fontSize: "clamp(0.84rem, 0.78rem + 0.2vw, 1rem)",
+              }}
             >
               Not enough history yet.
             </div>
@@ -241,36 +300,39 @@ export default function Profile() {
 
         <div
           style={{
-            marginTop: 14,
+            marginTop: 16,
             borderTop: "1px solid rgba(255,255,255,0.16)",
-            paddingTop: 14,
+            paddingTop: 16,
           }}
         >
           <h3
             style={{
               color: "var(--retro-yellow)",
-              fontSize: "0.65rem",
-              marginBottom: 8,
+              fontSize: "clamp(0.95rem, 0.86rem + 0.24vw, 1.1rem)",
+              marginBottom: 10,
             }}
           >
             Recent Results
           </h3>
           {(profile.recentResults ?? []).length === 0 ? (
             <div
-              style={{ color: "var(--text-secondary)", fontSize: "0.55rem" }}
+              style={{
+                color: "var(--text-secondary)",
+                fontSize: "clamp(0.84rem, 0.78rem + 0.2vw, 1rem)",
+              }}
             >
               No recent rounds.
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 6 }}>
+            <div style={{ display: "grid", gap: 8 }}>
               {profile.recentResults.map((row: any) => (
                 <div
                   key={row._id}
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1fr auto auto",
-                    gap: 10,
-                    fontSize: "0.55rem",
+                    gap: 12,
+                    fontSize: "clamp(0.84rem, 0.78rem + 0.2vw, 1rem)",
                   }}
                 >
                   <span>{row.game}</span>

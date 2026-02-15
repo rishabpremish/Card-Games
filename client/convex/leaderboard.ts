@@ -102,10 +102,10 @@ export const getHistoricalLeaderboards = query({
     const limit = args.limit || 10;
     const currentWeekStart = getWeekStart(new Date());
 
-    // Get unique weeks (ordered by most recent)
+    // Only use entries that are no longer current, so current balances never leak into history.
     const allEntries = await ctx.db
       .query("leaderboards")
-      .order("desc")
+      .withIndex("by_current", (q) => q.eq("isCurrent", false))
       .collect();
 
     // Group by normalized week start (so timezone/ms differences don't create duplicate weeks)
@@ -127,10 +127,48 @@ export const getHistoricalLeaderboards = query({
       .sort((a, b) => b[0] - a[0])
       .slice(0, limit)
       .map(([weekStart, entries]) => {
-        // Sort entries by rank
-        const sortedEntries = entries
-          .sort((a, b) => a.rank - b.rank)
-          .slice(0, 10);
+        // Deduplicate by user in case legacy rows with different raw weekStart values
+        // normalize into the same week.
+        const bestEntryByUser = new Map<string, any>();
+
+        for (const entry of entries) {
+          const key = String(entry.userId);
+          const existing = bestEntryByUser.get(key);
+
+          if (!existing) {
+            bestEntryByUser.set(key, entry);
+            continue;
+          }
+
+          // Prefer the better historical standing; fall back to higher balance.
+          if (entry.rank < existing.rank) {
+            bestEntryByUser.set(key, entry);
+            continue;
+          }
+
+          if (
+            entry.rank === existing.rank &&
+            entry.balance > existing.balance
+          ) {
+            bestEntryByUser.set(key, entry);
+          }
+        }
+
+        // Deterministic historical ordering based on snapshot balances.
+        const sortedEntries = Array.from(bestEntryByUser.values())
+          .sort((a, b) => {
+            if (b.balance !== a.balance) return b.balance - a.balance;
+            if (a.rank !== b.rank) return a.rank - b.rank;
+            return a.username.localeCompare(b.username);
+          })
+          .slice(0, 10)
+          .map((entry, index) => ({
+            ...entry,
+            rank: index + 1,
+            weekStart,
+            weekEnd: getWeekEnd(weekStart),
+            isCurrent: false,
+          }));
 
         return {
           weekStart,

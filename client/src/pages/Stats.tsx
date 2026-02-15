@@ -53,11 +53,19 @@ export default function Stats() {
     solarized: "Solarized",
     synthwave: "Synthwave",
     gruvbox: "Gruvbox",
-    ocean: "Ocean",
-    sunset: "Sunset",
+    catppuccin: "Catppuccin",
+    cyberpunk: "Cyberpunk",
+    gameboy: "GameBoy",
+    retrowave: "Retrowave",
+    oceanic: "Oceanic",
+    volcano: "Volcano",
     forest: "Forest",
-    candy: "Candy",
-    neon: "Neon",
+    midnight: "Midnight",
+    sakura: "Sakura",
+    amber: "Amber",
+    arctic: "Arctic",
+    neonnight: "Neon Night",
+    desert: "Desert",
   };
 
   const cardBackName: Record<string, string> = {
@@ -127,22 +135,32 @@ export default function Stats() {
     if (bankrollPoints.length < 2) return null;
     const w = 520;
     const h = 140;
-    const pad = 10;
+    const topPad = 10;
+    const rightPad = 10;
+    const bottomPad = 10;
+    const leftPad = 62;
     const vals = bankrollPoints.map((p) => p.balance);
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     const range = Math.max(1, max - min);
 
-    const xStep = (w - pad * 2) / (bankrollPoints.length - 1);
+    const xStep = (w - leftPad - rightPad) / (bankrollPoints.length - 1);
     const pts = bankrollPoints
       .map((p, i) => {
-        const x = pad + i * xStep;
-        const y = pad + (h - pad * 2) * (1 - (p.balance - min) / range);
+        const x = leftPad + i * xStep;
+        const y =
+          topPad + (h - topPad - bottomPad) * (1 - (p.balance - min) / range);
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(" ");
 
-    return { w, h, pts, min, max };
+    const yTicks = [
+      { value: max, y: topPad },
+      { value: min + range / 2, y: topPad + (h - topPad - bottomPad) / 2 },
+      { value: min, y: h - bottomPad },
+    ];
+
+    return { w, h, pts, min, max, leftPad, rightPad, yTicks };
   }, [bankrollPoints]);
 
   return (
@@ -153,7 +171,7 @@ export default function Stats() {
           background: var(--bg-primary, #0f0f23);
           padding: 44px 20px 20px;
           font-family: 'Press Start 2P', cursive;
-          color: #fff;
+          color: var(--text-primary, #fff);
           max-width: 1250px;
           margin: 0 auto;
         }
@@ -201,11 +219,11 @@ export default function Stats() {
           margin-bottom: 16px;
         }
         .stats-label {
-          color: rgba(255,255,255,0.5);
+          color: var(--text-secondary, rgba(255,255,255,0.65));
           font-size: 0.7rem;
         }
         .stats-value {
-          color: #fff;
+          color: var(--text-primary, #fff);
           font-size: 0.8rem;
         }
         .stats-value.green { color: #00ff88; }
@@ -227,7 +245,12 @@ export default function Stats() {
         }
       `}</style>
       <div className="stats-page">
-        <button className="stats-back" onClick={() => navigate("/")}>
+        <button
+          className="stats-back"
+          onClick={() =>
+            window.history.length > 1 ? navigate(-1) : navigate("/")
+          }
+        >
           ← Back
         </button>
         <h1 className="stats-title">📊 Player Stats</h1>
@@ -286,7 +309,7 @@ export default function Stats() {
               </span>
             </div>
             <div style={{ marginTop: "8px" }}>
-              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.5rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.5rem" }}>
                 Next: Silver $5k • Gold $25k • Platinum $100k • Diamond $500k
               </p>
             </div>
@@ -356,7 +379,7 @@ export default function Stats() {
               ))}
               {achievements.length > 12 && (
                 <span
-                  style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.5rem" }}
+                  style={{ color: "var(--text-secondary)", fontSize: "0.5rem" }}
                 >
                   +{achievements.length - 12} more
                 </span>
@@ -375,7 +398,7 @@ export default function Stats() {
                 style={{
                   background: "rgba(255,255,255,0.05)",
                   border: "2px solid rgba(255,255,255,0.2)",
-                  color: "#fff",
+                  color: "var(--text-primary)",
                   padding: "8px 10px",
                   fontFamily: "'Press Start 2P', cursive",
                   fontSize: "0.5rem",
@@ -387,20 +410,44 @@ export default function Stats() {
             </div>
 
             {!bankrollSvg ? (
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.6rem" }}>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.6rem" }}>
                 Not enough history yet.
               </p>
             ) : (
-              <div style={{ width: "100%", overflowX: "auto" }}>
+              <div style={{ width: "100%" }}>
                 <svg
-                  width={bankrollSvg.w}
-                  height={bankrollSvg.h}
+                  width="100%"
+                  height="140"
                   viewBox={`0 0 ${bankrollSvg.w} ${bankrollSvg.h}`}
+                  preserveAspectRatio="none"
                   style={{
                     background: "rgba(0,0,0,0.25)",
                     border: "2px solid rgba(255,255,255,0.15)",
+                    display: "block",
                   }}
                 >
+                  {bankrollSvg.yTicks.map((tick, idx) => (
+                    <g key={idx}>
+                      <line
+                        x1={bankrollSvg.leftPad}
+                        y1={tick.y}
+                        x2={bankrollSvg.w - bankrollSvg.rightPad}
+                        y2={tick.y}
+                        stroke="rgba(255,255,255,0.15)"
+                        strokeDasharray="4 4"
+                      />
+                      <text
+                        x={bankrollSvg.leftPad - 6}
+                        y={tick.y + 3}
+                        textAnchor="end"
+                        fontSize="8"
+                        fill="var(--text-secondary)"
+                        fontFamily="'Press Start 2P', cursive"
+                      >
+                        ${Math.round(tick.value).toLocaleString()}
+                      </text>
+                    </g>
+                  ))}
                   <polyline
                     fill="none"
                     stroke="var(--retro-cyan)"
@@ -408,18 +455,6 @@ export default function Stats() {
                     points={bankrollSvg.pts}
                   />
                 </svg>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginTop: 8,
-                    fontSize: "0.45rem",
-                    color: "rgba(255,255,255,0.5)",
-                  }}
-                >
-                  <span>${bankrollSvg.min.toLocaleString()}</span>
-                  <span>${bankrollSvg.max.toLocaleString()}</span>
-                </div>
               </div>
             )}
           </div>
@@ -469,7 +504,7 @@ export default function Stats() {
             {(matchHistory ?? []).length === 0 ? (
               <p
                 style={{
-                  color: "rgba(255,255,255,0.5)",
+                  color: "var(--text-secondary)",
                   fontSize: "0.6rem",
                   margin: 0,
                 }}
@@ -484,7 +519,7 @@ export default function Stats() {
                     gridTemplateColumns: "1.2fr 0.8fr 0.8fr 0.8fr 1.6fr",
                     gap: 8,
                     fontSize: "0.5rem",
-                    color: "rgba(255,255,255,0.55)",
+                    color: "var(--text-secondary)",
                     borderBottom: "1px solid rgba(255,255,255,0.15)",
                     paddingBottom: 6,
                   }}
@@ -527,7 +562,7 @@ export default function Stats() {
                     >
                       {row.net >= 0 ? "+" : ""}${row.net}
                     </span>
-                    <span style={{ color: "rgba(255,255,255,0.65)" }}>
+                    <span style={{ color: "var(--text-secondary)" }}>
                       {new Date(row.timestamp).toLocaleString()}
                     </span>
                   </div>

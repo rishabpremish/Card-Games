@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { useEconomy } from "../hooks/useEconomy";
+import { applyThemeToDocument } from "../lib/themeShop";
 
 interface SettingsProps {
   onLogout?: () => void;
@@ -7,6 +9,7 @@ interface SettingsProps {
 
 export default function Settings({ onLogout }: SettingsProps) {
   const { user, updateSettings } = useAuth();
+  const { playerStats } = useEconomy();
   const [isVisible, setIsVisible] = useState(false);
   const [theme, setTheme] = useState("default");
   const [gameplaySettings, setGameplaySettings] = useState({
@@ -22,6 +25,15 @@ export default function Settings({ onLogout }: SettingsProps) {
     highContrast: false,
     reduceMotion: false,
   });
+
+  const applyTheme = (themeName: string) => {
+    applyThemeToDocument(themeName);
+  };
+
+  const toggleBodyClass = (className: string, shouldAdd: boolean) => {
+    if (shouldAdd) document.body.classList.add(className);
+    else document.body.classList.remove(className);
+  };
 
   // Initialize settings from Convex user on mount/update
   useEffect(() => {
@@ -71,24 +83,10 @@ export default function Settings({ onLogout }: SettingsProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isVisible]);
 
-  const applyTheme = (themeName: string) => {
-    // Remove existing theme classes
-    const classes = document.body.className
-      .split(" ")
-      .filter((c) => !c.startsWith("theme-"));
-    document.body.className = classes.join(" ");
-
-    if (themeName !== "default") {
-      document.body.classList.add(`theme-${themeName}`);
-    }
-  };
-
-  const toggleBodyClass = (className: string, shouldAdd: boolean) => {
-    if (shouldAdd) document.body.classList.add(className);
-    else document.body.classList.remove(className);
-  };
-
   const handleThemeChange = (newTheme: string) => {
+    if (newTheme !== "default" && !ownedThemeIds.has(newTheme)) {
+      return;
+    }
     setTheme(newTheme);
     applyTheme(newTheme);
     updateSettings({ theme: newTheme });
@@ -413,6 +411,27 @@ export default function Settings({ onLogout }: SettingsProps) {
     },
   ];
 
+  const ownedThemeIds = useMemo(() => {
+    const ownedItems = (playerStats?.ownedItems ?? []) as string[];
+    return new Set(ownedItems);
+  }, [playerStats?.ownedItems]);
+
+  const visibleThemes = useMemo(
+    () => themes.filter((t) => t.id === "default" || ownedThemeIds.has(t.id)),
+    [themes, ownedThemeIds],
+  );
+
+  useEffect(() => {
+    if (theme === "default") return;
+    if (ownedThemeIds.has(theme)) return;
+
+    setTheme("default");
+    applyTheme("default");
+    if (user?.settings?.theme !== "default") {
+      updateSettings({ theme: "default" });
+    }
+  }, [theme, ownedThemeIds, updateSettings, user?.settings?.theme]);
+
   return (
     <>
       <button className="settings-hint" onClick={() => setIsVisible(true)}>
@@ -437,43 +456,11 @@ export default function Settings({ onLogout }: SettingsProps) {
               </button>
             </div>
 
-            {onLogout && (
-              <button
-                onClick={onLogout}
-                style={{
-                  background: "rgba(255, 0, 0, 0.1)",
-                  border: "2px solid var(--retro-red)",
-                  color: "var(--retro-red)",
-                  padding: "12px 16px",
-                  fontFamily: "'Press Start 2P', cursive",
-                  fontSize: "0.55rem",
-                  cursor: "pointer",
-                  transition: "0.15s",
-                  margin: "0 auto 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "10px",
-                  width: "auto",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--retro-red)";
-                  e.currentTarget.style.color = "white";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 0, 0, 0.1)";
-                  e.currentTarget.style.color = "var(--retro-red)";
-                }}
-              >
-                🚪 LOG OUT
-              </button>
-            )}
-
             <div className="settings-content">
               <div className="settings-section">
                 <h3>THEME</h3>
                 <div className="theme-grid">
-                  {themes.map((t) => (
+                  {visibleThemes.map((t) => (
                     <button
                       key={t.id}
                       className={`theme-btn ${theme === t.id ? "active" : ""}`}
@@ -623,6 +610,38 @@ export default function Settings({ onLogout }: SettingsProps) {
                 </div>
               </div>
             </div>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  background: "rgba(255, 0, 0, 0.1)",
+                  border: "2px solid var(--retro-red)",
+                  color: "var(--retro-red)",
+                  padding: "12px 16px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "0.55rem",
+                  cursor: "pointer",
+                  transition: "0.15s",
+                  margin: "16px auto 0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  width: "auto",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--retro-red)";
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 0, 0, 0.1)";
+                  e.currentTarget.style.color = "var(--retro-red)";
+                }}
+              >
+                🚪 LOG OUT
+              </button>
+            )}
           </div>
         </div>
       )}

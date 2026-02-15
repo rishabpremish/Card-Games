@@ -6,6 +6,7 @@ export function useConfetti() {
       intensity?: "low" | "medium" | "high";
       origin?: { x: number; y: number };
     }) => {
+      void _options;
       // Confetti celebrations are disabled across the platform.
       return;
     },

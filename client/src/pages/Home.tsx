@@ -152,7 +152,7 @@ export default function Home() {
             Higher or Lower
           </Link>
           <Link to="/poker" className="game-link">
-            🃏 Poker
+            Poker
           </Link>
           <Link to="/blackjack" className="game-link">
             Blackjack
@@ -161,16 +161,10 @@ export default function Home() {
             Baccarat
           </Link>
           <Link to="/slots" className="game-link">
-            🎰 Slots
+            Slots
           </Link>
           <Link to="/roulette" className="game-link">
-            🎡 Roulette
-          </Link>
-          <Link to="/craps" className="game-link">
-            🎲 Craps
-          </Link>
-          <Link to="/war" className="game-link">
-            ⚔️ War
+            Roulette
           </Link>
           <Link
             to="/stats"
@@ -180,19 +174,19 @@ export default function Home() {
               color: "var(--retro-cyan)",
             }}
           >
-            📊 Stats
+            Stats
           </Link>
           <Link to="/leaderboard" className="game-link">
-            🏆 Leaderboard
+            Leaderboard
           </Link>
           <Link to="/shop" className="game-link">
-            🛒 Shop
+            Shop
           </Link>
           <Link
             to={`/profile/${user?.username ?? "player"}`}
             className="game-link"
           >
-            👤 Public Profile
+            Public Profile
           </Link>
           {user?.isAdmin && (
             <Link
@@ -203,7 +197,7 @@ export default function Home() {
                 color: "var(--retro-magenta)",
               }}
             >
-              ⚙️ Admin Panel
+              Admin Panel
             </Link>
           )}
         </div>

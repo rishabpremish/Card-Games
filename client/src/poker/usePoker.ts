@@ -130,7 +130,8 @@ export function usePoker(): UsePokerReturn {
     if (!raw) return;
     try {
       reconnectRef.current = JSON.parse(raw);
-    } catch {
+    } catch (error) {
+      console.error("Failed to parse poker reconnect state", error);
       reconnectRef.current = null;
     }
   }, []);
@@ -267,16 +268,14 @@ export function usePoker(): UsePokerReturn {
             case "PONG":
               break;
           }
-        } catch {}
+        } catch (error) {
+          console.error("Failed to process poker websocket message", error);
+        }
       };
 
       ws.onclose = () => {
         setIsConnected(false);
         window.clearInterval(pingTimer.current);
-        // Auto-reconnect if in a room
-        if (roomCode && !isSpectator) {
-          reconnectTimer.current = window.setTimeout(connect, 2000);
-        }
       };
 
       ws.onerror = () => ws.close();
@@ -284,6 +283,18 @@ export function usePoker(): UsePokerReturn {
       setIsConnected(false);
     }
   }, [roomCode, isSpectator]);
+
+  useEffect(() => {
+    if (isConnected || !roomCode || isSpectator) return;
+
+    reconnectTimer.current = window.setTimeout(() => {
+      connect();
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(reconnectTimer.current);
+    };
+  }, [isConnected, roomCode, isSpectator, connect]);
 
   // Connect on mount
   useEffect(() => {

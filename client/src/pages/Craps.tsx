@@ -171,7 +171,9 @@ export default function Craps() {
     }, 2500);
     try {
       await addWinnings(winAmt, "Craps");
-    } catch {}
+    } catch (error) {
+      console.error("Failed to add Craps winnings", error);
+    }
   };
 
   const winField = async (total: number, mult: number) => {
@@ -191,7 +193,9 @@ export default function Craps() {
     }, 2500);
     try {
       await addWinnings(winAmt, "Craps");
-    } catch {}
+    } catch (error) {
+      console.error("Failed to add Craps winnings", error);
+    }
   };
 
   const lose = (total: number, msg: string) => {
@@ -220,7 +224,9 @@ export default function Craps() {
     }, 2500);
     try {
       await addWinnings(stagedBet, "Craps");
-    } catch {}
+    } catch (error) {
+      console.error("Failed to refund Craps push", error);
+    }
   };
 
   const newRound = () => {
@@ -237,8 +243,13 @@ export default function Craps() {
 
   return (
     <div className="craps-page">
-      <button className="home-btn" onClick={() => navigate("/")}>
-        🏠 HOME
+      <button
+        className="home-btn"
+        onClick={() =>
+          window.history.length > 1 ? navigate(-1) : navigate("/")
+        }
+      >
+        ← BACK
       </button>
 
       <style>{`
